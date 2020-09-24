@@ -1,0 +1,6 @@
+realm="master"
+host="http://keycloakHostname:8080"
+username="adminKeycloak"
+password="adminPassword"
+client="signauxfaibles"
+base="./userBase.xlsx"
