@@ -34,9 +34,13 @@ func main() {
 
 	// gather roles, newRoles are created before users, oldRoles are deleted after users
 	log.Println("checking roles and creating new ones")
-	newRoles, oldRoles := neededRoles(users).compare(kc.GetClientRoles()["signauxfaibles"])
+	newRoles, oldRoles := neededRoles(users).compare(kc.GetClientRoles()[viper.GetString("client")])
 
 	i, err := kc.CreateClientRoles(viper.GetString("client"), newRoles)
+	if err != nil {
+		log.Printf("failed creating new roles: %s", err.Error())
+		panic(err)
+	}
 	log.Printf("%d roles created", i)
 
 	// check and adjust composite roles
