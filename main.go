@@ -31,7 +31,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	// gather roles, newRoles are created before users, oldRoles are deleted after users
 	log.Println("checking roles and creating new ones")
 	newRoles, oldRoles := neededRoles(users).compare(kc.GetClientRoles()[viper.GetString("client")])

@@ -53,10 +53,13 @@ func loadExcel() (Users, map[string]Roles, error) {
 	}
 
 	for _, userRow := range table[1:] {
-		if userRow[fields["ADRESSE MAIL"]] != "" && len(userRow[fields["PRENOM"]]) > 1 {
+		niveau := userRow[fields["NIVEAU HABILITATION"]]
+		email := strings.ToLower(userRow[fields["ADRESSE MAIL"]])
+
+		if email != "" && len(userRow[fields["PRENOM"]]) > 1 {
 			user := User{
-				niveau:            strings.ToLower(userRow[fields["NIVEAU HABILITATION"]]),
-				email:             strings.ToLower(userRow[fields["ADRESSE MAIL"]]),
+				niveau:            strings.ToLower(niveau),
+				email:             email,
 				nom:               strings.ToUpper(userRow[fields["NOM"]]),
 				prenom:            strings.ToUpper(userRow[fields["PRENOM"]][0:1]) + strings.ToLower(userRow[fields["PRENOM"]][1:]),
 				poste:             userRow[fields["POSTE"]],
@@ -69,7 +72,7 @@ func loadExcel() (Users, map[string]Roles, error) {
 			if len(scope) != 1 || scope[0] != "" {
 				user.scope = scope
 			}
-			users[strings.ToLower(userRow[fields["ADRESSE MAIL"]])] = user
+			users[email] = user
 		}
 	}
 	compositeRoles := make(map[string]Roles)

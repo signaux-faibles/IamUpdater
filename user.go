@@ -26,15 +26,21 @@ type User struct {
 type Users map[string]User
 
 func (user User) roles() Roles {
-	var roles = Roles{"score", "detection"}
+	var roles Roles
 	if user.niveau == "a" {
 		roles = append(roles, "urssaf", "dgefp", "bdf")
 	}
-	if user.accesGeographique != "" {
-		roles = append(roles, user.accesGeographique)
+	if user.niveau == "b" {
+		roles = append(roles, "dgefp")
 	}
-	if !(len(user.scope) == 1 && user.scope[0] == "") {
-		roles = append(roles, user.scope...)
+	if user.niveau != "0" {
+		roles = append(roles, "score", "detection")
+		if user.accesGeographique != "" {
+			roles = append(roles, user.accesGeographique)
+		}
+		if !(len(user.scope) == 1 && user.scope[0] == "") {
+			roles = append(roles, user.scope...)
+		}
 	}
 	return roles
 }
@@ -42,7 +48,7 @@ func (user User) roles() Roles {
 // GetUser resolves existing user from its username
 func (kc KeycloakContext) GetUser(username string) (gocloak.User, error) {
 	for _, u := range kc.Users {
-		if u != nil && u.Username != nil && *u.Username == username {
+		if u != nil && u.Username != nil && strings.ToLower(*u.Username) == strings.ToLower(username) {
 			return *u, nil
 		}
 	}
@@ -68,14 +74,12 @@ func (users Users) Compare(kc KeycloakContext) (UserSlice, []gocloak.User, []goc
 
 	for _, kcu := range kc.Users {
 		if kcu != nil {
-			if _, ok := users[*kcu.Username]; !ok {
+			if _, ok := users[strings.ToLower(*kcu.Username)]; !ok {
 				if *kcu.Enabled {
 					obsolete = append(obsolete, *kcu)
 				}
 			} else {
-				// if *kcu.Enabled {
 				current = append(current, *kcu)
-				// }
 			}
 		}
 	}

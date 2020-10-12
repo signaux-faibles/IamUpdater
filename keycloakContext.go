@@ -140,7 +140,7 @@ func (kc *KeycloakContext) refreshClientRoles() error {
 			if err != nil {
 				return err
 			}
-			kc.ClientRoles[*c.Name] = roles
+			kc.ClientRoles[*c.ClientID] = roles
 		}
 	}
 	return nil
@@ -238,8 +238,8 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 
 		u := userMap[*user.Username]
 		ug := u.ToGocloakUser()
-		if u.nom != *user.LastName ||
-			u.prenom != *user.FirstName ||
+		if user.LastName != nil && u.nom != *user.LastName ||
+			user.LastName != nil && u.prenom != *user.FirstName ||
 			!compareAttributes(user.Attributes, ug.Attributes) {
 
 			update := gocloak.User{
