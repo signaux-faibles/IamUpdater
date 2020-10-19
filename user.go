@@ -103,7 +103,7 @@ func (user User) ToGocloakUser() gocloak.User {
 	t := true
 	attributes := make(map[string][]string)
 	if user.goup != "" {
-		attributes["goup-path"] = []string{user.goup}
+		attributes["goup_path"] = []string{user.goup}
 	}
 	attributes["fonction"] = []string{user.fonction}
 	attributes["employeur"] = []string{user.employeur}
