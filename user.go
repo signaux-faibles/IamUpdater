@@ -14,7 +14,7 @@ type User struct {
 	email             string
 	prenom            string
 	nom               string
-	poste             string
+	segment           string
 	fonction          string
 	employeur         string
 	goup              string
@@ -48,7 +48,7 @@ func (user User) roles() Roles {
 // GetUser resolves existing user from its username
 func (kc KeycloakContext) GetUser(username string) (gocloak.User, error) {
 	for _, u := range kc.Users {
-		if u != nil && u.Username != nil && strings.ToLower(*u.Username) == strings.ToLower(username) {
+		if u != nil && u.Username != nil && strings.EqualFold(*u.Username, username) {
 			return *u, nil
 		}
 	}
@@ -107,6 +107,10 @@ func (user User) ToGocloakUser() gocloak.User {
 	}
 	attributes["fonction"] = []string{user.fonction}
 	attributes["employeur"] = []string{user.employeur}
+
+	if user.segment != "" {
+		attributes["segment"] = []string{user.segment}
+	}
 	return gocloak.User{
 		Username:      &user.email,
 		Email:         &user.email,

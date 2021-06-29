@@ -19,7 +19,6 @@ func (roles *Roles) add(role string) {
 		}
 	}
 	*roles = append(*roles, role)
-
 }
 
 func (roles Roles) contains(role string) bool {

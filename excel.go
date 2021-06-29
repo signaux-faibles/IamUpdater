@@ -62,7 +62,7 @@ func loadExcel() (Users, map[string]Roles, error) {
 				email:             email,
 				nom:               strings.ToUpper(userRow[fields["NOM"]]),
 				prenom:            strings.ToUpper(userRow[fields["PRENOM"]][0:1]) + strings.ToLower(userRow[fields["PRENOM"]][1:]),
-				poste:             userRow[fields["POSTE"]],
+				segment:           userRow[fields["SEGMENT"]],
 				fonction:          userRow[fields["FONCTION"]],
 				employeur:         userRow[fields["ENTITES"]],
 				goup:              userRow[fields["GOUP"]],
