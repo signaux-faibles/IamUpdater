@@ -230,15 +230,25 @@ func (kc *KeycloakContext) EnableUsers(users []gocloak.User, userMap Users, clie
 
 // UpdateCurrentUsers sets client roles on specified users according userMap
 func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users, clientName string) error {
+	accountInternalID, err := kc.GetInternalIDFromClientID("account")
+	if err != nil {
+		return err
+	}
 	internalID, err := kc.GetInternalIDFromClientID(clientName)
 	if err != nil {
 		return err
 	}
+
 	for _, user := range users {
 		roles, err := kc.API.GetClientRolesByUserID(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, *user.ID)
 		if err != nil {
 			return err
 		}
+		accountPRoles, err := kc.API.GetClientRolesByUserID(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, *user.ID)
+		if err != nil {
+			return err
+		}
+		accountRoles := rolesFromGocloakPRoles(accountPRoles)
 
 		u := userMap[*user.Username]
 		ug := u.ToGocloakUser()
@@ -275,6 +285,14 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 			err = kc.API.AddClientRoleToUser(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, *user.ID, new.GetKeycloakRoles(clientName, kc))
 			if err != nil {
 				log.Printf("kc.UpdateCurrentUsers - %s: failed to add roles, %s", *user.Username, err.Error())
+			}
+		}
+
+		if len(accountRoles) > 0 {
+			log.Printf("kc.ProtectCurrentUsers - %s: disabling account management [%s]", *user.Username, strings.Join(new, ", "))
+			err = kc.API.AddClientRoleToUser(context.Background(), kc.JWT.AccessToken, kc.realm, accountInternalID, *user.ID, accountRoles.GetKeycloakRoles("account", kc))
+			if err != nil {
+				log.Printf("kc.UpdateCurrentUsers - %s: failed to disable management, %s", *user.Username, err.Error())
 			}
 		}
 	}
