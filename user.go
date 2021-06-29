@@ -48,7 +48,7 @@ func (user User) roles() Roles {
 // GetUser resolves existing user from its username
 func (kc KeycloakContext) GetUser(username string) (gocloak.User, error) {
 	for _, u := range kc.Users {
-		if u != nil && u.Username != nil && strings.ToLower(*u.Username) == strings.ToLower(username) {
+		if u != nil && u.Username != nil && strings.EqualFold(*u.Username, username) {
 			return *u, nil
 		}
 	}

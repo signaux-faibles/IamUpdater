@@ -163,7 +163,11 @@ func (kc *KeycloakContext) CreateUsers(users []gocloak.User, userMap Users, clie
 		log.Printf("kc.CreateUsers - %s: adding roles to user [%s]", *user.Username, strings.Join(rolesFromGocloakRoles(roles), ", "))
 		err = kc.API.AddClientRoleToUser(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, u, roles)
 		if err != nil {
-
+			var role []string
+			for _, r := range roles {
+				role = append(role, *r.Name)
+			}
+			log.Printf("error adding client rôles (%s) to %s: %s", strings.Join(role, ","), *user.Email, err.Error())
 		}
 	}
 
