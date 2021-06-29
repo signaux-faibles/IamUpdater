@@ -244,7 +244,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 		if err != nil {
 			return err
 		}
-		accountPRoles, err := kc.API.GetClientRolesByUserID(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, *user.ID)
+		accountPRoles, err := kc.API.GetClientRolesByUserID(context.Background(), kc.JWT.AccessToken, kc.realm, accountInternalID, *user.ID)
 		if err != nil {
 			return err
 		}
@@ -289,10 +289,10 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 		}
 
 		if len(accountRoles) > 0 {
-			log.Printf("kc.ProtectCurrentUsers - %s: disabling account management [%s]", *user.Username, strings.Join(new, ", "))
-			err = kc.API.AddClientRoleToUser(context.Background(), kc.JWT.AccessToken, kc.realm, accountInternalID, *user.ID, accountRoles.GetKeycloakRoles("account", kc))
+			log.Printf("kc.ProtectCurrentUsers - %s: disabling account management [%s]", *user.Username, strings.Join(accountRoles, ", "))
+			err = kc.API.DeleteClientRoleFromUser(context.Background(), kc.JWT.AccessToken, kc.realm, accountInternalID, *user.ID, accountRoles.GetKeycloakRoles("account", kc))
 			if err != nil {
-				log.Printf("kc.UpdateCurrentUsers - %s: failed to disable management, %s", *user.Username, err.Error())
+				log.Printf("kc.ProtectUsers - %s: failed to disable management, %s", *user.Username, err.Error())
 			}
 		}
 	}
