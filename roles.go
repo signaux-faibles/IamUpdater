@@ -63,14 +63,20 @@ func rolesFromGocloakPRoles(roles []*gocloak.Role) Roles {
 	return r
 }
 
-func neededRoles(users Users) Roles {
-	var roles Roles
-	for _, user := range users {
-		for _, role := range user.roles() {
-			roles.add(role)
+func neededRoles(compositeRoles map[string]Roles, users Users) Roles {
+	var neededRoles Roles
+	for composite, roles := range compositeRoles {
+		neededRoles.add(composite)
+		for _, role := range roles {
+			neededRoles.add(role)
 		}
 	}
-	return roles
+	for _, user := range users {
+		for _, role := range user.roles() {
+			neededRoles.add(role)
+		}
+	}
+	return neededRoles
 }
 
 // GetRoleFromRoleName resolves gocloak role object from a name
