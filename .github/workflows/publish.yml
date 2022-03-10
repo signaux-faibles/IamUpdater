@@ -6,9 +6,10 @@ name: Publish keycloakUpdater binary
 #  release:
 #    types: [created]
 
-push:
-  tags:
-    - 'v*'
+on:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   release-linux-amd64:
