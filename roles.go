@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/Nerzal/gocloak/v7"
+	"github.com/Nerzal/gocloak/v11"
 )
 
 // Roles is role collection in []string with some handy functions attached

@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/Nerzal/gocloak/v7"
+	"github.com/Nerzal/gocloak/v11"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
@@ -109,7 +109,7 @@ func NewKeycloakContext(realm, hostname, username, password string) (KeycloakCon
 
 	kc.RefreshUsers()
 
-	kc.Roles, err = kc.API.GetRealmRoles(context.Background(), kc.JWT.AccessToken, kc.realm)
+	kc.Roles, err = kc.API.GetRealmRoles(context.Background(), kc.JWT.AccessToken, kc.realm, gocloak.GetRoleParams{})
 	if err != nil {
 		return KeycloakContext{}, err
 	}
@@ -136,7 +136,7 @@ func (kc *KeycloakContext) refreshClientRoles() error {
 	kc.ClientRoles = make(map[string][]*gocloak.Role)
 	for _, c := range kc.Clients {
 		if c != nil && c.ClientID != nil {
-			roles, err := kc.API.GetClientRoles(context.Background(), kc.JWT.AccessToken, kc.realm, *c.ID)
+			roles, err := kc.API.GetClientRoles(context.Background(), kc.JWT.AccessToken, kc.realm, *c.ID, gocloak.GetRoleParams{})
 			if err != nil {
 				return err
 			}

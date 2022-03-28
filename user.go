@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Nerzal/gocloak/v7"
+	"github.com/Nerzal/gocloak/v11"
 )
 
 // User is the definition of an user in excel state
