@@ -1,4 +1,4 @@
-module github.com/signaux-faibles/keycloakUpdater/m/v2
+module github.com/signaux-faibles/keycloakUpdater/v2
 
 go 1.18
 
