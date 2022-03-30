@@ -19,19 +19,22 @@ func main() {
 		panic(err)
 	}
 
-	clientId := viper.GetString("client")
+	clientId := viper.GetString("access.clients")
 
 	kc, err := NewKeycloakContext(
-		viper.GetString("host"),
-		viper.GetString("realm"),
-		viper.GetString("password"),
-		viper.GetString("username"))
+		viper.GetString("access.address"),
+		viper.GetString("access.realm"),
+		viper.GetString("access.username"),
+		viper.GetString("access.password"))
 	if err != nil {
 		panic(err)
 	}
 
+	// realm configuration
+
 	// loading desired state for users, composites roles
-	users, compositeRoles, err := loadExcel()
+	excelFileName := viper.GetString("users.file")
+	users, compositeRoles, err := loadExcel(excelFileName)
 	if err != nil {
 		panic(err)
 	}
@@ -58,10 +61,10 @@ func main() {
 		clientId,
 		compositeRoles,
 	)
-
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	// checking users
 	missing, obsolete, update, current := users.Compare(kc)
 
@@ -80,6 +83,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	// make sure every on has correct roles
 	err = kc.UpdateCurrentUsers(current, users, clientId)
 	if err != nil {

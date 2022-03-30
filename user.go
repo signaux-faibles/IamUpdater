@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"sort"
 	"strings"
 
@@ -73,14 +74,16 @@ func (users Users) Compare(kc KeycloakContext) (UserSlice, []gocloak.User, []goc
 	}
 
 	for _, kcu := range kc.Users {
-		if kcu != nil {
-			if _, ok := users[strings.ToLower(*kcu.Username)]; !ok {
-				if *kcu.Enabled {
-					obsolete = append(obsolete, *kcu)
-				}
-			} else {
-				current = append(current, *kcu)
+		if kcu == nil {
+			log.Println("nil user from context ??")
+			continue
+		}
+		if _, ok := users[strings.ToLower(*kcu.Username)]; !ok {
+			if *kcu.Enabled {
+				obsolete = append(obsolete, *kcu)
 			}
+		} else {
+			current = append(current, *kcu)
 		}
 	}
 	return missing, obsolete, enable, current

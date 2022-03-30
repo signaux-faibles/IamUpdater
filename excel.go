@@ -3,12 +3,10 @@ package main
 import (
 	"strings"
 
-	"github.com/spf13/viper"
 	"github.com/tealeg/xlsx/v3"
 )
 
-func loadExcel() (Users, map[string]Roles, error) {
-	excelFileName := viper.GetString("base")
+func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 	xlFile, err := xlsx.OpenFile(excelFileName)
 	if err != nil {
 		return nil, nil, err
@@ -17,26 +15,10 @@ func loadExcel() (Users, map[string]Roles, error) {
 	var zones [][]string
 	for _, sheet := range xlFile.Sheets {
 		if sheet.Name == "utilisateurs" {
-			sheet.ForEachRow(func(row *xlsx.Row) error {
-				var r []string
-				row.ForEachCell(func(cell *xlsx.Cell) error {
-					r = append(r, cell.Value)
-					return nil
-				})
-				table = append(table, r)
-				return nil
-			})
+			table = loadSheet(*sheet)
 		}
 		if sheet.Name == "zones" {
-			sheet.ForEachRow(func(row *xlsx.Row) error {
-				var r []string
-				row.ForEachCell(func(cell *xlsx.Cell) error {
-					r = append(r, cell.Value)
-					return nil
-				})
-				zones = append(zones, r)
-				return nil
-			})
+			zones = loadSheet(*sheet)
 		}
 	}
 
@@ -87,4 +69,18 @@ func loadExcel() (Users, map[string]Roles, error) {
 		)
 	}
 	return users, compositeRoles, nil
+}
+
+func loadSheet(sheet xlsx.Sheet) [][]string {
+	var r [][]string
+	_ = sheet.ForEachRow(func(row *xlsx.Row) error {
+		var line []string
+		_ = row.ForEachCell(func(cell *xlsx.Cell) error {
+			line = append(line, cell.Value)
+			return nil
+		})
+		r = append(r, line)
+		return nil
+	})
+	return r
 }
