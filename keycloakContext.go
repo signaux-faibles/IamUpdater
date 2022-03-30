@@ -24,6 +24,42 @@ type KeycloakContext struct {
 	ClientRoles map[string][]*gocloak.Role
 }
 
+// NewKeycloakContext provides a connected keycloak context object
+func NewKeycloakContext(hostname, realm, username, password string) (KeycloakContext, error) {
+	kc := KeycloakContext{
+		hostname: hostname,
+		realm:    realm,
+		username: username,
+		password: password,
+	}
+
+	kc.API = gocloak.NewClient(kc.hostname)
+	var err error
+	kc.JWT, err = kc.API.LoginAdmin(context.Background(), kc.username, kc.password, kc.realm)
+	if err != nil {
+		return KeycloakContext{}, err
+	}
+	err = kc.refreshClients()
+	if err != nil {
+		return KeycloakContext{}, err
+	}
+	err = kc.RefreshUsers()
+	if err != nil {
+		return KeycloakContext{}, err
+	}
+	kc.Roles, err = kc.API.GetRealmRoles(context.Background(), kc.JWT.AccessToken, kc.realm, gocloak.GetRoleParams{})
+	if err != nil {
+		return KeycloakContext{}, err
+	}
+
+	err = kc.refreshClientRoles()
+	if err != nil {
+		return KeycloakContext{}, err
+	}
+
+	return kc, nil
+}
+
 // GetRoles returns realm roles in []string
 func (kc KeycloakContext) GetRoles() Roles {
 	var roles Roles
@@ -83,42 +119,6 @@ func (kc KeycloakContext) GetClientRoles() map[string]Roles {
 		clientRoles[n] = roles
 	}
 	return clientRoles
-}
-
-// NewKeycloakContext provides a connected keycloak context object
-func NewKeycloakContext(hostname, realm, username, password string) (KeycloakContext, error) {
-	kc := KeycloakContext{
-		hostname: hostname,
-		realm:    realm,
-		username: username,
-		password: password,
-	}
-
-	kc.API = gocloak.NewClient(kc.hostname)
-	var err error
-	kc.JWT, err = kc.API.LoginAdmin(context.Background(), kc.username, kc.password, kc.realm)
-	if err != nil {
-		return KeycloakContext{}, err
-	}
-	err = kc.refreshClients()
-	if err != nil {
-		return KeycloakContext{}, err
-	}
-	err = kc.RefreshUsers()
-	if err != nil {
-		return KeycloakContext{}, err
-	}
-	kc.Roles, err = kc.API.GetRealmRoles(context.Background(), kc.JWT.AccessToken, kc.realm, gocloak.GetRoleParams{})
-	if err != nil {
-		return KeycloakContext{}, err
-	}
-
-	err = kc.refreshClientRoles()
-	if err != nil {
-		return KeycloakContext{}, err
-	}
-
-	return kc, nil
 }
 
 func (kc *KeycloakContext) refreshClients() error {
