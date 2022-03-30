@@ -12,8 +12,8 @@ import (
 
 // KeycloakContext carry keycloak state
 type KeycloakContext struct {
-	realm       string
 	hostname    string
+	realm       string
 	username    string
 	password    string
 	API         gocloak.GoCloak
@@ -86,29 +86,28 @@ func (kc KeycloakContext) GetClientRoles() map[string]Roles {
 }
 
 // NewKeycloakContext provides a connected keycloak context object
-func NewKeycloakContext(realm, hostname, username, password string) (KeycloakContext, error) {
+func NewKeycloakContext(hostname, realm, username, password string) (KeycloakContext, error) {
 	kc := KeycloakContext{
-		realm:    realm,
 		hostname: hostname,
+		realm:    realm,
 		username: username,
 		password: password,
 	}
 
 	kc.API = gocloak.NewClient(kc.hostname)
-
 	var err error
 	kc.JWT, err = kc.API.LoginAdmin(context.Background(), kc.username, kc.password, kc.realm)
 	if err != nil {
 		return KeycloakContext{}, err
 	}
-
-	kc.Clients, err = kc.API.GetClients(context.Background(), kc.JWT.AccessToken, kc.realm, gocloak.GetClientsParams{})
+	err = kc.refreshClients()
 	if err != nil {
 		return KeycloakContext{}, err
 	}
-
-	kc.RefreshUsers()
-
+	err = kc.RefreshUsers()
+	if err != nil {
+		return KeycloakContext{}, err
+	}
 	kc.Roles, err = kc.API.GetRealmRoles(context.Background(), kc.JWT.AccessToken, kc.realm, gocloak.GetRoleParams{})
 	if err != nil {
 		return KeycloakContext{}, err
@@ -120,6 +119,12 @@ func NewKeycloakContext(realm, hostname, username, password string) (KeycloakCon
 	}
 
 	return kc, nil
+}
+
+func (kc *KeycloakContext) refreshClients() error {
+	var err error
+	kc.Clients, err = kc.API.GetClients(context.Background(), kc.JWT.AccessToken, kc.realm, gocloak.GetClientsParams{})
+	return err
 }
 
 // RefreshUsers pulls user base from keycloak server
@@ -214,7 +219,7 @@ func (kc *KeycloakContext) DisableUsers(users []gocloak.User, clientName string)
 }
 
 // EnableUsers enables users and adds roles
-func (kc *KeycloakContext) EnableUsers(users []gocloak.User, userMap Users, clientName string) error {
+func (kc *KeycloakContext) EnableUsers(users []gocloak.User) error {
 	t := true
 	for _, user := range users {
 		log.Printf("kc.EnableUsers - %s: enabling user", *user.Username)
@@ -271,7 +276,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 			}
 		}
 
-		new, old := userMap[*user.Username].roles().compare(rolesFromGocloakPRoles(roles))
+		novel, old := userMap[*user.Username].roles().compare(rolesFromGocloakPRoles(roles))
 		if len(old) > 0 {
 			log.Printf("kc.UpdateCurrentUsers - %s: deleting unused roles [%s]", *user.Username, strings.Join(old, ", "))
 			err = kc.API.DeleteClientRoleFromUser(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, *user.ID, old.GetKeycloakRoles(clientName, kc))
@@ -280,9 +285,9 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 			}
 		}
 
-		if len(new) > 0 {
-			log.Printf("kc.UpdateCurrentUsers - %s: adding missing roles [%s]", *user.Username, strings.Join(new, ", "))
-			err = kc.API.AddClientRoleToUser(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, *user.ID, new.GetKeycloakRoles(clientName, kc))
+		if len(novel) > 0 {
+			log.Printf("kc.UpdateCurrentUsers - %s: adding missing roles [%s]", *user.Username, strings.Join(novel, ", "))
+			err = kc.API.AddClientRoleToUser(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, *user.ID, novel.GetKeycloakRoles(clientName, kc))
 			if err != nil {
 				log.Printf("kc.UpdateCurrentUsers - %s: failed to add roles, %s", *user.Username, err.Error())
 			}
@@ -298,4 +303,51 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 	}
 
 	return nil
+}
+
+func (kc *KeycloakContext) CreateClientWhenNecessary(name string) (string, error) {
+	if len(name) == 0 {
+		panic(errors.New("keycloakContext#CreateClientWhenNecessary: client name is empty"))
+	}
+	var err error
+
+	found := kc.getClientByName(name)
+	clientExists := found != gocloak.Client{} && found.ID != nil
+
+	if clientExists {
+		return *found.ID, nil
+	}
+	// must create client
+	toAdd := gocloak.Client{
+		ClientID: &name,
+		Name:     &name,
+	}
+	log.Printf("create client with name %s and clientId %s", toAdd.Name, toAdd.ClientID)
+	createdId, err := kc.API.CreateClient(context.Background(), kc.JWT.AccessToken, kc.realm, toAdd)
+	if err != nil {
+		return "", err
+	}
+	err = kc.refreshClients()
+	if err != nil {
+		return "", err
+	}
+	return createdId, nil
+}
+
+func (kc KeycloakContext) getClientByName(name string) gocloak.Client {
+	if len(name) == 0 {
+		panic(errors.New("keycloakContext#getClientByName: client name is empty"))
+	}
+	if kc.Clients == nil {
+		panic(errors.New("keycloakContext#getClientByName: KeycloakContex.Clients are nil"))
+	}
+	if len(kc.Clients) == 0 {
+		panic(errors.Errorf("keycloakContext#getClientByName: keycloakContext: %f is empty", kc.Clients))
+	}
+	for _, current := range kc.Clients {
+		if name == *current.Name {
+			return *current
+		}
+	}
+	return gocloak.Client{}
 }
