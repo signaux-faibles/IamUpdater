@@ -18,6 +18,7 @@ type KeycloakContext struct {
 	password    string
 	API         gocloak.GoCloak
 	JWT         *gocloak.JWT
+	Realm       *gocloak.RealmRepresentation
 	Clients     []*gocloak.Client
 	Users       []*gocloak.User
 	Roles       []*gocloak.Role
@@ -39,14 +40,23 @@ func NewKeycloakContext(hostname, realm, username, password string) (KeycloakCon
 	if err != nil {
 		return KeycloakContext{}, err
 	}
+
+	// fetch Realm
+	kc.Realm, err = kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, kc.realm)
+	if err != nil {
+		return KeycloakContext{}, err
+	}
+
 	err = kc.refreshClients()
 	if err != nil {
 		return KeycloakContext{}, err
 	}
+
 	err = kc.RefreshUsers()
 	if err != nil {
 		return KeycloakContext{}, err
 	}
+
 	kc.Roles, err = kc.API.GetRealmRoles(context.Background(), kc.JWT.AccessToken, kc.realm, gocloak.GetRoleParams{})
 	if err != nil {
 		return KeycloakContext{}, err
@@ -125,6 +135,14 @@ func (kc *KeycloakContext) refreshClients() error {
 	var err error
 	kc.Clients, err = kc.API.GetClients(context.Background(), kc.JWT.AccessToken, kc.realm, gocloak.GetClientsParams{})
 	return err
+}
+
+// RefreshRealm update Realm in keycloak server
+func (kc KeycloakContext) RefreshRealm() {
+	var err error
+	if err = kc.API.UpdateRealm(context.Background(), kc.JWT.AccessToken, *kc.Realm); err != nil {
+		log.Fatalf("Error when updating Realm : %s", err.Error())
+	}
 }
 
 // RefreshUsers pulls user base from keycloak server
@@ -322,7 +340,7 @@ func (kc *KeycloakContext) CreateClientWhenNecessary(name string) (string, error
 		ClientID: &name,
 		Name:     &name,
 	}
-	log.Printf("create client with name %s and clientId %s", toAdd.Name, toAdd.ClientID)
+	log.Printf("create client with name %s and clientId %s", *toAdd.Name, *toAdd.ClientID)
 	createdId, err := kc.API.CreateClient(context.Background(), kc.JWT.AccessToken, kc.realm, toAdd)
 	if err != nil {
 		return "", err
@@ -342,7 +360,7 @@ func (kc KeycloakContext) getClientByName(name string) gocloak.Client {
 		panic(errors.New("keycloakContext#getClientByName: KeycloakContex.Clients are nil"))
 	}
 	if len(kc.Clients) == 0 {
-		panic(errors.Errorf("keycloakContext#getClientByName: keycloakContext: %f is empty", kc.Clients))
+		panic(errors.Errorf("keycloakContext#getClientByName: keycloakContext: %s is empty", name))
 	}
 	for _, current := range kc.Clients {
 		if name == *current.Name {
