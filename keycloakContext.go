@@ -83,7 +83,12 @@ func (kc KeycloakContext) GetRoles() Roles {
 
 // CreateClientRoles creates a bunch of roles in a client from a []string
 func (kc *KeycloakContext) CreateClientRoles(clientID string, roles Roles) (int, error) {
-	defer kc.refreshClientRoles()
+	defer func() {
+		if err := kc.refreshClientRoles(); err != nil {
+			log.Fatalf("error refreshing client roles : %s", err)
+		}
+	}()
+
 	internalClientID, err := kc.GetInternalIDFromClientID(clientID)
 	if err != nil {
 		return 0, errors.Errorf("kc.CreateClientRoles, %s: no such client", clientID)
@@ -138,7 +143,7 @@ func (kc *KeycloakContext) refreshClients() error {
 }
 
 // RefreshRealm update Realm in keycloak server
-func (kc KeycloakContext) RefreshRealm() {
+func (kc *KeycloakContext) RefreshRealm() {
 	var err error
 	if err = kc.API.UpdateRealm(context.Background(), kc.JWT.AccessToken, *kc.Realm); err != nil {
 		log.Fatalf("Error when updating Realm : %s", err.Error())
@@ -329,7 +334,7 @@ func (kc *KeycloakContext) CreateClientWhenNecessary(name string) (string, error
 	}
 	var err error
 
-	found := kc.getClientByName(name)
+	found := kc.getClientByClientId(name)
 	clientExists := found != gocloak.Client{} && found.ID != nil
 
 	if clientExists {
@@ -352,20 +357,34 @@ func (kc *KeycloakContext) CreateClientWhenNecessary(name string) (string, error
 	return createdId, nil
 }
 
-func (kc KeycloakContext) getClientByName(name string) gocloak.Client {
-	if len(name) == 0 {
-		panic(errors.New("keycloakContext#getClientByName: client name is empty"))
+func (kc KeycloakContext) getClientByClientId(clientId string) gocloak.Client {
+	if len(clientId) == 0 {
+		panic(errors.New("keycloakContext#getClientByClientId: client clientId is empty"))
 	}
 	if kc.Clients == nil {
-		panic(errors.New("keycloakContext#getClientByName: KeycloakContex.Clients are nil"))
+		panic(errors.New("keycloakContext#getClientByClientId: KeycloakContex.Clients are nil"))
 	}
 	if len(kc.Clients) == 0 {
-		panic(errors.Errorf("keycloakContext#getClientByName: keycloakContext: %s is empty", name))
+		panic(errors.Errorf("keycloakContext#getClientByClientId: keycloakContext: %s is empty", clientId))
 	}
 	for _, current := range kc.Clients {
-		if name == *current.Name {
+		if clientId == *current.ClientID {
 			return *current
 		}
 	}
 	return gocloak.Client{}
+}
+
+func (kc KeycloakContext) updateClient(client gocloak.Client) {
+	if client.ID != nil {
+		if err := kc.API.UpdateClient(context.Background(), kc.JWT.AccessToken, kc.realm, client); err != nil {
+			log.Panicf("error updating client : %s", err)
+		}
+		return
+	}
+	createClient, err := kc.API.CreateClient(context.Background(), kc.JWT.AccessToken, kc.realm, client)
+	if err != nil {
+		log.Panicf("error creating client : %s", err)
+	}
+	log.Printf("new client has id : %s", createClient)
 }

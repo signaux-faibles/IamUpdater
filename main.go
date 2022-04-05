@@ -19,7 +19,7 @@ func main() {
 		panic(err)
 	}
 
-	clientId := viper.GetString("access.clients")
+	clientId := viper.GetString("access.client")
 
 	kc, err := NewKeycloakContext(
 		viper.GetString("access.address"),
@@ -31,7 +31,13 @@ func main() {
 	}
 
 	// realm configuration
-	configureRealm(kc)
+	ConfigureRealm(&kc)
+
+	// clients configuration
+	ConfigureClients(kc)
+	if err = kc.refreshClients(); err != nil {
+		log.Fatalf("error refreshing clients : %s", err)
+	}
 
 	// loading desired state for users, composites roles
 	excelFileName := viper.GetString("users.file")
@@ -42,13 +48,6 @@ func main() {
 	// gather roles, newRoles are created before users, oldRoles are deleted after users
 	log.Println("checking roles and creating new ones")
 	newRoles, oldRoles := neededRoles(compositeRoles, users).compare(kc.GetClientRoles()[clientId])
-
-	id, err := kc.CreateClientWhenNecessary(clientId)
-	if err != nil {
-		log.Printf("failed creating client with clientId %s: %s", clientId, err.Error())
-		panic(err)
-	}
-	log.Printf("client %s exists with id %s", clientId, id)
 
 	i, err := kc.CreateClientRoles(clientId, newRoles)
 	if err != nil {
@@ -105,38 +104,4 @@ func main() {
 			}
 		}
 	}
-}
-
-func configureRealm(kc KeycloakContext) {
-	log.Println("configure realm...")
-	// configure login
-	*kc.Realm.RememberMe = true
-	*kc.Realm.ResetPasswordAllowed = true
-
-	// configure email
-	smtp := map[string]string{
-		"host":            viper.GetString("email.host"),
-		"port":            viper.GetString("email.port"),
-		"from":            viper.GetString("email.from.address"),
-		"fromDisplayName": viper.GetString("email.from.label"),
-	}
-	*kc.Realm.SMTPServer = smtp
-
-	// configure display
-	displayname := viper.GetString("realm.description.displayname")
-	kc.Realm.DisplayName = &displayname
-	displaynamehtml := viper.GetString("realm.description.displaynamehtml")
-	kc.Realm.DisplayNameHTML = &displaynamehtml
-
-	// configure theme
-	theme := viper.GetString("realm.description.theme")
-	kc.Realm.LoginTheme = &theme
-	kc.Realm.EmailTheme = &theme
-
-	// configure security
-	*kc.Realm.BruteForceProtected = true
-	*kc.Realm.MinimumQuickLoginWaitSeconds = 5
-	log.Println("update realm")
-	kc.RefreshRealm()
-	log.Println("configure realm [OK]")
 }
