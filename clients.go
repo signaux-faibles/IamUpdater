@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Nerzal/gocloak/v11"
 	"log"
 )
@@ -65,6 +66,11 @@ func (cc *ClientConfigurator) Configure(kc KeycloakContext) {
 	cc.updateMapOfStrings("attributes", func(param *map[string]string) {
 		cc.toConfigure.Attributes = param
 	})
+	// listing des clés non utilisées
+	// il faut prévenir l'utilisateur
+	for k := range cc.configuration {
+		log.Printf("%s - CAUTION : param '%s' is not yet implemented !!", cc, k)
+	}
 	kc.updateClient(*cc.toConfigure)
 }
 
@@ -73,6 +79,7 @@ func (cc *ClientConfigurator) updateBoolParam(key string, setter func(*bool)) {
 	if !ok {
 		return
 	}
+	delete(cc.configuration, key)
 	t := val.(bool)
 	setter(&t)
 }
@@ -82,6 +89,7 @@ func (cc *ClientConfigurator) updateMapOfStrings(key string, setter func(*map[st
 	if !ok {
 		return
 	}
+	delete(cc.configuration, key)
 	r := map[string]string{}
 	t := val.(map[string]interface{})
 	for k, v := range t {
@@ -95,6 +103,7 @@ func (cc *ClientConfigurator) updateStringParam(key string, setter func(*string)
 	if !ok {
 		return
 	}
+	delete(cc.configuration, key)
 	r := val.(string)
 	setter(&r)
 }
@@ -104,10 +113,15 @@ func (cc *ClientConfigurator) updateStringArrayParam(key string, setter func(*[]
 	if !ok {
 		return
 	}
+	delete(cc.configuration, key)
 	vals := val.([]interface{})
 	var t []string
 	for _, uri := range vals {
 		t = append(t, uri.(string))
 	}
 	setter(&t)
+}
+
+func (cc ClientConfigurator) String() string {
+	return fmt.Sprintf("ClientConfigurator %s", *cc.toConfigure.ClientID)
 }

@@ -32,6 +32,7 @@ func main() {
 	clients := readClientConfigurations(kc)
 	for _, client := range clients {
 		client.Configure(kc)
+		log.Printf("%s has been configured", client)
 	}
 	if err = kc.refreshClients(); err != nil {
 		log.Fatalf("error refreshing clients : %s", err)
