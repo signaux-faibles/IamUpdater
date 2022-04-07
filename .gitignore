@@ -1,4 +1,4 @@
-v1
-config.toml
 .idea
+config.toml
+config.d/**
 keycloakUpdater
