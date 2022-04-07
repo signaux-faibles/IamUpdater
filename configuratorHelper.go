@@ -5,64 +5,54 @@ type Configurator interface {
 }
 
 func updateBoolParam(cc Configurator, key string, setter func(*bool)) {
-	config := cc.GetConfig()
-	val, ok := config[key]
-	if !ok {
-		return
+	if val, ok := fetchParam(cc, key); ok {
+		t := val.(bool)
+		setter(&t)
 	}
-	delete(config, key)
-	t := val.(bool)
-	setter(&t)
 }
 
 func updateIntParam(cc Configurator, key string, setter func(param *int)) {
-	config := cc.GetConfig()
-	val, ok := config[key]
-	if !ok {
-		return
+	if val, ok := fetchParam(cc, key); ok {
+		r := int(val.(int64))
+		setter(&r)
 	}
-	delete(config, key)
-	r := int(val.(int64))
-	setter(&r)
 }
 
 func updateMapOfStringsParam(cc Configurator, key string, setter func(*map[string]string)) {
-	config := cc.GetConfig()
-	val, ok := config[key]
-	if !ok {
-		return
+	if val, ok := fetchParam(cc, key); ok {
+		r := map[string]string{}
+		t := val.(map[string]interface{})
+		for k, v := range t {
+			r[k] = v.(string)
+		}
+		setter(&r)
 	}
-	delete(config, key)
-	r := map[string]string{}
-	t := val.(map[string]interface{})
-	for k, v := range t {
-		r[k] = v.(string)
-	}
-	setter(&r)
 }
 
 func updateStringParam(cc Configurator, key string, setter func(*string)) {
-	config := cc.GetConfig()
-	val, ok := config[key]
-	if !ok {
-		return
+	if val, ok := fetchParam(cc, key); ok {
+		r := val.(string)
+		setter(&r)
 	}
-	delete(config, key)
-	r := val.(string)
-	setter(&r)
 }
 
 func updateStringArrayParam(cc Configurator, key string, setter func(*[]string)) {
+	if val, ok := fetchParam(cc, key); ok {
+		vals := val.([]interface{})
+		var t []string
+		for _, uri := range vals {
+			t = append(t, uri.(string))
+		}
+		setter(&t)
+	}
+}
+
+func fetchParam(cc Configurator, key string) (interface{}, bool) {
 	config := cc.GetConfig()
 	val, ok := config[key]
 	if !ok {
-		return
+		return nil, false
 	}
 	delete(config, key)
-	vals := val.([]interface{})
-	var t []string
-	for _, uri := range vals {
-		t = append(t, uri.(string))
-	}
-	setter(&t)
+	return val, true
 }
