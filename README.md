@@ -20,6 +20,9 @@ __ATTENTION :__
 - les paramètres identiques dans plusieurs fichiers seront écrasés par ceux du dernier fichier pris en compte
 dans `config.d`. 
 - Un tableau ne peut pas être partagé entre plusieurs fichiers.
+- `Viper` gère les paramètres en `lower case` sauf dans les maps, donc les paramètres sont ceux de l'API `Keycloak` 
+  mais il faut remplacer les majuscules par un `_` avec la lettre en minuscule.
+  Ex : `ImplicitFlowEnabled` devient `implicit_flow_enabled`
 
 Le fichier [`config.toml.example`](config.toml.example) est un exemple de configuration. 
 Le compte utilisateur `keycloak` stipulé doit avoir l'intégralité des droits d'administration sur le serveur keycloak.
@@ -44,11 +47,15 @@ Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le 
 docker run -p 8080:8080 --name keycloak ghcr.io/signaux-faibles/conteneurs/keycloak:v1.0.0
 # créer l'utilisateur 
 # (chez moi, les arguments pour créer un utilisateur au lancement du container ne fonctionnent pas)
+# ce user doit être déclaré dans le fichier `excel` des users
 docker exec keycloak  /opt/jboss/keycloak/bin/add-user-keycloak.sh -u kcadmin -p kcpwd
 # redémarrer
 docker restart keycloak
 ```
-
+## Erreurs
+- `panic: 401 Unauthorized: invalid_grant: Invalid user credentials` 
+  -> il faut s'assurer que le user est bien créé dans `Keycloak`, qu'il a les droits nécessaires
+  et que ses credentials sont bien configurés dans le fichier de config (voir `## Pour tester via Docker`)
 ## Format Excel
 Le niveau peut prendre 0, A ou B:
 - 0: utilisateur administratif (compte de service, ou administrateur)

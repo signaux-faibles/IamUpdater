@@ -33,34 +33,34 @@ func (cc *ClientConfigurator) Configure(kc KeycloakContext) {
 	if cc.toConfigure == nil {
 		log.Fatal("client to configure is nil")
 	}
-	cc.updateStringParam("adminUrl", func(param *string) {
+	cc.updateStringParam("admin_url", func(param *string) {
 		cc.toConfigure.AdminURL = param
 	})
-	cc.updateBoolParam("authorizationServicesEnabled", func(b *bool) {
+	cc.updateBoolParam("authorization_services_enabled", func(b *bool) {
 		cc.toConfigure.AuthorizationServicesEnabled = b
 	})
-	cc.updateBoolParam("bearerOnly", func(b *bool) {
+	cc.updateBoolParam("bearer_only", func(b *bool) {
 		cc.toConfigure.BearerOnly = b
 	})
-	cc.updateBoolParam("directAccessGrantsEnabled", func(b *bool) {
+	cc.updateBoolParam("direct_access_grants_enabled", func(b *bool) {
 		cc.toConfigure.DirectAccessGrantsEnabled = b
 	})
-	cc.updateBoolParam("implicitFlowEnabled", func(b *bool) {
+	cc.updateBoolParam("implicit_flow_enabled", func(b *bool) {
 		cc.toConfigure.ImplicitFlowEnabled = b
 	})
-	cc.updateBoolParam("publicClient", func(b *bool) {
+	cc.updateBoolParam("public_client", func(b *bool) {
 		cc.toConfigure.PublicClient = b
 	})
-	cc.updateStringArrayParam("redirectUris", func(param *[]string) {
+	cc.updateStringArrayParam("redirect_uris", func(param *[]string) {
 		cc.toConfigure.RedirectURIs = param
 	})
-	cc.updateStringParam("rootUrl", func(param *string) {
+	cc.updateStringParam("root_url", func(param *string) {
 		cc.toConfigure.RootURL = param
 	})
-	cc.updateBoolParam("serviceAccountsEnabled", func(b *bool) {
+	cc.updateBoolParam("service_accounts_enabled", func(b *bool) {
 		cc.toConfigure.ServiceAccountsEnabled = b
 	})
-	cc.updateStringArrayParam("webOrigins", func(param *[]string) {
+	cc.updateStringArrayParam("web_origins", func(param *[]string) {
 		cc.toConfigure.WebOrigins = param
 	})
 	cc.updateMapOfStrings("attributes", func(param *map[string]string) {
@@ -72,6 +72,7 @@ func (cc *ClientConfigurator) Configure(kc KeycloakContext) {
 		log.Printf("%s - CAUTION : param '%s' is not yet implemented !!", cc, k)
 	}
 	kc.updateClient(*cc.toConfigure)
+	log.Printf("%s has been configured and updated", cc)
 }
 
 func (cc *ClientConfigurator) updateBoolParam(key string, setter func(*bool)) {

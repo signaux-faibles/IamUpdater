@@ -14,25 +14,29 @@ func main() {
 	initConfig()
 	// initialisation et connexion à keycloak
 
-	clientId := viper.GetString("access.defaultClient")
+	clientId := viper.GetString("access.default_client")
+	realmName := viper.GetString("access.realm")
 
 	kc, err := NewKeycloakContext(
 		viper.GetString("access.address"),
-		viper.GetString("access.realm"),
+		realmName,
 		viper.GetString("access.username"),
 		viper.GetString("access.password"))
 	if err != nil {
 		panic(err)
 	}
 
-	// realm config
-	ConfigureRealm(&kc)
+	// realmName config
+	//ConfigureRealm(&kc)
+	rawConfig := viper.GetStringMap("realm")
+	masterConfigurator := NewRealmConfigurator(realmName, rawConfig)
+	masterConfigurator.Configure(kc)
+	//kc.RefreshRealm()
 
 	// clients config
 	clients := readClientConfigurations(kc)
 	for _, client := range clients {
 		client.Configure(kc)
-		log.Printf("%s has been configured", client)
 	}
 	if err = kc.refreshClients(); err != nil {
 		log.Fatalf("error refreshing clients : %s", err)
@@ -139,11 +143,8 @@ func readClientConfigurations(kc KeycloakContext) []ClientConfigurator {
 	// read fom main.toml
 	rawConfig := viper.GetStringMap("client")
 	for name, rawClient := range rawConfig {
-		//clientConfig := rawClient.(map[string]interface{})
 		clientConfig := mainToConfig(rawClient)
-		//clientID := clientConfig["name"].(string)
 		log.Printf("read config for client %s.....", name)
-		//config := mainToConfig(rawClient)
 		if client := kc.getClientByClientId(name); client != nil {
 			r = append(r, ExistingClient(client, clientConfig))
 		} else {
