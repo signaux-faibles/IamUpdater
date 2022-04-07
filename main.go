@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"strings"
 
@@ -10,16 +11,10 @@ import (
 )
 
 func main() {
+	initConfig()
 	// initialisation et connexion à keycloak
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(err)
-	}
 
-	clientId := viper.GetString("access.client")
+	clientId := viper.GetString("access.defaultClient")
 
 	kc, err := NewKeycloakContext(
 		viper.GetString("access.address"),
@@ -30,11 +25,14 @@ func main() {
 		panic(err)
 	}
 
-	// realm configuration
+	// realm config
 	ConfigureRealm(&kc)
 
-	// clients configuration
-	ConfigureClients(kc)
+	// clients config
+	clients := readClientConfigurations(kc)
+	for _, client := range clients {
+		client.Configure(kc)
+	}
 	if err = kc.refreshClients(); err != nil {
 		log.Fatalf("error refreshing clients : %s", err)
 	}
@@ -104,4 +102,62 @@ func main() {
 			}
 		}
 	}
+}
+
+func initConfig() {
+	viper.AddConfigPath("config.d")
+	viper.AddConfigPath(".")
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	err := viper.MergeInConfig()
+	if err != nil {
+		log.Fatalf("error reading config toml : %s", err)
+	}
+	files, err := ioutil.ReadDir("config.d")
+	if err != nil {
+		log.Fatalf("error reading clients config folder : %s", err)
+	}
+	for _, f := range files {
+		filename := f.Name()
+		if !strings.HasSuffix(filename, ".toml") {
+			log.Printf("ignore config file %s", filename)
+			continue
+		}
+		clientID, _, _ := strings.Cut(filename, ".toml")
+		viper.SetConfigName(clientID)
+		err := viper.MergeInConfig()
+		if err != nil {
+			log.Fatalf("error reading config file %s : %s", filename, err)
+		}
+	}
+}
+
+func readClientConfigurations(kc KeycloakContext) []ClientConfigurator {
+	var r []ClientConfigurator
+
+	// read fom main.toml
+	rawConfig := viper.GetStringMap("client")
+	for name, rawClient := range rawConfig {
+		//clientConfig := rawClient.(map[string]interface{})
+		clientConfig := mainToConfig(rawClient)
+		//clientID := clientConfig["name"].(string)
+		log.Printf("read config for client %s.....", name)
+		//config := mainToConfig(rawClient)
+		if client := kc.getClientByClientId(name); client != nil {
+			r = append(r, ExistingClient(client, clientConfig))
+		} else {
+			r = append(r, NewClient(name, clientConfig))
+		}
+		log.Printf("read config for client %s [OK]", name)
+	}
+	return r
+}
+
+func mainToConfig(raw interface{}) map[string]interface{} {
+	array := raw.([]interface{})
+	if len(array) != 1 {
+		log.Fatalf("error in config -> %s", array)
+	}
+	r := array[0].(map[string]interface{})
+	return r
 }

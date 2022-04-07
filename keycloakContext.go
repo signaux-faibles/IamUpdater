@@ -335,7 +335,7 @@ func (kc *KeycloakContext) CreateClientWhenNecessary(name string) (string, error
 	var err error
 
 	found := kc.getClientByClientId(name)
-	clientExists := found != gocloak.Client{} && found.ID != nil
+	clientExists := found != nil
 
 	if clientExists {
 		return *found.ID, nil
@@ -357,7 +357,7 @@ func (kc *KeycloakContext) CreateClientWhenNecessary(name string) (string, error
 	return createdId, nil
 }
 
-func (kc KeycloakContext) getClientByClientId(clientId string) gocloak.Client {
+func (kc KeycloakContext) getClientByClientId(clientId string) *gocloak.Client {
 	if len(clientId) == 0 {
 		panic(errors.New("keycloakContext#getClientByClientId: client clientId is empty"))
 	}
@@ -369,13 +369,13 @@ func (kc KeycloakContext) getClientByClientId(clientId string) gocloak.Client {
 	}
 	for _, current := range kc.Clients {
 		if clientId == *current.ClientID {
-			return *current
+			return current
 		}
 	}
-	return gocloak.Client{}
+	return nil
 }
 
-func (kc KeycloakContext) updateClient(client gocloak.Client) {
+func (kc *KeycloakContext) updateClient(client gocloak.Client) {
 	if client.ID != nil {
 		if err := kc.API.UpdateClient(context.Background(), kc.JWT.AccessToken, kc.realm, client); err != nil {
 			log.Panicf("error updating client : %s", err)
