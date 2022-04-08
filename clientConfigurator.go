@@ -11,7 +11,7 @@ type ClientConfigurator struct {
 	configuration map[string]interface{}
 }
 
-// to implements Configurator
+// GetConfig implements Configurator
 func (cc *ClientConfigurator) GetConfig() map[string]interface{} {
 	return cc.configuration
 }
@@ -38,34 +38,34 @@ func (cc *ClientConfigurator) Configure(kc KeycloakContext) {
 	if cc.toConfigure == nil {
 		log.Fatal("client to configure is nil")
 	}
-	updateStringParam(cc, "admin_url", func(param *string) {
+	updateStringParam(cc, "adminUrl", func(param *string) {
 		cc.toConfigure.AdminURL = param
 	})
-	updateBoolParam(cc, "authorization_services_enabled", func(b *bool) {
+	updateBoolParam(cc, "authorizationServicesEnabled", func(b *bool) {
 		cc.toConfigure.AuthorizationServicesEnabled = b
 	})
-	updateBoolParam(cc, "bearer_only", func(b *bool) {
+	updateBoolParam(cc, "bearerOnly", func(b *bool) {
 		cc.toConfigure.BearerOnly = b
 	})
-	updateBoolParam(cc, "direct_access_grants_enabled", func(b *bool) {
+	updateBoolParam(cc, "directAccessGrantsEnabled", func(b *bool) {
 		cc.toConfigure.DirectAccessGrantsEnabled = b
 	})
-	updateBoolParam(cc, "implicit_flow_enabled", func(b *bool) {
+	updateBoolParam(cc, "implicitFlowEnabled", func(b *bool) {
 		cc.toConfigure.ImplicitFlowEnabled = b
 	})
-	updateBoolParam(cc, "public_client", func(b *bool) {
+	updateBoolParam(cc, "publicClient", func(b *bool) {
 		cc.toConfigure.PublicClient = b
 	})
-	updateStringArrayParam(cc, "redirect_uris", func(param *[]string) {
+	updateStringArrayParam(cc, "redirectUris", func(param *[]string) {
 		cc.toConfigure.RedirectURIs = param
 	})
-	updateStringParam(cc, "root_url", func(param *string) {
+	updateStringParam(cc, "rootUrl", func(param *string) {
 		cc.toConfigure.RootURL = param
 	})
-	updateBoolParam(cc, "service_accounts_enabled", func(b *bool) {
+	updateBoolParam(cc, "serviceAccountsEnabled", func(b *bool) {
 		cc.toConfigure.ServiceAccountsEnabled = b
 	})
-	updateStringArrayParam(cc, "web_origins", func(param *[]string) {
+	updateStringArrayParam(cc, "webOrigins", func(param *[]string) {
 		cc.toConfigure.WebOrigins = param
 	})
 	updateMapOfStringsParam(cc, "attributes", func(param *map[string]string) {

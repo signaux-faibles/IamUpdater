@@ -11,8 +11,9 @@ type RealmConfigurator struct {
 	configuration map[string]interface{}
 }
 
-func (cc *RealmConfigurator) GetConfig() map[string]interface{} {
-	return cc.configuration
+// GetConfig implements Configurator
+func (rc *RealmConfigurator) GetConfig() map[string]interface{} {
+	return rc.configuration
 }
 
 func NewRealmConfigurator(name string, config map[string]interface{}) RealmConfigurator {
@@ -30,31 +31,31 @@ func (rc *RealmConfigurator) Configure(kc KeycloakContext) {
 	if rc.toConfigure == nil {
 		log.Fatal("client to configure is nil")
 	}
-	updateBoolParam(rc, "brute_force_protected", func(param *bool) {
+	updateBoolParam(rc, "bruteForceProtected", func(param *bool) {
 		rc.toConfigure.BruteForceProtected = param
 	})
-	updateStringParam(rc, "display_name", func(param *string) {
+	updateStringParam(rc, "displayName", func(param *string) {
 		rc.toConfigure.DisplayName = param
 	})
-	updateStringParam(rc, "display_name_html", func(param *string) {
+	updateStringParam(rc, "displayNameHtml", func(param *string) {
 		rc.toConfigure.DisplayNameHTML = param
 	})
-	updateStringParam(rc, "email_theme", func(param *string) {
+	updateStringParam(rc, "emailTheme", func(param *string) {
 		rc.toConfigure.EmailTheme = param
 	})
-	updateStringParam(rc, "login_theme", func(param *string) {
+	updateStringParam(rc, "loginTheme", func(param *string) {
 		rc.toConfigure.LoginTheme = param
 	})
-	updateIntParam(rc, "minimum_quick_login_wait_seconds", func(param *int) {
+	updateIntParam(rc, "minimumQuickLoginWaitSeconds", func(param *int) {
 		rc.toConfigure.MinimumQuickLoginWaitSeconds = param
 	})
-	updateBoolParam(rc, "remember_me", func(param *bool) {
+	updateBoolParam(rc, "rememberMe", func(param *bool) {
 		rc.toConfigure.RememberMe = param
 	})
-	updateBoolParam(rc, "reset_password_allowed", func(param *bool) {
+	updateBoolParam(rc, "resetPasswordAllowed", func(param *bool) {
 		rc.toConfigure.ResetPasswordAllowed = param
 	})
-	updateMapOfStringsParam(rc, "smtp_server", func(param *map[string]string) {
+	updateMapOfStringsParam(rc, "smtpServer", func(param *map[string]string) {
 		rc.toConfigure.SMTPServer = param
 	})
 

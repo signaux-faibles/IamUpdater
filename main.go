@@ -14,7 +14,10 @@ func main() {
 	initConfig()
 	// initialisation et connexion à keycloak
 
-	clientId := viper.GetString("access.default_client")
+	clientId := viper.GetString("access.defaultClient")
+
+	log.Printf("default clientId : %s", clientId)
+
 	realmName := viper.GetString("access.realm")
 
 	kc, err := NewKeycloakContext(
@@ -27,11 +30,9 @@ func main() {
 	}
 
 	// realmName config
-	//ConfigureRealm(&kc)
 	rawConfig := viper.GetStringMap("realm")
 	masterConfigurator := NewRealmConfigurator(realmName, rawConfig)
 	masterConfigurator.Configure(kc)
-	//kc.RefreshRealm()
 
 	// clients config
 	clients := readClientConfigurations(kc)
