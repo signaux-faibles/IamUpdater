@@ -74,9 +74,8 @@ func (users Users) Compare(kc KeycloakContext) (UserSlice, []gocloak.User, []goc
 	}
 
 	for _, kcu := range kc.Users {
-		if kcu == nil {
-			log.Println("nil user from context ??")
-			continue
+		if *kcu.Username == kc.username {
+			log.Printf("avoid user from context : %s", kc.username)
 		}
 		if _, ok := users[strings.ToLower(*kcu.Username)]; !ok {
 			if *kcu.Enabled {

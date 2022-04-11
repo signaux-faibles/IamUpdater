@@ -33,7 +33,6 @@ func main() {
 	kc.SaveClients(conf.Clients)
 
 	// loading desired state for users, composites roles
-	// 	excelFileName := viper.GetString("users.file")
 	users, compositeRoles, err := loadExcel(conf.GetUsersFile())
 	if err != nil {
 		panic(err)
@@ -68,6 +67,7 @@ func main() {
 
 	// disable obsolete users
 	err = kc.DisableUsers(obsolete, clientId)
+
 	if err != nil {
 		panic(err)
 	}

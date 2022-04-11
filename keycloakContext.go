@@ -7,7 +7,6 @@ import (
 
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/pkg/errors"
-	// 	"github.com/spf13/viper"
 )
 
 // KeycloakContext carry keycloak state
@@ -212,9 +211,6 @@ func (kc *KeycloakContext) DisableUsers(users []gocloak.User, clientName string)
 		return err
 	}
 	for _, u := range users {
-		//if *u.username == viper.GetString("username") {
-		//	continue
-		//}
 		u.Enabled = &f
 		log.Printf("kc.DisableUsers - %s: disabling user", *u.Username)
 		err := kc.API.UpdateUser(context.Background(), kc.JWT.AccessToken, kc.realm, u)
@@ -346,7 +342,7 @@ func (kc *KeycloakContext) SaveClients(input []*gocloak.Client) {
 	}
 	err := kc.refreshClients()
 	if err != nil {
-		log.Panicf("Error saving clients : %s", err)
+		log.Panicf("Error refreshing clients : %s", err)
 	}
 }
 
