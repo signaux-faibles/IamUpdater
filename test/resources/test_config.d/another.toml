@@ -1,0 +1,16 @@
+[[clients]]
+clientId = "another"
+adminUrl = "https://another.beta.gouv.fr/"
+attributes = { "loginTheme" = "another" }
+authorizationServicesEnabled = true
+directAccessGrantsEnabled = true
+implicitFlowEnabled = true
+publicClient = false
+redirectUris = [
+    "https://another.beta.gouv.fr/*"
+]
+webOrigins = [
+    "https://another.beta.gouv.fr/"
+]
+rootUrl = "https://another.beta.gouv.fr/"
+serviceAccountsEnabled = true

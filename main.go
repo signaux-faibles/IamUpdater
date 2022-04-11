@@ -3,49 +3,38 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"log"
 	"strings"
-
-	"github.com/spf13/viper"
 )
 
 func main() {
-	initConfig()
+	conf := config.InitConfig("config.toml", "config.d")
 	// initialisation et connexion à keycloak
-
-	clientId := viper.GetString("access.defaultClient")
+	clientId := conf.GetDefaultClient()
 
 	log.Printf("default clientId : %s", clientId)
 
-	realmName := viper.GetString("access.realm")
-
 	kc, err := NewKeycloakContext(
-		viper.GetString("access.address"),
-		realmName,
-		viper.GetString("access.username"),
-		viper.GetString("access.password"))
+		conf.GetAddress(),
+		conf.GetRealm(),
+		conf.GetUsername(),
+		conf.GetPassword(),
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	// realmName config
-	rawConfig := viper.GetStringMap("realm")
-	masterConfigurator := NewRealmConfigurator(realmName, rawConfig)
-	masterConfigurator.Configure(kc)
+	// realmName conf
+	kc.SaveMasterRealm(*conf.Realm)
+	log.Println("master Realm has been configured and updated")
 
-	// clients config
-	clients := readClientConfigurations(kc)
-	for _, client := range clients {
-		client.Configure(kc)
-	}
-	if err = kc.refreshClients(); err != nil {
-		log.Fatalf("error refreshing clients : %s", err)
-	}
+	// clients conf
+	kc.SaveClients(conf.Clients)
 
 	// loading desired state for users, composites roles
-	excelFileName := viper.GetString("users.file")
-	users, compositeRoles, err := loadExcel(excelFileName)
+	// 	excelFileName := viper.GetString("users.file")
+	users, compositeRoles, err := loadExcel(conf.GetUsersFile())
 	if err != nil {
 		panic(err)
 	}
@@ -108,59 +97,4 @@ func main() {
 			}
 		}
 	}
-}
-
-func initConfig() {
-	viper.AddConfigPath("config.d")
-	viper.AddConfigPath(".")
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	err := viper.MergeInConfig()
-	if err != nil {
-		log.Fatalf("error reading config toml : %s", err)
-	}
-	files, err := ioutil.ReadDir("config.d")
-	if err != nil {
-		log.Fatalf("error reading clients config folder : %s", err)
-	}
-	for _, f := range files {
-		filename := f.Name()
-		if !strings.HasSuffix(filename, ".toml") {
-			log.Printf("ignore config file %s", filename)
-			continue
-		}
-		clientID, _, _ := strings.Cut(filename, ".toml")
-		viper.SetConfigName(clientID)
-		err := viper.MergeInConfig()
-		if err != nil {
-			log.Fatalf("error reading config file %s : %s", filename, err)
-		}
-	}
-}
-
-func readClientConfigurations(kc KeycloakContext) []ClientConfigurator {
-	var r []ClientConfigurator
-
-	// read fom main.toml
-	rawConfig := viper.GetStringMap("client")
-	for name, rawClient := range rawConfig {
-		clientConfig := mainToConfig(rawClient)
-		log.Printf("read config for client %s.....", name)
-		if client := kc.getClientByClientId(name); client != nil {
-			r = append(r, ExistingClient(client, clientConfig))
-		} else {
-			r = append(r, NewClient(name, clientConfig))
-		}
-		log.Printf("read config for client %s [OK]", name)
-	}
-	return r
-}
-
-func mainToConfig(raw interface{}) map[string]interface{} {
-	array := raw.([]interface{})
-	if len(array) != 1 {
-		log.Fatalf("error in config -> %s", array)
-	}
-	r := array[0].(map[string]interface{})
-	return r
 }

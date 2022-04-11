@@ -7,7 +7,7 @@ import (
 
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
+	// 	"github.com/spf13/viper"
 )
 
 // KeycloakContext carry keycloak state
@@ -52,7 +52,7 @@ func NewKeycloakContext(hostname, realm, username, password string) (KeycloakCon
 		return KeycloakContext{}, err
 	}
 
-	err = kc.RefreshUsers()
+	err = kc.refreshUsers()
 	if err != nil {
 		return KeycloakContext{}, err
 	}
@@ -123,6 +123,15 @@ func (kc KeycloakContext) GetInternalIDFromClientID(clientID string) (string, er
 	return "", errors.Errorf("kc.GetInternalIDFromClientID %s: no such clientID", clientID)
 }
 
+// GetQuietlyInternalIDFromClientID resolves internal client ID from human readable clientID
+func (kc KeycloakContext) GetQuietlyInternalIDFromClientID(clientID string) (string, bool) {
+	id, err := kc.GetInternalIDFromClientID(clientID)
+	if err != nil {
+		return "", false
+	}
+	return id, true
+}
+
 // GetClientRoles returns realm roles in map[string][]string
 func (kc KeycloakContext) GetClientRoles() map[string]Roles {
 	clientRoles := make(map[string]Roles)
@@ -142,16 +151,8 @@ func (kc *KeycloakContext) refreshClients() error {
 	return err
 }
 
-// RefreshRealm update Realm in keycloak server
-func (kc *KeycloakContext) RefreshRealm() {
-	var err error
-	if err = kc.API.UpdateRealm(context.Background(), kc.JWT.AccessToken, *kc.Realm); err != nil {
-		log.Fatalf("Error when updating Realm : %s", err.Error())
-	}
-}
-
-// RefreshUsers pulls user base from keycloak server
-func (kc *KeycloakContext) RefreshUsers() error {
+// refreshUsers pulls user base from keycloak server
+func (kc *KeycloakContext) refreshUsers() error {
 	var err error
 	max := 100000
 	kc.Users, err = kc.API.GetUsers(context.Background(), kc.JWT.AccessToken, kc.realm, gocloak.GetUsersParams{
@@ -199,7 +200,7 @@ func (kc *KeycloakContext) CreateUsers(users []gocloak.User, userMap Users, clie
 		}
 	}
 
-	err = kc.RefreshUsers()
+	err = kc.refreshUsers()
 	return err
 }
 
@@ -211,9 +212,9 @@ func (kc *KeycloakContext) DisableUsers(users []gocloak.User, clientName string)
 		return err
 	}
 	for _, u := range users {
-		if *u.Username == viper.GetString("username") {
-			continue
-		}
+		//if *u.username == viper.GetString("username") {
+		//	continue
+		//}
 		u.Enabled = &f
 		log.Printf("kc.DisableUsers - %s: disabling user", *u.Username)
 		err := kc.API.UpdateUser(context.Background(), kc.JWT.AccessToken, kc.realm, u)
@@ -237,7 +238,7 @@ func (kc *KeycloakContext) DisableUsers(users []gocloak.User, clientName string)
 			return err
 		}
 	}
-	err = kc.RefreshUsers()
+	err = kc.refreshUsers()
 	return err
 }
 
@@ -252,7 +253,7 @@ func (kc *KeycloakContext) EnableUsers(users []gocloak.User) error {
 			log.Printf("kc.EnableUsers - %s: failed to enable user: %s", *user.Username, err.Error())
 		}
 	}
-	err := kc.RefreshUsers()
+	err := kc.refreshUsers()
 	return err
 }
 
@@ -328,63 +329,41 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 	return nil
 }
 
-func (kc *KeycloakContext) CreateClientWhenNecessary(name string) (string, error) {
-	if len(name) == 0 {
-		panic(errors.New("keycloakContext#CreateClientWhenNecessary: client name is empty"))
+// SaveMasterRealm update master Realm
+func (kc KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
+	id := "master"
+	input.ID = &id
+	input.Realm = &id
+	if err := kc.API.UpdateRealm(context.Background(), kc.JWT.AccessToken, input); err != nil {
+		log.Panicf("Error when updating Realm : %s", err.Error())
 	}
-	var err error
-
-	found := kc.getClientByClientId(name)
-	clientExists := found != nil
-
-	if clientExists {
-		return *found.ID, nil
-	}
-	// must create client
-	toAdd := gocloak.Client{
-		ClientID: &name,
-		Name:     &name,
-	}
-	log.Printf("create client with name %s and clientId %s", *toAdd.Name, *toAdd.ClientID)
-	createdId, err := kc.API.CreateClient(context.Background(), kc.JWT.AccessToken, kc.realm, toAdd)
-	if err != nil {
-		return "", err
-	}
-	err = kc.refreshClients()
-	if err != nil {
-		return "", err
-	}
-	return createdId, nil
 }
 
-func (kc KeycloakContext) getClientByClientId(clientId string) *gocloak.Client {
-	if len(clientId) == 0 {
-		panic(errors.New("keycloakContext#getClientByClientId: client clientId is empty"))
+// SaveClients save clients then refresh clients list
+func (kc *KeycloakContext) SaveClients(input []*gocloak.Client) {
+	for _, client := range input {
+		kc.saveClient(*client)
 	}
-	if kc.Clients == nil {
-		panic(errors.New("keycloakContext#getClientByClientId: KeycloakContex.Clients are nil"))
+	err := kc.refreshClients()
+	if err != nil {
+		log.Panicf("Error saving clients : %s", err)
 	}
-	if len(kc.Clients) == 0 {
-		panic(errors.Errorf("keycloakContext#getClientByClientId: keycloakContext: %s is empty", clientId))
-	}
-	for _, current := range kc.Clients {
-		if clientId == *current.ClientID {
-			return current
-		}
-	}
-	return nil
 }
 
-func (kc *KeycloakContext) updateClient(client gocloak.Client) {
-	if client.ID != nil {
-		if err := kc.API.UpdateClient(context.Background(), kc.JWT.AccessToken, kc.realm, client); err != nil {
-			log.Panicf("error updating client : %s", err)
+func (kc KeycloakContext) saveClient(input gocloak.Client) {
+	id, found := kc.GetQuietlyInternalIDFromClientID(*input.ClientID)
+	// need client creation
+	if !found {
+		createClient, err := kc.API.CreateClient(context.Background(), kc.JWT.AccessToken, kc.realm, input)
+		if err != nil {
+			log.Panicf("error creating client : %s", err)
 		}
+		log.Printf("new client has id : %s", createClient)
 		return
 	}
-	createClient, err := kc.API.CreateClient(context.Background(), kc.JWT.AccessToken, kc.realm, client)
-	if err != nil {
-		log.Panicf("error creating client : %s", err)
+	// update client
+	input.ID = &id
+	if err := kc.API.UpdateClient(context.Background(), kc.JWT.AccessToken, kc.realm, input); err != nil {
+		log.Panicf("error updating client : %s", err)
 	}
-	log.Printf("new client has id : %s", createClient)
 }
