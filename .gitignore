@@ -1,4 +1,5 @@
 .idea
 config.toml
-
+.logs
+*.log
 keycloakUpdater

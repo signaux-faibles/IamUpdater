@@ -3,34 +3,22 @@ package config
 import (
 	"github.com/BurntSushi/toml"
 	"github.com/Nerzal/gocloak/v11"
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"io/fs"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 )
 
-type Config struct {
-	Access  *access                      `toml:"access"`
-	Realm   *gocloak.RealmRepresentation `toml:"realm"`
-	Clients []*gocloak.Client            `toml:"clients"`
-}
+var log = *logger.InfoLogger()
 
-type access struct {
-	Address       string
-	Username      string
-	Password      string
-	Realm         string
-	DefaultClient string
-	UsersFile     string
-}
-
-func InitConfig(configFilename, configFolder string) Config {
-	var conf Config
+func InitConfig(configFilename, configFolder string) structs.Config {
+	var conf structs.Config
 	//var err error
 	//var meta toml.MetaData
 	filenames := getAllConfigFilenames(configFilename, configFolder)
-	log.Printf("config files : %s", filenames)
+	log.Infof("config files : %s", filenames)
 	allConfig := readAllConfigFiles(filenames)
 	for _, current := range allConfig {
 		conf = merge(conf, current)
@@ -38,32 +26,8 @@ func InitConfig(configFilename, configFolder string) Config {
 	return conf
 }
 
-func (c Config) GetAddress() string {
-	return c.Access.Address
-}
-
-func (c Config) GetDefaultClient() string {
-	return c.Access.DefaultClient
-}
-
-func (c Config) GetRealm() string {
-	return c.Access.Realm
-}
-
-func (c Config) GetUsername() string {
-	return c.Access.Username
-}
-
-func (c Config) GetPassword() string {
-	return c.Access.Password
-}
-
-func (c Config) GetUsersFile() string {
-	return c.Access.UsersFile
-}
-
-func readAllConfigFiles(filenames []string) []Config {
-	var r = make([]Config, 0)
+func readAllConfigFiles(filenames []string) []structs.Config {
+	var r = make([]structs.Config, 0)
 	for _, filename := range filenames {
 		config := extractConfig(filename)
 		r = append(r, config)
@@ -74,12 +38,10 @@ func readAllConfigFiles(filenames []string) []Config {
 func getAllConfigFilenames(filename, folder string) []string {
 	var r = make([]string, 0)
 	// checking file exist
-	var file *os.File
 	var err error
-	if file, err = os.Open(filename); err != nil {
+	if _, err = os.Open(filename); err != nil {
 		log.Panicf("error reading clients config file : %s", err)
 	}
-	log.Print(file)
 	r = append(r, filename)
 	var files []fs.FileInfo
 	if files, err = ioutil.ReadDir(folder); err != nil {
@@ -88,7 +50,7 @@ func getAllConfigFilenames(filename, folder string) []string {
 	for _, f := range files {
 		filename := folder + "/" + f.Name()
 		if !strings.HasSuffix(filename, ".toml") {
-			log.Printf("ignore config file %s", filename)
+			log.Debugf("ignore config file %s", filename)
 			continue
 		}
 		r = append(r, filename)
@@ -96,8 +58,8 @@ func getAllConfigFilenames(filename, folder string) []string {
 	return r
 }
 
-func extractConfig(filename string) Config {
-	var conf Config
+func extractConfig(filename string) structs.Config {
+	var conf structs.Config
 	var err error
 	var meta toml.MetaData
 	if meta, err = toml.DecodeFile(filename, &conf); err != nil {
@@ -105,14 +67,16 @@ func extractConfig(filename string) Config {
 	}
 	if meta.Undecoded() != nil {
 		for _, key := range meta.Undecoded() {
-			log.Printf("Caution : key '%s' from config file '%s' is not used", key, filename)
+			log.Warnf("Caution : key '%s' from config file '%s' is not used", key, filename)
 		}
 	}
 	return conf
 }
 
-func merge(first Config, second Config) Config {
-	r := Config{Clients: make([]*gocloak.Client, 0)}
+func merge(first structs.Config, second structs.Config) structs.Config {
+	r := structs.Config{Clients: make([]*gocloak.Client, 0)}
+	r.Stock = firstNonNil(first.Stock, second.Stock)
+	r.Logger = firstNonNil(first.Logger, second.Logger)
 	r.Access = mergeAccess(first.Access, second.Access)
 	r.Realm = mergeRealm(first.Realm, second.Realm)
 	r.Clients = mergeClients(first.Clients, second.Clients)
@@ -137,7 +101,14 @@ func mergeRealm(first *gocloak.RealmRepresentation, second *gocloak.RealmReprese
 	return second
 }
 
-func mergeAccess(first *access, second *access) *access {
+func firstNonNil[T any](first *T, second *T) *T {
+	if first != nil {
+		return first
+	}
+	return second
+}
+
+func mergeAccess(first *structs.Access, second *structs.Access) *structs.Access {
 	if first != nil {
 		return first
 	}

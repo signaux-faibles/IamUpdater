@@ -2,99 +2,86 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
-	"log"
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"strings"
 )
 
 func main() {
+	log := logger.InfoLogger()
+
 	conf := config.InitConfig("config.toml", "config.d")
-	// initialisation et connexion à keycloak
-	clientId := conf.GetDefaultClient()
 
-	log.Printf("default clientId : %s", clientId)
+	log.ConfigureWith(*conf.Logger)
+	log.Infof("START")
 
-	kc, err := NewKeycloakContext(
-		conf.GetAddress(),
-		conf.GetRealm(),
-		conf.GetUsername(),
-		conf.GetPassword(),
-	)
+	clientId := conf.Stock.Target
+	kc, err := NewKeycloakContext(conf.Access, *log)
 	if err != nil {
 		panic(err)
 	}
 
 	// realmName conf
 	kc.SaveMasterRealm(*conf.Realm)
-	log.Println("master Realm has been configured and updated")
+	log.Infof("master Realm has been configured and updated")
 
 	// clients conf
 	kc.SaveClients(conf.Clients)
 
 	// loading desired state for users, composites roles
-	users, compositeRoles, err := loadExcel(conf.GetUsersFile())
+	users, compositeRoles, err := loadExcel(conf.Stock.Filename)
 	if err != nil {
-		panic(err)
+		log.Panicf("error loading stock file")
 	}
 	// gather roles, newRoles are created before users, oldRoles are deleted after users
-	log.Println("checking roles and creating new ones")
+	log.Info("checking roles and creating new ones")
 	newRoles, oldRoles := neededRoles(compositeRoles, users).compare(kc.GetClientRoles()[clientId])
 
 	i, err := kc.CreateClientRoles(clientId, newRoles)
 	if err != nil {
-		log.Printf("failed creating new roles: %s", err.Error())
-		panic(err)
+		log.Panicf("failed creating new roles: %s", err.Error())
 	}
-	log.Printf("%d roles created", i)
+	log.Infof("%d roles created", i)
 
 	// check and adjust composite roles
-	err = kc.ComposeRoles(
-		clientId,
-		compositeRoles,
-	)
-	if err != nil {
-		fmt.Println(err)
+	if err = kc.ComposeRoles(clientId, compositeRoles); err != nil {
+		log.Error(err)
 	}
 
 	// checking users
 	missing, obsolete, update, current := users.Compare(kc)
 
-	err = kc.CreateUsers(missing.GetNewGocloakUsers(), users, clientId)
-	if err != nil {
-		panic(err)
+	if err = kc.CreateUsers(missing.GetNewGocloakUsers(), users, clientId); err != nil {
+		log.Panic(err)
 	}
 
 	// disable obsolete users
-	err = kc.DisableUsers(obsolete, clientId)
-
-	if err != nil {
-		panic(err)
+	if err = kc.DisableUsers(obsolete, clientId); err != nil {
+		log.Panic(err)
 	}
 	// enable existing but disabled users
-	err = kc.EnableUsers(update)
-	if err != nil {
-		panic(err)
+	if err = kc.EnableUsers(update); err != nil {
+		log.Panic(err)
 	}
 
 	// make sure every on has correct roles
-	err = kc.UpdateCurrentUsers(current, users, clientId)
-	if err != nil {
+	if err = kc.UpdateCurrentUsers(current, users, clientId); err != nil {
 		panic(err)
 	}
 
 	// delete old roles
 	if len(oldRoles) > 0 {
-		log.Printf("removing unused roles: %s", strings.Join(oldRoles, ", "))
+		log.Infof("removing unused roles: %s", strings.Join(oldRoles, ", "))
 		internalID, err := kc.GetInternalIDFromClientID(clientId)
 		if err != nil {
 			panic(err)
 		}
 		for _, role := range oldRoles.GetKeycloakRoles(clientId, kc) {
-			err = kc.API.DeleteClientRole(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, *role.Name)
+			err = kc.API.DeleteClientRole(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalID, *role.Name)
 			if err != nil {
 				panic(err)
 			}
 		}
 	}
+	log.Infof("DONE")
 }

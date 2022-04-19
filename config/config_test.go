@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/Nerzal/gocloak/v11"
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
@@ -16,32 +17,32 @@ func Test_getAllConfigFilenames(t *testing.T) {
 
 func Test_merge(t *testing.T) {
 	assertions := assert.New(t)
-	wantedAccess := &access{}
+	wantedAccess := &structs.Access{}
 	wantedRealm := &gocloak.RealmRepresentation{}
 	clientA := gocloak.Client{}
 	clientB := gocloak.Client{}
 	clientC := gocloak.Client{}
 	wantedClients := []*gocloak.Client{&clientA, &clientB, &clientC}
-	configA := Config{
+	configA := structs.Config{
 		Access:  wantedAccess,
 		Realm:   nil,
 		Clients: []*gocloak.Client{&clientA},
 	}
-	configB := Config{
+	configB := structs.Config{
 		Access:  nil,
 		Realm:   wantedRealm,
 		Clients: []*gocloak.Client{&clientB, &clientC},
 	}
 	type args struct {
-		first  Config
-		second Config
+		first  structs.Config
+		second structs.Config
 	}
 	tests := []struct {
 		name string
 		args args
-		want Config
+		want structs.Config
 	}{
-		{name: "merge Configs", args: args{first: configA, second: configB}, want: Config{
+		{name: "merge Configs", args: args{first: configA, second: configB}, want: structs.Config{
 			Access:  wantedAccess,
 			Realm:   wantedRealm,
 			Clients: wantedClients,
@@ -56,16 +57,16 @@ func Test_merge(t *testing.T) {
 }
 
 func Test_mergeAccess(t *testing.T) {
-	anAccess := access{}
-	anotherAccess := access{}
+	anAccess := structs.Access{}
+	anotherAccess := structs.Access{}
 	type args struct {
-		first  *access
-		second *access
+		first  *structs.Access
+		second *structs.Access
 	}
 	tests := []struct {
 		name string
 		args args
-		want *access
+		want *structs.Access
 	}{
 		{name: "first is chosen", args: args{first: &anAccess, second: nil}, want: &anAccess},
 		{name: "second is chosen", args: args{first: nil, second: &anAccess}, want: &anAccess},
