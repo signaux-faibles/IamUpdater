@@ -5,16 +5,15 @@ import (
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/sirupsen/logrus"
 	"github.com/snowzach/rotatefilehook"
+	"os"
+
+	"github.com/snowzach/writerhook"
 )
 
-type Logger struct{ *logrus.Logger }
+var logger *logrus.Logger
 
-func InfoLogger() *Logger {
-	return NewLogger(logrus.InfoLevel)
-}
-
-func NewLogger(level logrus.Level) *Logger {
-	log := logrus.New()
+func init() {
+	logger = logrus.New()
 	// formatter
 	consoleFormatter := &logrus.TextFormatter{
 		PadLevelText:  true,
@@ -23,25 +22,22 @@ func NewLogger(level logrus.Level) *Logger {
 		//TimestampFormat: ,
 	}
 
-	log.SetLevel(level)
-	log.SetOutput(colorable.NewColorableStdout())
-	log.SetFormatter(consoleFormatter)
-
-	return &Logger{log}
+	logger.SetLevel(logrus.InfoLevel)
+	logger.SetOutput(colorable.NewColorableStdout())
+	logger.SetFormatter(consoleFormatter)
 }
 
-func (log *Logger) ConfigureWith(config structs.LoggerConfig) {
+func ConfigureWith(config structs.LoggerConfig) {
 	//log.ReportCaller = true
 	var err error
 
 	// level
 	var logLevel logrus.Level
 	if logLevel, err = logrus.ParseLevel(config.Level); err != nil {
-		log.Info("bad log level '%s' : %s", config.Level, err)
+		logger.Info("bad log level '%s' : %s", config.Level, err)
 		logLevel = logrus.InfoLevel
 	}
-	log.SetLevel(logLevel)
-
+	logger.SetLevel(logLevel)
 	// formatter
 	consoleFormatter := &logrus.TextFormatter{
 		PadLevelText:    true,
@@ -54,22 +50,71 @@ func (log *Logger) ConfigureWith(config structs.LoggerConfig) {
 		TimestampFormat: config.TimestampFormat,
 		PadLevelText:    true,
 	}
+	var hook logrus.Hook
 
-	rotateFileHook, err := rotatefilehook.NewRotateFileHook(rotatefilehook.RotateFileConfig{
-		Filename:   config.Filename,
+	if config.Rotation {
+		hook = rotateFileHook(config.Filename, logLevel, fileFormater)
+	} else {
+		hook = simpleFileHook(config.Filename, logLevel, fileFormater)
+	}
+
+	logger.SetOutput(colorable.NewColorableStdout())
+	logger.SetFormatter(consoleFormatter)
+
+	logger.AddHook(hook)
+}
+
+func Debugf(msg string, args ...interface{}) {
+	logger.Debugf(msg, args...)
+}
+
+func Infof(msg string, args ...interface{}) {
+	logger.Infof(msg, args...)
+}
+
+func Warnf(msg string, args ...interface{}) {
+	logger.Warnf(msg, args...)
+}
+
+func Errorf(msg string, args ...interface{}) {
+	logger.Errorf(msg, args...)
+}
+
+func Panicf(msg string, args ...interface{}) {
+	logger.Panicf(msg, args...)
+}
+
+func Panic(err error) {
+	logger.Panic(err)
+}
+
+func rotateFileHook(filename string, logLevel logrus.Level, fileFormater logrus.Formatter) logrus.Hook {
+
+	hook, err := rotatefilehook.NewRotateFileHook(rotatefilehook.RotateFileConfig{
+		Filename:   filename,
 		MaxSize:    50, // megabytes
-		MaxBackups: 3,  // amouts
-		MaxAge:     28, //days
+		MaxBackups: 99, // amouts
+		MaxAge:     1,  //days
 		Level:      logLevel,
 		Formatter:  fileFormater,
 	})
-
 	if err != nil {
-		log.Fatalf("Failed to initialize file rotate hook: %v", err)
+		logger.Fatalf("Failed to initialize file rotate hook: %v", err)
+	}
+	return hook
+}
+
+func simpleFileHook(filename string, logLevel logrus.Level, fileFormater logrus.Formatter) logrus.Hook {
+	var hook logrus.Hook
+	var err error
+	var file *os.File
+
+	if file, err = os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644); err != nil {
+		logger.Fatalf("Failed to initialize file hook: %v", err)
 	}
 
-	log.SetOutput(colorable.NewColorableStdout())
-	log.SetFormatter(consoleFormatter)
-
-	log.AddHook(rotateFileHook)
+	if hook, err = writerhook.NewWriterHook(file, logLevel, fileFormater); err != nil {
+		logger.Fatalf("Failed to initialize file hook: %v", err)
+	}
+	return hook
 }

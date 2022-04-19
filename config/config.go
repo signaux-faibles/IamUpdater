@@ -11,14 +11,12 @@ import (
 	"strings"
 )
 
-var log = *logger.InfoLogger()
-
 func InitConfig(configFilename, configFolder string) structs.Config {
 	var conf structs.Config
 	//var err error
 	//var meta toml.MetaData
 	filenames := getAllConfigFilenames(configFilename, configFolder)
-	log.Infof("config files : %s", filenames)
+	logger.Infof("config files : %s", filenames)
 	allConfig := readAllConfigFiles(filenames)
 	for _, current := range allConfig {
 		conf = merge(conf, current)
@@ -40,17 +38,17 @@ func getAllConfigFilenames(filename, folder string) []string {
 	// checking file exist
 	var err error
 	if _, err = os.Open(filename); err != nil {
-		log.Panicf("error reading clients config file : %s", err)
+		logger.Panicf("error reading clients config file : %s", err)
 	}
 	r = append(r, filename)
 	var files []fs.FileInfo
 	if files, err = ioutil.ReadDir(folder); err != nil {
-		log.Panicf("error reading clients config folder : %s", err)
+		logger.Panicf("error reading clients config folder : %s", err)
 	}
 	for _, f := range files {
 		filename := folder + "/" + f.Name()
 		if !strings.HasSuffix(filename, ".toml") {
-			log.Debugf("ignore config file %s", filename)
+			logger.Debugf("ignore config file %s", filename)
 			continue
 		}
 		r = append(r, filename)
@@ -63,11 +61,11 @@ func extractConfig(filename string) structs.Config {
 	var err error
 	var meta toml.MetaData
 	if meta, err = toml.DecodeFile(filename, &conf); err != nil {
-		log.Panicf("error decoding toml config file '%s': %s", filename, err)
+		logger.Panicf("error decoding toml config file '%s': %s", filename, err)
 	}
 	if meta.Undecoded() != nil {
 		for _, key := range meta.Undecoded() {
-			log.Warnf("Caution : key '%s' from config file '%s' is not used", key, filename)
+			logger.Warnf("Caution : key '%s' from config file '%s' is not used", key, filename)
 		}
 	}
 	return conf

@@ -26,4 +26,5 @@ type LoggerConfig struct {
 	Filename        string
 	Level           string
 	TimestampFormat string
+	Rotation        bool
 }
