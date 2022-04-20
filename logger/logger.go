@@ -28,7 +28,7 @@ func init() {
 }
 
 func ConfigureWith(config structs.LoggerConfig) {
-	//log.ReportCaller = true
+	//logger.ReportCaller = true
 	var err error
 
 	// level
@@ -38,29 +38,31 @@ func ConfigureWith(config structs.LoggerConfig) {
 		logLevel = logrus.InfoLevel
 	}
 	logger.SetLevel(logLevel)
-	// formatter
-	consoleFormatter := &logrus.TextFormatter{
-		PadLevelText:    true,
-		ForceColors:     true,
-		FullTimestamp:   true,
-		TimestampFormat: config.TimestampFormat,
-	}
-	fileFormater := &logrus.TextFormatter{
+
+	// console
+	logger.SetOutput(colorable.NewColorableStdout())
+	//consoleFormatter := &logrus.TextFormatter{
+	//	PadLevelText:    true,
+	//	ForceColors:     true,
+	//	FullTimestamp:   true,
+	//	TimestampFormat: config.TimestampFormat,
+	//}
+	//logger.SetFormatter(consoleFormatter)
+	f := &SimpleFormatter{}
+	logger.SetFormatter(f)
+
+	// file
+	fileFormatter := &logrus.TextFormatter{
 		DisableColors:   true,
 		TimestampFormat: config.TimestampFormat,
 		PadLevelText:    true,
 	}
 	var hook logrus.Hook
-
 	if config.Rotation {
-		hook = rotateFileHook(config.Filename, logLevel, fileFormater)
+		hook = rotateFileHook(config.Filename, logLevel, fileFormatter)
 	} else {
-		hook = simpleFileHook(config.Filename, logLevel, fileFormater)
+		hook = simpleFileHook(config.Filename, logLevel, fileFormatter)
 	}
-
-	logger.SetOutput(colorable.NewColorableStdout())
-	logger.SetFormatter(consoleFormatter)
-
 	logger.AddHook(hook)
 }
 
@@ -68,16 +70,38 @@ func Debugf(msg string, args ...interface{}) {
 	logger.Debugf(msg, args...)
 }
 
+func Debug(msg string, data map[string]interface{}) {
+	logger.WithFields(data).Debug(msg)
+}
+
 func Infof(msg string, args ...interface{}) {
 	logger.Infof(msg, args...)
+}
+
+func Info(msg string, data map[string]interface{}) {
+	logger.WithFields(data).Info(msg)
 }
 
 func Warnf(msg string, args ...interface{}) {
 	logger.Warnf(msg, args...)
 }
 
-func Errorf(msg string, args ...interface{}) {
-	logger.Errorf(msg, args...)
+func Warn(msg string, data map[string]interface{}) {
+	logger.WithFields(data).Warning(msg)
+}
+
+func WarnE(msg string, data map[string]interface{}, err error) {
+	Data(data).AddError(err)
+	Warn(msg, data)
+}
+
+func Error(msg string, data map[string]interface{}) {
+	logger.WithFields(data).Error(msg)
+}
+
+func ErrorE(msg string, data map[string]interface{}, err error) {
+	Data(data).AddError(err)
+	Error(msg, data)
 }
 
 func Panicf(msg string, args ...interface{}) {

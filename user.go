@@ -73,9 +73,6 @@ func (users Users) Compare(kc KeycloakContext) (UserSlice, []gocloak.User, []goc
 	}
 
 	for _, kcu := range kc.Users {
-		//if *kcu.Username == kc.username {
-		//	kc.log.Infof"avoid user from context : %s", kc.username)
-		//}
 		if _, ok := users[strings.ToLower(*kcu.Username)]; !ok {
 			if *kcu.Enabled {
 				obsolete = append(obsolete, *kcu)

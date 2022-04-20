@@ -4,14 +4,14 @@ import (
 	"context"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
-	"strings"
 )
 
 func main() {
+	fields := logger.DataForMethod("main")
 	conf := config.InitConfig("config.toml", "config.d")
 
 	logger.ConfigureWith(*conf.Logger)
-	logger.Infof("START")
+	logger.Info("START", fields)
 
 	clientId := conf.Stock.Target
 	kc, err := NewKeycloakContext(conf.Access)
@@ -21,7 +21,6 @@ func main() {
 
 	// realmName conf
 	kc.SaveMasterRealm(*conf.Realm)
-	logger.Infof("master Realm has been configured and updated")
 
 	// clients conf
 	kc.SaveClients(conf.Clients)
@@ -37,7 +36,7 @@ func main() {
 
 	i, err := kc.CreateClientRoles(clientId, newRoles)
 	if err != nil {
-		logger.Panicf("failed creating new roles: %s", err.Error())
+		logger.ErrorE("failed creating new roles", fields, err)
 	}
 	logger.Infof("%d roles created", i)
 
@@ -69,7 +68,8 @@ func main() {
 
 	// delete old roles
 	if len(oldRoles) > 0 {
-		logger.Infof("removing unused roles: %s", strings.Join(oldRoles, ", "))
+		fields.AddStringArray("toDelete", oldRoles)
+		logger.Info("removing unused roles", fields)
 		internalID, err := kc.GetInternalIDFromClientID(clientId)
 		if err != nil {
 			panic(err)
@@ -81,5 +81,5 @@ func main() {
 			}
 		}
 	}
-	logger.Infof("DONE")
+	logger.Info("DONE", fields)
 }

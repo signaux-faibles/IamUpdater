@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
@@ -102,37 +103,42 @@ func (roles Roles) GetKeycloakRoles(clientName string, kc KeycloakContext) []goc
 
 // ComposeRoles writes roles composition to keycloak server
 func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles map[string]Roles) error {
+	fields := logger.DataForMethod("kc.ComposeRoles")
+	fields.AddAny("clientId", clientID)
 	// Add known roles
 	for role, roles := range compositeRoles {
+		fields.AddAny("role", role)
 		gocloakRole := kc.GetRoleFromRoleName(clientID, role)
 		if gocloakRole == nil {
-			logger.Infof("composeRoles - %s: role doesn't exists", role)
+			logger.Warn("role doesn't exists", fields)
 			continue
 		}
 		gocloakRoles := roles.GetKeycloakRoles(clientID, kc)
 		if len(gocloakRoles) != len(roles) {
-			logger.Infof("composeRoles - %s: only %d on %d roles exist, some roles may not be used in user base", role, len(gocloakRoles), len(roles))
+			message := fmt.Sprintf("only %d on %d roles exist, some roles may not be used in user base", len(gocloakRoles), len(roles))
+			logger.Warn(message, fields)
 			if len(gocloakRoles) == 0 {
-				logger.Infof("composeRoles - %s: no composite roles to send, discarding", role)
+				logger.Warn("no composite roles to send, discarding", fields)
 				continue
 			}
 		}
 		err := kc.API.AddClientRoleComposite(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), *gocloakRole.ID, gocloakRoles)
 		if err != nil {
-			logger.Infof("composeRoles - %s: error from keycloak, %s", role, err.Error())
+			logger.WarnE("error from keycloak", fields, err)
 		}
 	}
 
 	// Clean composite roles
 	internalID, err := kc.GetInternalIDFromClientID(clientID)
 	if err != nil {
-		logger.Infof("composeRoles - %s: can't resolve client", clientID)
+		logger.WarnE("can't resolve client", fields, err)
 	}
 
 	for _, r := range kc.ClientRoles[clientID] {
+		fields.AddRole(*r)
 		composingRoles, err := kc.API.GetCompositeClientRolesByRoleID(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalID, *r.ID)
 		if err != nil {
-			logger.Errorf(err.Error())
+			logger.ErrorE("error when searching composite client role", fields, err)
 		}
 		wantedRoles := compositeRoles[*r.Name]
 		var deleteRoles []gocloak.Role
@@ -142,9 +148,10 @@ func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles map[strin
 			}
 		}
 		if len(deleteRoles) != 0 {
-			logger.Infof("composeRoles - %s: removing %d composing role(s)", *r.Name, len(deleteRoles))
+			fields.AddArray("toDelete", logger.ToInterfaces(deleteRoles))
+			logger.Info("removing composing role(s)", fields)
 			if err = kc.API.DeleteClientRoleComposite(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), *r.ID, deleteRoles); err != nil {
-				logger.Panicf("Error deleting client role composite ")
+				logger.ErrorE("Error deleting client role composite", fields, err)
 			}
 		}
 	}
