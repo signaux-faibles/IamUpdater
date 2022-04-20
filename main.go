@@ -2,91 +2,84 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"strings"
-
-	"github.com/spf13/viper"
+	"github.com/signaux-faibles/keycloakUpdater/v2/config"
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
 func main() {
-	// initialisation et connexion à keycloak
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath(".")
-	viper.ReadInConfig()
+	fields := logger.DataForMethod("main")
+	conf := config.InitConfig("config.toml", "config.d")
 
-	kc, err := NewKeycloakContext(
-		viper.GetString("realm"),
-		viper.GetString("host"),
-		viper.GetString("username"),
-		viper.GetString("password"),
-	)
+	logger.ConfigureWith(*conf.Logger)
+	logger.Info("START", fields)
+
+	clientId := conf.Stock.Target
+	kc, err := NewKeycloakContext(conf.Access)
 	if err != nil {
-		panic(err)
+		logger.Panic(err)
 	}
+
+	// realmName conf
+	kc.SaveMasterRealm(*conf.Realm)
+
+	// clients conf
+	kc.SaveClients(conf.Clients)
 
 	// loading desired state for users, composites roles
-	users, compositeRoles, err := loadExcel()
+	users, compositeRoles, err := loadExcel(conf.Stock.Filename)
 	if err != nil {
-		panic(err)
+		logger.Panic(err)
 	}
 	// gather roles, newRoles are created before users, oldRoles are deleted after users
-	log.Println("checking roles and creating new ones")
-	newRoles, oldRoles := neededRoles(compositeRoles, users).compare(kc.GetClientRoles()[viper.GetString("client")])
+	logger.Infof("checking roles and creating new ones")
+	newRoles, oldRoles := neededRoles(compositeRoles, users).compare(kc.GetClientRoles()[clientId])
 
-	i, err := kc.CreateClientRoles(viper.GetString("client"), newRoles)
+	i, err := kc.CreateClientRoles(clientId, newRoles)
 	if err != nil {
-		log.Printf("failed creating new roles: %s", err.Error())
-		panic(err)
+		logger.ErrorE("failed creating new roles", fields, err)
 	}
-	log.Printf("%d roles created", i)
+	logger.Infof("%d roles created", i)
 
 	// check and adjust composite roles
-	err = kc.ComposeRoles(
-		viper.GetString("client"),
-		compositeRoles,
-	)
-
-	if err != nil {
-		fmt.Println(err)
+	if err = kc.ComposeRoles(clientId, compositeRoles); err != nil {
+		logger.Panic(err)
 	}
+
 	// checking users
 	missing, obsolete, update, current := users.Compare(kc)
 
-	err = kc.CreateUsers(missing.GetNewGocloakUsers(), users, viper.GetString("client"))
-	if err != nil {
-		panic(err)
+	if err = kc.CreateUsers(missing.GetNewGocloakUsers(), users, clientId); err != nil {
+		logger.Panic(err)
 	}
 
 	// disable obsolete users
-	err = kc.DisableUsers(obsolete, viper.GetString("client"))
-	if err != nil {
-		panic(err)
+	if err = kc.DisableUsers(obsolete, clientId); err != nil {
+		logger.Panic(err)
 	}
 	// enable existing but disabled users
-	err = kc.EnableUsers(update, users, viper.GetString("client"))
-	if err != nil {
-		panic(err)
+	if err = kc.EnableUsers(update); err != nil {
+		logger.Panic(err)
 	}
+
 	// make sure every on has correct roles
-	err = kc.UpdateCurrentUsers(current, users, viper.GetString("client"))
-	if err != nil {
-		panic(err)
+	if err = kc.UpdateCurrentUsers(current, users, clientId); err != nil {
+		logger.Panic(err)
 	}
 
 	// delete old roles
 	if len(oldRoles) > 0 {
-		log.Printf("removing unused roles: %s", strings.Join(oldRoles, ", "))
-		internalID, err := kc.GetInternalIDFromClientID(viper.GetString("client"))
+		fields.AddStringArray("toDelete", oldRoles)
+		logger.Info("removing unused roles", fields)
+		internalID, err := kc.GetInternalIDFromClientID(clientId)
 		if err != nil {
 			panic(err)
 		}
-		for _, role := range oldRoles.GetKeycloakRoles(viper.GetString("client"), kc) {
-			err = kc.API.DeleteClientRole(context.Background(), kc.JWT.AccessToken, kc.realm, internalID, *role.Name)
+		for _, role := range oldRoles.GetKeycloakRoles(clientId, kc) {
+			err = kc.API.DeleteClientRole(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalID, *role.Name)
 			if err != nil {
 				panic(err)
 			}
 		}
 	}
+	logger.Info("DONE", fields)
 }

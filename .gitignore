@@ -1,2 +1,5 @@
-v1
+.idea
 config.toml
+.logs
+*.log
+keycloakUpdater

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Nerzal/gocloak/v7"
+	"github.com/Nerzal/gocloak/v11"
 )
 
 // User is the definition of an user in excel state
@@ -73,14 +73,12 @@ func (users Users) Compare(kc KeycloakContext) (UserSlice, []gocloak.User, []goc
 	}
 
 	for _, kcu := range kc.Users {
-		if kcu != nil {
-			if _, ok := users[strings.ToLower(*kcu.Username)]; !ok {
-				if *kcu.Enabled {
-					obsolete = append(obsolete, *kcu)
-				}
-			} else {
-				current = append(current, *kcu)
+		if _, ok := users[strings.ToLower(*kcu.Username)]; !ok {
+			if *kcu.Enabled {
+				obsolete = append(obsolete, *kcu)
 			}
+		} else {
+			current = append(current, *kcu)
 		}
 	}
 	return missing, obsolete, enable, current
