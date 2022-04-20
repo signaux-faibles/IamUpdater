@@ -148,7 +148,7 @@ func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles map[strin
 			}
 		}
 		if len(deleteRoles) != 0 {
-			fields.AddArray("toDelete", logger.ToInterfaces(deleteRoles))
+			fields.AddArray("toDelete", logger.ToStrings(deleteRoles))
 			logger.Info("removing composing role(s)", fields)
 			if err = kc.API.DeleteClientRoleComposite(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), *r.ID, deleteRoles); err != nil {
 				logger.ErrorE("Error deleting client role composite", fields, err)

@@ -68,7 +68,7 @@ func main() {
 
 	// delete old roles
 	if len(oldRoles) > 0 {
-		fields.AddStringArray("toDelete", oldRoles)
+		fields.AddArray("toDelete", oldRoles)
 		logger.Info("removing unused roles", fields)
 		internalID, err := kc.GetInternalIDFromClientID(clientId)
 		if err != nil {

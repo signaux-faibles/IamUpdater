@@ -23,15 +23,7 @@ func (d Data) AddError(err error) {
 	d["error"] = err
 }
 
-func (d Data) AddArray(key string, any []interface{}) {
-	var s []string
-	for _, v := range any {
-		s = append(s, fmt.Sprintf("%v", v))
-	}
-	d.AddStringArray(key, s)
-}
-
-func (d Data) AddStringArray(key string, any []string) {
+func (d Data) AddArray(key string, any []string) {
 	d[key] = strings.Join(any, ", ")
 }
 
@@ -51,10 +43,10 @@ func (d Data) AddRole(input gocloak.Role) {
 	d["role"] = *input.Name
 }
 
-func ToInterfaces[T any](array []T) []interface{} {
-	y := make([]interface{}, len(array))
+func ToStrings[T any](array []T) []string {
+	y := make([]string, len(array))
 	for i, v := range array {
-		y[i] = v
+		y[i] = fmt.Sprintf("%s", v)
 	}
 	return y
 }
