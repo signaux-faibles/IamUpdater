@@ -31,6 +31,6 @@ jobs:
       run: go test
 
     - name: Lint
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v3.1.0
       with:
-        version: v1.45.2
+        version: latest
