@@ -91,7 +91,7 @@ func TestAllIntegration(t *testing.T) {
 
 	var conf structs.Config
 	var err error
-	if conf, err = config.InitConfig("test/resources/config.toml", "test/resources/test_config.d"); err != nil {
+	if conf, err = config.InitConfig("test/resources/test_config.toml", "test/resources/test_config.d"); err != nil {
 		panic(err)
 	}
 	// configure logger

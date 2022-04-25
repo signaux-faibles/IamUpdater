@@ -10,8 +10,8 @@ import (
 
 func Test_getAllConfigFilenames(t *testing.T) {
 	assertions := assert.New(t)
-	expected := []string{"../test/resources/config.toml", "../test/resources/test_config.d/another.toml"}
-	actual := getAllConfigFilenames("../test/resources/config.toml", "../test/resources/test_config.d")
+	expected := []string{"../test/resources/test_config.toml", "../test/resources/test_config.d/another.toml"}
+	actual := getAllConfigFilenames("../test/resources/test_config.toml", "../test/resources/test_config.d")
 	assertions.ElementsMatch(expected, actual)
 }
 

@@ -1,0 +1,45 @@
+[access]
+address = "http://localhost:8080"
+username = "kcadmin"
+password = "kcpwd"
+realm = "master"
+
+[logger]
+filename = "roles-test.log"
+level = "TRACE"
+timestampFormat = "2006-01-02 15:04:05"
+#rotation = false
+
+[stock]
+target = "signauxfaibles"
+filename = "./userBase.xlsx"
+
+[realm]
+bruteForceProtected = true
+displayName = "Signaux Faibles"
+displayNameHtml = '<div class="kc-logo-text"><span>Signaux Faibles</span></div>'
+emailTheme = "signaux-faibles"
+loginTheme = "signaux-faibles"
+minimumQuickLoginWaitSeconds = 5
+rememberMe = true
+resetPasswordAllowed = true
+
+[realm.smtpServer]
+from = "Authentification Signaux Faibles"
+fromDisplayName = "noreply@localhost"
+host = "localhost"
+port = "25"
+
+[[clients]]
+clientId = "signauxfaibles"
+bearerOnly = false
+directAccessGrantsEnabled = true
+publicClient = true
+redirectUris = [
+    "https://signaux-faibles.beta.gouv.fr/*",
+    "https://localhost:8080/*"
+]
+webOrigins = [
+    "https://signaux-faibles.beta.gouv.fr/",
+    "https://localhost:8080/"
+]
