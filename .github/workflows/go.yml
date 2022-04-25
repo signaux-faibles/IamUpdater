@@ -27,8 +27,13 @@ jobs:
     - name: Build
       run: go build -v .
 
-    - name: Test
-      run: go test
+    - name: Tests unitaires
+      run: go test ./...
+
+    - name: Tests intégration
+      run: go test -tags=integration
+
+
 
 #    - name: Lint
 #      uses: golangci/golangci-lint-action@v3.1.0
