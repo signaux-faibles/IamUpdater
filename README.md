@@ -41,7 +41,8 @@ __ATTENTION :__ tout n'est pas encore développé.
 ### Configuration des utilisateurs
 Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le chemin peut être ajusté dans `config.toml`.
 
-## Pour tester via `Docker`
+## les TestsPour tester via `Docker`
+### Lancer Keycloak en `localhost` via Docker
 ```bash
 # lancer le container
 docker run -p 8080:8080 --name keycloak ghcr.io/signaux-faibles/conteneurs/keycloak:v1.0.0
@@ -52,6 +53,16 @@ docker exec keycloak  /opt/jboss/keycloak/bin/add-user-keycloak.sh -u kcadmin -p
 # redémarrer
 docker restart keycloak
 ```
+
+### Lancer les tests `go`
+- Lancer les tests dans tous les packages
+  ```bash
+  go test ./...
+  ```
+- Lancer le test d'intégration
+  ```bash
+  go test -tags=integration
+  ```
 ## Erreurs
 - `panic: 401 Unauthorized: invalid_grant: Invalid user credentials` 
   -> il faut s'assurer que le user est bien créé dans `Keycloak`, qu'il a les droits nécessaires
