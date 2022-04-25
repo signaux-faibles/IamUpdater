@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"fmt"
 	"github.com/Nerzal/gocloak/v11"
 	"strings"
 )
@@ -40,13 +39,22 @@ func (d Data) AddClient(input gocloak.Client) {
 }
 
 func (d Data) AddRole(input gocloak.Role) {
-	d["role"] = *input.Name
+	d["role"] = role2string(input)
 }
 
-func ToStrings[T any](array []T) []string {
+func (d Data) AddRoles(all []gocloak.Role) {
+	if all == nil {
+		return
+	}
+	d["roles"] = strings.Join(toStrings(all, role2string), ", ")
+}
+
+func toStrings[T any](array []T, toString func(T) string) []string {
 	y := make([]string, len(array))
 	for i, v := range array {
-		y[i] = fmt.Sprintf("+%v", v)
+		y[i] = toString(v)
 	}
 	return y
 }
+
+func role2string(role gocloak.Role) string { return *role.Name }

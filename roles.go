@@ -114,6 +114,7 @@ func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles map[strin
 			continue
 		}
 		gocloakRoles := roles.GetKeycloakRoles(clientID, kc)
+		fields.AddRoles(gocloakRoles)
 		if len(gocloakRoles) != len(roles) {
 			message := fmt.Sprintf("only %d on %d roles exist, some roles may not be used in user base", len(gocloakRoles), len(roles))
 			logger.Warn(message, fields)
@@ -122,6 +123,7 @@ func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles map[strin
 				continue
 			}
 		}
+		logger.Info("add composite roles", fields)
 		err := kc.API.AddClientRoleComposite(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), *gocloakRole.ID, gocloakRoles)
 		if err != nil {
 			logger.WarnE("error from keycloak", fields, err)
@@ -148,7 +150,7 @@ func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles map[strin
 			}
 		}
 		if len(deleteRoles) != 0 {
-			fields.AddArray("toDelete", logger.ToStrings(deleteRoles))
+			fields.AddRoles(deleteRoles)
 			logger.Info("removing composing role(s)", fields)
 			if err = kc.API.DeleteClientRoleComposite(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), *r.ID, deleteRoles); err != nil {
 				logger.ErrorE("Error deleting client role composite", fields, err)
