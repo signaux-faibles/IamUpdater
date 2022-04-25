@@ -18,7 +18,7 @@ func (s *SimpleFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	concat(b, printLevel(entry))
 	//concat(b, " ")
 	//concat(b, printCaller(entry))
-	concat(b, " ")
+	concat(b, "\t")
 	concat(b, entry.Message)
 	data := printData(entry)
 	if len(data) > 0 {

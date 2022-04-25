@@ -26,6 +26,7 @@ func NewKeycloakContext(access *structs.Access) (KeycloakContext, error) {
 
 // Init provides a connected keycloak context object
 func Init(hostname, realm, username, password string) (KeycloakContext, error) {
+	fields := logger.DataForMethod("Init")
 	kc := KeycloakContext{}
 
 	kc.API = gocloak.NewClient(hostname)
@@ -34,6 +35,7 @@ func Init(hostname, realm, username, password string) (KeycloakContext, error) {
 	if err != nil {
 		return KeycloakContext{}, err
 	}
+	logger.Info("initialize KeycloakContext [START]", fields)
 
 	// fetch Realm
 	kc.Realm, err = kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, realm)
@@ -60,7 +62,7 @@ func Init(hostname, realm, username, password string) (KeycloakContext, error) {
 	if err != nil {
 		return KeycloakContext{}, err
 	}
-
+	logger.Info("initialize KeycloakContext [DONE]", fields)
 	return kc, nil
 }
 
@@ -144,7 +146,8 @@ func (kc KeycloakContext) GetClientRoles() map[string]Roles {
 
 func (kc *KeycloakContext) refreshClients() error {
 	var err error
-	kc.Clients, err = kc.API.GetClients(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), gocloak.GetClientsParams{})
+	clients, err := kc.API.GetClients(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), gocloak.GetClientsParams{})
+	kc.Clients = clients
 	return err
 }
 
@@ -342,7 +345,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 }
 
 // SaveMasterRealm update master Realm
-func (kc KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
+func (kc *KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
 	fields := logger.DataForMethod("kc.SaveMasterRealm")
 	id := "master"
 	input.ID = &id
@@ -352,26 +355,41 @@ func (kc KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
 		logger.ErrorE("Error when updating Realm ", fields, err)
 		panic(err)
 	}
+
+	kc.refreshRealm(*input.Realm)
+}
+
+func (kc *KeycloakContext) refreshRealm(realmName string) {
+	logger.Debugf("refresh Realm")
+	realm, err2 := kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, realmName)
+	if err2 != nil {
+		logger.Errorf("Error when fetching Realm : +%v", err2)
+		panic(err2)
+	}
+	kc.Realm = realm
 }
 
 // SaveClients save clients then refresh clients list
-func (kc *KeycloakContext) SaveClients(input []*gocloak.Client) {
+func (kc *KeycloakContext) SaveClients(input []*gocloak.Client) error {
 	fields := logger.DataForMethod("kc.SaveClients")
 	for _, client := range input {
 		fields.AddClient(*client)
 		logger.Info("save client", fields)
-		kc.saveClient(*client)
+		if err := kc.saveClient(*client); err != nil {
+			return errors.WithStack(err)
+		}
 	}
 	err := kc.refreshClients()
 	if err != nil {
-		logger.ErrorE("Error refreshing clients ", fields, err)
-		panic(err)
+		return errors.WithStack(err)
 	}
+	return nil
 }
 
-func (kc KeycloakContext) saveClient(input gocloak.Client) {
+func (kc KeycloakContext) saveClient(input gocloak.Client) error {
 	fields := logger.DataForMethod("kc.saveClient")
 	fields.AddClient(input)
+	//kc.refreshClients()
 	id, found := kc.GetQuietlyInternalIDFromClientID(*input.ClientID)
 	// need client creation
 	fields.AddAny("found", found)
@@ -379,19 +397,18 @@ func (kc KeycloakContext) saveClient(input gocloak.Client) {
 	if !found {
 		createdId, err := kc.API.CreateClient(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), input)
 		if err != nil {
-			logger.ErrorE("error creating client", fields, err)
-			panic(err)
+			return errors.WithStack(err)
 		}
 		fields.AddAny("id", createdId)
 		logger.Debug("new client is created", fields)
-		return
+		return nil
 	}
 	// update client
 	input.ID = &id
 	if err := kc.API.UpdateClient(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), input); err != nil {
-		logger.ErrorE("error updating clients", fields, err)
-		panic(err)
+		return errors.Wrap(err, "error updating client")
 	}
+	return nil
 }
 
 func (kc KeycloakContext) getRealmName() string {

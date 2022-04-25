@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/BurntSushi/toml"
 	"github.com/Nerzal/gocloak/v11"
+	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"io/fs"
@@ -11,7 +12,7 @@ import (
 	"strings"
 )
 
-func InitConfig(configFilename, configFolder string) structs.Config {
+func InitConfig(configFilename, configFolder string) (structs.Config, error) {
 	var conf structs.Config
 	//var err error
 	//var meta toml.MetaData
@@ -21,7 +22,13 @@ func InitConfig(configFilename, configFolder string) structs.Config {
 	for _, current := range allConfig {
 		conf = merge(conf, current)
 	}
-	return conf
+	if conf.Access == nil {
+		return structs.Config{}, errors.Errorf("[config] keycloak Access is not configured")
+	}
+	if conf.Stock == nil {
+		return structs.Config{}, errors.Errorf("[config] Stock is not configured")
+	}
+	return conf, nil
 }
 
 func readAllConfigFiles(filenames []string) []structs.Config {

@@ -41,15 +41,15 @@ func ConfigureWith(config structs.LoggerConfig) {
 
 	// console
 	logger.SetOutput(colorable.NewColorableStdout())
-	//consoleFormatter := &logrus.TextFormatter{
-	//	PadLevelText:    true,
-	//	ForceColors:     true,
-	//	FullTimestamp:   true,
-	//	TimestampFormat: config.TimestampFormat,
-	//}
-	//logger.SetFormatter(consoleFormatter)
-	f := &SimpleFormatter{}
-	logger.SetFormatter(f)
+	consoleFormatter := &logrus.TextFormatter{
+		PadLevelText:    true,
+		ForceColors:     true,
+		FullTimestamp:   true,
+		TimestampFormat: config.TimestampFormat,
+	}
+	logger.SetFormatter(consoleFormatter)
+	//consoleFormatter := &SimpleFormatter{}
+	logger.SetFormatter(consoleFormatter)
 
 	// file
 	fileFormatter := &logrus.TextFormatter{
@@ -58,12 +58,14 @@ func ConfigureWith(config structs.LoggerConfig) {
 		PadLevelText:    true,
 	}
 	var hook logrus.Hook
-	if config.Rotation {
-		hook = rotateFileHook(config.Filename, logLevel, fileFormatter)
-	} else {
-		hook = simpleFileHook(config.Filename, logLevel, fileFormatter)
+	if config.Filename != "" {
+		if config.Rotation {
+			hook = rotateFileHook(config.Filename, logLevel, fileFormatter)
+		} else {
+			hook = simpleFileHook(config.Filename, logLevel, fileFormatter)
+		}
+		logger.AddHook(hook)
 	}
-	logger.AddHook(hook)
 }
 
 func Debugf(msg string, args ...interface{}) {
@@ -102,6 +104,10 @@ func Error(msg string, data map[string]interface{}) {
 func ErrorE(msg string, data map[string]interface{}, err error) {
 	Data(data).AddError(err)
 	Error(msg, data)
+}
+
+func Errorf(msg string, args ...interface{}) {
+	logger.Errorf(msg, args...)
 }
 
 func Panicf(msg string, args ...interface{}) {
