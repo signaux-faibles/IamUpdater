@@ -46,7 +46,7 @@ func (d Data) AddRole(input gocloak.Role) {
 func ToStrings[T any](array []T) []string {
 	y := make([]string, len(array))
 	for i, v := range array {
-		y[i] = fmt.Sprintf("%s", v)
+		y[i] = fmt.Sprintf("+%v", v)
 	}
 	return y
 }

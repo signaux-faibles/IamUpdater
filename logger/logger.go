@@ -34,7 +34,7 @@ func ConfigureWith(config structs.LoggerConfig) {
 	// level
 	var logLevel logrus.Level
 	if logLevel, err = logrus.ParseLevel(config.Level); err != nil {
-		logger.Info("bad log level '%s' : %s", config.Level, err)
+		logger.Infof("bad log level '%s' : %s", config.Level, err)
 		logLevel = logrus.InfoLevel
 	}
 	logger.SetLevel(logLevel)
