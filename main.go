@@ -18,10 +18,7 @@ func main() {
 	if err != nil {
 		logger.Panic(err)
 	}
-
-	if err = UpdateAll(&kc, clientId, *conf.Realm, conf.Clients, conf.Stock.Filename); err != nil {
-
+	if err = UpdateAll(&kc, clientId, *conf.Realm, conf.Clients, conf.Stock.Filename, conf.Access.Username); err != nil {
 		panic(err)
 	}
-
 }

@@ -22,6 +22,10 @@ func (d Data) AddError(err error) {
 	d["error"] = err
 }
 
+func (d Data) removeError() {
+	delete(d, "error")
+}
+
 func (d Data) AddArray(key string, any []string) {
 	d[key] = strings.Join(any, ", ")
 }
@@ -43,10 +47,13 @@ func (d Data) AddRole(input gocloak.Role) {
 }
 
 func (d Data) AddRoles(all []gocloak.Role) {
+	var val string
 	if all == nil {
-		return
+		val = ""
+	} else {
+		val = strings.Join(toStrings(all, role2string), ", ")
 	}
-	d["roles"] = strings.Join(toStrings(all, role2string), ", ")
+	d["roles"] = val
 }
 
 func toStrings[T any](array []T, toString func(T) string) []string {

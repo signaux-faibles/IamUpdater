@@ -13,8 +13,12 @@ timestampFormat = "2006-01-02 15:04:05"
 [stock]
 target = "signauxfaibles"
 filename = "./userBase.xlsx"
+#filename = "/Users/raphaelsquelbut/devhome/workspace/signaux-faibles/archives/userBase.xlsx"
 
 [realm]
+accessCodeLifespan = 900
+accessTokenLifespan = 900
+accessTokenLifespanForImplicitFlow = 1800
 bruteForceProtected = true
 displayName = "Signaux Faibles"
 displayNameHtml = '<div class="kc-logo-text"><span>Signaux Faibles</span></div>'

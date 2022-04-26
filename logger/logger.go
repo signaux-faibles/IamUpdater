@@ -93,8 +93,10 @@ func Warn(msg string, data map[string]interface{}) {
 }
 
 func WarnE(msg string, data map[string]interface{}, err error) {
-	Data(data).AddError(err)
+	context := Data(data)
+	context.AddError(err)
 	Warn(msg, data)
+	context.removeError()
 }
 
 func Error(msg string, data map[string]interface{}) {
@@ -102,8 +104,10 @@ func Error(msg string, data map[string]interface{}) {
 }
 
 func ErrorE(msg string, data map[string]interface{}, err error) {
-	Data(data).AddError(err)
+	context := Data(data)
+	context.AddError(err)
 	Error(msg, data)
+	context.removeError()
 }
 
 func Errorf(msg string, args ...interface{}) {

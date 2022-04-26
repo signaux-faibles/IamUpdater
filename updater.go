@@ -13,8 +13,14 @@ func UpdateAll(
 	realm gocloak.RealmRepresentation,
 	clients []*gocloak.Client,
 	filename string,
+	currentUsername string,
 ) error {
 	fields := logger.DataForMethod("UpdateAll")
+	var err error
+	var currentUser gocloak.User
+	if currentUser, err = kc.GetUser(currentUsername); err != nil {
+		return errors.Wrap(err, "current user not found : "+currentUsername)
+	}
 
 	logger.Info("START", fields)
 
@@ -22,7 +28,7 @@ func UpdateAll(
 	kc.SaveMasterRealm(realm)
 
 	// clients conf
-	if err := kc.SaveClients(clients); err != nil {
+	if err = kc.SaveClients(clients); err != nil {
 		return errors.Wrap(err, "error when saving clients")
 	}
 
@@ -33,7 +39,8 @@ func UpdateAll(
 	}
 	// gather roles, newRoles are created before users, oldRoles are deleted after users
 	logger.Info("checking roles and creating new ones", fields)
-	newRoles, oldRoles := neededRoles(compositeRoles, users).compare(kc.GetClientRoles()[clientId])
+	neededRoles := neededRoles(compositeRoles, users)
+	newRoles, oldRoles := neededRoles.compare(kc.GetClientRoles()[clientId])
 
 	i, err := kc.CreateClientRoles(clientId, newRoles)
 	if err != nil {
@@ -54,6 +61,7 @@ func UpdateAll(
 	}
 
 	// disable obsolete users
+	obsolete = removeUser(obsolete, currentUser)
 	if err = kc.DisableUsers(obsolete, clientId); err != nil {
 		logger.Panic(err)
 	}
@@ -71,6 +79,7 @@ func UpdateAll(
 	if len(oldRoles) > 0 {
 		fields.AddArray("toDelete", oldRoles)
 		logger.Info("removing unused roles", fields)
+		fields.Remove("toDelete")
 		internalID, err := kc.GetInternalIDFromClientID(clientId)
 		if err != nil {
 			panic(err)
@@ -81,7 +90,20 @@ func UpdateAll(
 				panic(err)
 			}
 		}
+		_ = kc.refreshClientRoles()
 	}
 	logger.Info("DONE", fields)
 	return nil
+}
+
+func removeUser(users []gocloak.User, toRemove gocloak.User) []gocloak.User {
+	if users == nil {
+		return nil
+	}
+	for index, current := range users {
+		if current.Username == toRemove.Username {
+			return append(users[:index], users[index+1:]...)
+		}
+	}
+	return users
 }

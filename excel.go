@@ -79,8 +79,22 @@ func loadSheet(sheet xlsx.Sheet) [][]string {
 			line = append(line, cell.Value)
 			return nil
 		})
-		r = append(r, line)
+		if isNotEmpty(line) {
+			r = append(r, line)
+		}
 		return nil
 	})
 	return r
+}
+
+func isNotEmpty(array []string) bool {
+	if array == nil {
+		return false
+	}
+	for _, current := range array {
+		if current != "" {
+			return true
+		}
+	}
+	return false
 }
