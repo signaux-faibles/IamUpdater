@@ -76,7 +76,7 @@ Le niveau peut prendre 0, A ou B:
 La zone géographique peut être le numéro d'un département, ou d'une région renseignée dans l'onglet `zones` du fichier excel.
 
 ## Licence
-Copyright © 09/25/2020, Christophe Ninucci
+Copyright © 09/25/2020, Christophe Ninucci, Rapha
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
