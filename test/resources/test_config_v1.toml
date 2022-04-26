@@ -12,8 +12,7 @@ timestampFormat = "2006-01-02 15:04:05"
 
 [stock]
 target = "signauxfaibles"
-filename = "./userBase.xlsx"
-#filename = "/Users/raphaelsquelbut/devhome/workspace/signaux-faibles/archives/userBase.xlsx"
+filename = "./test/resources/userBase_v1.xlsx"
 
 [realm]
 accessCodeLifespan = 900

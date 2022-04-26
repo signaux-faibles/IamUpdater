@@ -10,7 +10,7 @@ import (
 func UpdateAll(
 	kc *KeycloakContext,
 	clientId string,
-	realm gocloak.RealmRepresentation,
+	realm *gocloak.RealmRepresentation,
 	clients []*gocloak.Client,
 	filename string,
 	currentUsername string,
@@ -25,7 +25,9 @@ func UpdateAll(
 	logger.Info("START", fields)
 
 	// realmName conf
-	kc.SaveMasterRealm(realm)
+	if realm != nil {
+		kc.SaveMasterRealm(*realm)
+	}
 
 	// clients conf
 	if err = kc.SaveClients(clients); err != nil {

@@ -1,0 +1,15 @@
+[access]
+address = "http://localhost:8080"
+username = "kcadmin"
+password = "kcpwd"
+realm = "master"
+
+[logger]
+filename = "roles-test_v2.log"
+level = "TRACE"
+timestampFormat = "2006-01-02 15:04:05"
+#rotation = false
+
+[stock]
+target = "signauxfaibles"
+filename = "./test/resources/userBase_v2.xlsx"

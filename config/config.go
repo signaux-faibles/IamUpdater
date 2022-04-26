@@ -49,6 +49,10 @@ func getAllConfigFilenames(filename, folder string) []string {
 	}
 	r = append(r, filename)
 	var files []fs.FileInfo
+	if folder == "" {
+		logger.Warnf("no configuration folder is defined")
+		return r
+	}
 	if files, err = ioutil.ReadDir(folder); err != nil {
 		logger.Panicf("error reading clients config folder : %s", err)
 	}

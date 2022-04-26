@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 	fields := logger.DataForMethod("TestMain")
 
 	var err error
-	if conf, err = config.InitConfig("test/resources/test_config.toml", "test/resources/test_config.d"); err != nil {
+	if conf, err = config.InitConfig("test/resources/test_config_v1.toml", "test/resources/test_config.d"); err != nil {
 		panic(err)
 	}
 	// configure logger
@@ -58,7 +58,7 @@ func TestMain(m *testing.M) {
 		logger.ErrorE("Could not start keycloak", fields, err)
 	}
 	// container stops after 60 seconds
-	if err = keycloak.Expire(600); err != nil {
+	if err = keycloak.Expire(120); err != nil {
 		kill(keycloak)
 		logger.ErrorE("Could not set expiration on container keycloak", fields, err)
 	}
@@ -99,14 +99,14 @@ func TestAllIntegration(t *testing.T) {
 
 	//var conf structs.Config
 	var err error
-	if conf, err = config.InitConfig("test/resources/test_config.toml", "test/resources/test_config.d"); err != nil {
-		panic(err)
-	}
+	//if conf, err = config.InitConfig("test/resources/test_config.toml", "test/resources/test_config.d"); err != nil {
+	//	panic(err)
+	//}
 	// configure logger
-	logger.ConfigureWith(*conf.Logger)
+	//logger.ConfigureWith(*conf.Logger)
 
 	// update all
-	if err = UpdateAll(&kc, conf.Stock.Target, *conf.Realm, conf.Clients, conf.Stock.Filename, conf.Access.Username); err != nil {
+	if err = UpdateAll(&kc, conf.Stock.Target, conf.Realm, conf.Clients, conf.Stock.Filename, conf.Access.Username); err != nil {
 		panic(err)
 	}
 
@@ -153,17 +153,17 @@ func TestSecondPassage(t *testing.T) {
 	configuredClients := []string{"signauxfaibles", "another"}
 	clientSF := getConfiguredClients(configuredClients)["signauxfaibles"]
 
-	if conf, err = config.InitConfig("test/resources/test_config.toml", "test/resources/test_config.d"); err != nil {
+	if conf, err = config.InitConfig("test/resources/test_config_v2.toml", ""); err != nil {
 		panic(err)
 	}
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
 
 	// update all
-	if err = UpdateAll(&kc, conf.Stock.Target, *conf.Realm, conf.Clients, "test/resources/userBase_v2.xlsx", conf.Access.Username); err != nil {
+	err = UpdateAll(&kc, conf.Stock.Target, conf.Realm, conf.Clients, conf.Stock.Filename, conf.Access.Username)
+	if err != nil {
 		panic(err)
 	}
-	kc.refreshClientRoles()
 	asserte.Len(kc.ClientRoles["signauxfaibles"], 25)
 	err = logUser(clientSF, disabledUser)
 	asserte.NotNil(err)
