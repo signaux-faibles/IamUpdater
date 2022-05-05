@@ -3,3 +3,4 @@ config.toml
 .logs
 *.log
 keycloakUpdater
+/config.d/

@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 	fields := logger.DataForMethod("TestMain")
 
 	var err error
-	if conf, err = config.InitConfig("test/resources/test_config_v1.toml", "test/resources/test_config.d"); err != nil {
+	if conf, err = config.InitConfig("test/resources/test_config.toml"); err != nil {
 		panic(err)
 	}
 	// configure logger
@@ -94,19 +94,19 @@ func kill(resource *dockertest.Resource) {
 	}
 }
 
-func TestAllIntegration(t *testing.T) {
+func TestKeycloakInitialisation(t *testing.T) {
 	asserte := assert.New(t)
 
 	//var conf structs.Config
 	var err error
-	//if conf, err = config.InitConfig("test/resources/test_config.toml", "test/resources/test_config.d"); err != nil {
-	//	panic(err)
-	//}
-	// configure logger
-	//logger.ConfigureWith(*conf.Logger)
+	if conf, err = config.InitConfig("test/resources/initialisation/config.toml"); err != nil {
+		panic(err)
+	}
+	//configure logger
+	logger.ConfigureWith(*conf.Logger)
 
 	// update all
-	if err = UpdateAll(&kc, conf.Stock.Target, conf.Realm, conf.Clients, conf.Stock.Filename, conf.Access.Username); err != nil {
+	if err = UpdateAll(&kc, conf.Stock.ClientForRoles, conf.Realm, conf.Clients, conf.Stock.UsersAndRolesFilename, conf.Access.Username); err != nil {
 		panic(err)
 	}
 
@@ -119,80 +119,65 @@ func TestAllIntegration(t *testing.T) {
 	asserte.Equal(5, *kc.Realm.MinimumQuickLoginWaitSeconds)
 	asserte.True(*kc.Realm.RememberMe)
 
-	// assertions about clients
-	// in config, 2 clients are configured "signauxfaibles" and "another"
-	configuredClients := []string{"signauxfaibles", "another"}
-	clientsMap := getConfiguredClients(configuredClients)
-
-	clientSF := clientsMap["signauxfaibles"]
+	clientSF, found := kc.getClient("signauxfaibles")
+	asserte.True(found)
 	asserte.NotNil(clientSF)
 	asserte.True(*clientSF.PublicClient)
 	asserte.Contains(*clientSF.RedirectURIs, "https://signaux-faibles.beta.gouv.fr/*", "https://localhost:8080/*")
 	asserte.Len(kc.ClientRoles["signauxfaibles"], 144)
 
-	clientAnother := clientsMap["another"]
+	clientAnother, found := kc.getClient("another")
+	asserte.True(found)
 	asserte.NotNil(clientAnother)
 	asserte.False(*clientAnother.PublicClient)
+	asserte.Len(kc.ClientRoles["another"], 1) // il y a au minimum 1 rôle pour 1 client
 
 	user, err := kc.GetUser("raphael.squelbut@shodo.io")
 	asserte.Nil(err)
 	asserte.NotNil(user)
 
-	err = logUser(clientSF, user)
+	err = logUser(*clientSF, user)
 	asserte.Nil(err)
 }
 
-func TestSecondPassage(t *testing.T) {
+func TestKeycloakUpdate(t *testing.T) {
 	asserte := assert.New(t)
+
 	// voir le fichier
+	// le user raphael.squelbut@shodo.io a été créé au test précédent
 	disabledUser, err := kc.GetUser("raphael.squelbut@shodo.io")
 	asserte.Nil(err)
 	asserte.NotNil(disabledUser)
 
-	// in config, 2 clients are configured "signauxfaibles" and "another"
-	configuredClients := []string{"signauxfaibles", "another"}
-	clientSF := getConfiguredClients(configuredClients)["signauxfaibles"]
+	clientSF, found := kc.getClient("signauxfaibles")
+	asserte.True(found)
 
-	if conf, err = config.InitConfig("test/resources/test_config_v2.toml", ""); err != nil {
+	// le user doit encore pouvoir se logguer
+	// avant l'exécution de l'update
+	err = logUser(*clientSF, disabledUser)
+	asserte.Nil(err)
+
+	if conf, err = config.InitConfig("test/resources/update/config.toml"); err != nil {
 		panic(err)
 	}
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
 
 	// update all
-	err = UpdateAll(&kc, conf.Stock.Target, conf.Realm, conf.Clients, conf.Stock.Filename, conf.Access.Username)
+	err = UpdateAll(&kc, conf.Stock.ClientForRoles, conf.Realm, conf.Clients, conf.Stock.UsersAndRolesFilename, conf.Access.Username)
 	if err != nil {
 		panic(err)
 	}
+
+	// des rôles ont été supprimés dans le fichier de rôles
 	asserte.Len(kc.ClientRoles["signauxfaibles"], 25)
-	err = logUser(clientSF, disabledUser)
+
+	// on vérifie
+	err = logUser(*clientSF, disabledUser)
 	asserte.NotNil(err)
 	apiError, ok := err.(*gocloak.APIError)
 	asserte.True(ok)
 	asserte.Equal(400, apiError.Code)
-}
-
-func contains(array []string, item string) bool {
-	if array == nil {
-		return false
-	}
-	for _, s := range array {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}
-
-func getConfiguredClients(configuredClients []string) map[string]gocloak.Client {
-	// in config, 2 clients are configured "signauxfaibles" and "another"
-	clientsMap := make(map[string]gocloak.Client, len(kc.ClientRoles))
-	for _, client := range kc.Clients {
-		if contains(configuredClients, *client.ClientID) {
-			clientsMap[*client.ClientID] = *client
-		}
-	}
-	return clientsMap
 }
 
 func logUser(client gocloak.Client, user gocloak.User) error {

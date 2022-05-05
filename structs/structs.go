@@ -3,8 +3,9 @@ package structs
 import "github.com/Nerzal/gocloak/v11"
 
 type Stock struct {
-	Target   string
-	Filename string
+	ClientsAndRealmFolder string
+	ClientForRoles        string
+	UsersAndRolesFilename string
 }
 
 type Config struct {

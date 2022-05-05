@@ -1,17 +1,33 @@
 package config
 
 import (
+	"fmt"
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"reflect"
 	"testing"
 )
 
 func Test_getAllConfigFilenames(t *testing.T) {
 	assertions := assert.New(t)
-	expected := []string{"../test/resources/test_config_v1.toml", "../test/resources/test_config.d/another.toml"}
-	actual := getAllConfigFilenames("../test/resources/test_config_v1.toml", "../test/resources/test_config.d")
+	currentConfigFile := "test_config.toml"
+	expected := []string{
+		currentConfigFile,
+		"../test/resources/test_config.d/another.toml",
+		"../test/resources/test_config.d/realm_master.toml",
+		"../test/resources/test_config.d/client_signauxfaibles.toml",
+	}
+
+	// using the function
+	mydir, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(mydir)
+
+	actual := getAllConfigFilenames(currentConfigFile)
 	assertions.ElementsMatch(expected, actual)
 }
 

@@ -12,11 +12,11 @@ import (
 	"strings"
 )
 
-func InitConfig(configFilename, configFolder string) (structs.Config, error) {
+func InitConfig(configFilename string) (structs.Config, error) {
 	var conf structs.Config
 	//var err error
 	//var meta toml.MetaData
-	filenames := getAllConfigFilenames(configFilename, configFolder)
+	filenames := getAllConfigFilenames(configFilename)
 	logger.Infof("config files : %s", filenames)
 	allConfig := readAllConfigFiles(filenames)
 	for _, current := range allConfig {
@@ -40,7 +40,7 @@ func readAllConfigFiles(filenames []string) []structs.Config {
 	return r
 }
 
-func getAllConfigFilenames(filename, folder string) []string {
+func getAllConfigFilenames(filename string) []string {
 	var r = make([]string, 0)
 	// checking file exist
 	var err error
@@ -49,6 +49,8 @@ func getAllConfigFilenames(filename, folder string) []string {
 	}
 	r = append(r, filename)
 	var files []fs.FileInfo
+	config := extractConfig(filename)
+	folder := config.Stock.ClientsAndRealmFolder
 	if folder == "" {
 		logger.Warnf("no configuration folder is defined")
 		return r
