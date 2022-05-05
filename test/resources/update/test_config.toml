@@ -1,0 +1,15 @@
+[access]
+address = "http://localhost:8080"
+username = "kcadmin"
+password = "kcpwd"
+realm = "master"
+
+[logger]
+filename = "test_update.log"
+level = "TRACE"
+timestampFormat = "2006-01-02 15:04:05"
+#rotation = false
+
+[stock]
+clientForRoles = "signauxfaibles"
+usersAndRolesFilename = "test/resources/update/userBase.xlsx"

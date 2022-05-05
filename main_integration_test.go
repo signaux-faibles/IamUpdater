@@ -99,7 +99,7 @@ func TestKeycloakInitialisation(t *testing.T) {
 
 	//var conf structs.Config
 	var err error
-	if conf, err = config.InitConfig("test/resources/initialisation/config.toml"); err != nil {
+	if conf, err = config.InitConfig("test/resources/initialisation/test_config.toml"); err != nil {
 		panic(err)
 	}
 	//configure logger
@@ -157,7 +157,7 @@ func TestKeycloakUpdate(t *testing.T) {
 	err = logUser(*clientSF, disabledUser)
 	asserte.Nil(err)
 
-	if conf, err = config.InitConfig("test/resources/update/config.toml"); err != nil {
+	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
 		panic(err)
 	}
 	// configure logger
