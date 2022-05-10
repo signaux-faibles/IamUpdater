@@ -1,23 +1,14 @@
-# The base go-image
-FROM golang:1.18-alpine
+FROM golang:1.18-alpine as builder
+RUN apk add --no-cache git
+RUN mkdir /build
+# must create 'workspace' folder here because scratch image can't create it
+RUN mkdir /workspace
+ADD . /build/
+WORKDIR /build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o keycloakUpdater .
 
-# Install git to download dependencies
-#RUN apk update
-#RUN apk add git
-
-# Create a directory for the app
-RUN mkdir /app
-RUN mkdir /config.d
-
-# Copy all files from the current directory to the app directory
-COPY keycloakUpdater /app
-
-# Set working directory
+FROM scratch
+COPY --from=builder /build/keycloakUpdater /app/
+COPY --from=builder /workspace /workspace
 WORKDIR /app
-
-# Run command as described:
-# go build will build an executable file named server in the current directory
-#RUN go build -o keycloakUpdater .
-
-# Run the server executable
-ENTRYPOINT [ "/app/keycloakUpdater" ]
+CMD ["./keycloakUpdater"]
