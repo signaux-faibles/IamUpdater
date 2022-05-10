@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	conf, err := config.InitConfig("config.toml")
+	conf, err := config.InitConfig("/workspace/config.toml")
 	if err != nil {
 		panic(err)
 	}

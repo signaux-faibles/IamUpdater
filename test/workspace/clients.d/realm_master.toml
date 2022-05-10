@@ -1,0 +1,18 @@
+[realm]
+accessCodeLifespan = 900
+accessTokenLifespan = 900
+accessTokenLifespanForImplicitFlow = 1800
+bruteForceProtected = true
+displayName = "Signaux Faibles"
+displayNameHtml = '<div class="kc-logo-text"><span>Signaux Faibles</span></div>'
+emailTheme = "signaux-faibles"
+loginTheme = "signaux-faibles"
+minimumQuickLoginWaitSeconds = 5
+rememberMe = true
+resetPasswordAllowed = true
+
+[realm.smtpServer]
+from = "Authentification Signaux Faibles"
+fromDisplayName = "noreply@localhost"
+host = "localhost"
+port = "25"

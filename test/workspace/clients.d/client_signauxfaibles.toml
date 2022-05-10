@@ -1,0 +1,14 @@
+
+[[clients]]
+clientId = "signauxfaibles"
+bearerOnly = false
+directAccessGrantsEnabled = true
+publicClient = true
+redirectUris = [
+    "https://signaux-faibles.beta.gouv.fr/*",
+    "https://localhost:8080/*"
+]
+webOrigins = [
+    "https://signaux-faibles.beta.gouv.fr/",
+    "https://localhost:8080/"
+]

@@ -1,11 +1,11 @@
 [access]
-address = "http://localhost:8080"
+address = "http://keycloak:8080"
 username = "kcadmin"
 password = "kcpwd"
 realm = "master"
 
 [logger]
-filename = "roles-test.log"
+filename = "./roles-test.log"
 level = "TRACE"
 timestampFormat = "2006-01-02 15:04:05"
 #rotation = false
@@ -14,17 +14,3 @@ timestampFormat = "2006-01-02 15:04:05"
 clientsAndRealmFolder = "test/resources/test_config.d"
 clientForRoles = "signauxfaibles"
 usersAndRolesFilename = "test/resources/userBase_v1.xlsx"
-
-[[clients]]
-clientId = "signauxfaibles"
-bearerOnly = false
-directAccessGrantsEnabled = true
-publicClient = true
-redirectUris = [
-    "https://signaux-faibles.beta.gouv.fr/*",
-    "https://localhost:8080/*"
-]
-webOrigins = [
-    "https://signaux-faibles.beta.gouv.fr/",
-    "https://localhost:8080/"
-]
