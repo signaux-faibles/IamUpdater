@@ -26,10 +26,6 @@ jobs:
   Deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.18
 
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -42,10 +38,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build binary
-        shell: bash
-        run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
+#      - name: Build binary
+#        shell: bash
+#        run: |
+#          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
       #          cp ./datapi ./build-container
       #          cp -r ./migrations ./build-container
       - name: Extract metadata (tags, labels) for Docker
