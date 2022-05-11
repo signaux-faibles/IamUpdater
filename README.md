@@ -54,12 +54,14 @@ Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le 
 ### Tester localement
 ```bash
 # 1. Lancer le conteneur keycloak
-docker run -p 8080:8080 --name keycloak --env KEYCLOAK_USER=kcadmin --env KEYCLOAK_PASSWORD=kcpwd
+docker run -p 8080:8080 --name keycloak --env KEYCLOAK_USER=kcadmin --env KEYCLOAK_PASSWORD=kcpwd ghcr.io/signaux-faibles/conteneurs/keycloak:v1.0.0
 # 2. Créer le conteneur (avec le tag `ku`)
 docker build  --tag ku .
 # 3. Lancer le conteneur avec la configuration qui va bien
 docker run --rm --name ku --volume /path/to/keycloakUpdater/test/sample:/workspace --link keycloak:keycloak ku
 ```
+Il faut monter un volume avec les fichiers de configuration dans le répertoire `workspace` du conteneur.
+
 
 ## Erreurs
 - `panic: 401 Unauthorized: invalid_grant: Invalid user credentials` 

@@ -1,0 +1,16 @@
+[access]
+address = "http://keycloak:8080"
+username = "kcadmin"
+password = "kcpwd"
+realm = "master"
+
+[logger]
+filename = "some.log"
+level = "TRACE"
+timestampFormat = "2006-01-02 15:04:05"
+#rotation = false
+
+[stock]
+clientsAndRealmFolder = "clients.d" # repertoire contenant les fichiers de configuration des clients et du realm
+clientForRoles = "signauxfaibles"
+usersAndRolesFilename = "userBase.xlsx"
