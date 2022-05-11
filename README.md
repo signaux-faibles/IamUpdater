@@ -37,18 +37,7 @@ Un client correspond à [`ClientRepresentation`](https://www.keycloak.org/docs-a
 ### Configuration des utilisateurs
 Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le chemin peut être ajusté dans `config.toml`.
 
-## les TestsPour tester via `Docker`
-### Lancer Keycloak en `localhost` via Docker
-```bash
-# lancer le container
-docker run -p 8080:8080 --name keycloak ghcr.io/signaux-faibles/conteneurs/keycloak:v1.0.0
-# créer l'utilisateur 
-# (chez moi, les arguments pour créer un utilisateur au lancement du container ne fonctionnent pas)
-# ce user doit être déclaré dans le fichier `excel` des users
-docker exec keycloak  /opt/jboss/keycloak/bin/add-user-keycloak.sh -u kcadmin -p kcpwd
-# redémarrer
-docker restart keycloak
-```
+
 
 ### Lancer les tests `go`
 - Lancer les tests dans tous les packages
@@ -62,6 +51,15 @@ docker restart keycloak
   __ATTENTION :__ si les tests d'intégration sont lancés via un IDE, ils seront lancés parallèlement,
   ce qui causera des soucis. Pour éviter ça il faut rajouter le paramètre `-p 1` pour que ce soit lancé à la suite.
 
+### Tester localement
+```bash
+# 1. Lancer le conteneur keycloak
+docker run -p 8080:8080 --name keycloak --env KEYCLOAK_USER=kcadmin --env KEYCLOAK_PASSWORD=kcpwd
+# 2. Créer le conteneur (avec le tag `ku`)
+docker build  --tag ku .
+# 3. Lancer le conteneur avec la configuration qui va bien
+docker run --rm --name ku --volume /path/to/keycloakUpdater/test/sample:/workspace --link keycloak:keycloak ku
+```
 
 ## Erreurs
 - `panic: 401 Unauthorized: invalid_grant: Invalid user credentials` 
