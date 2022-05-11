@@ -55,9 +55,13 @@ func getAllConfigFilenames(filename string) []string {
 		logger.Warnf("no configuration folder is defined")
 		return r
 	}
+	if _, err = ioutil.ReadFile(config.Stock.UsersAndRolesFilename); err != nil {
+		logger.Panicf("error reading stock file : %s", err)
+	}
 	if files, err = ioutil.ReadDir(folder); err != nil {
 		logger.Panicf("error reading clients config folder : %s", err)
 	}
+
 	for _, f := range files {
 		filename := folder + "/" + f.Name()
 		if !strings.HasSuffix(filename, ".toml") {

@@ -1,6 +1,9 @@
 # KeycloakUpdater pour signaux-faibles
-Outil de maintenance la base utilisateurs Keycloak à jour à partir d'un fichier excel
-Cet outil est spécifique pour le projet Signaux-Faibles.
+Cet outil permet :
+- de maintenir à jour à la base des utilisateurs Keycloak ainsi que leurs droits à partir d'un fichier excel.
+- de configurer le realm et les clients Keycloak nécessaires au bon fonctionnement de la plateforme
+
+- Cet outil est spécifique pour le projet Signaux-Faibles.
 
 ## Installation
 ```
@@ -14,29 +17,22 @@ Si vous ne souhaitez pas utiliser le realm master, créez en un autre et spécif
 Créez un client avec le nom de votre choix, en prenant soin de spécifier ce nom dans `config.toml`
 
 ## Configuration
-La configuration de keycloakUpdater se fait à l'aide du fichier `config.toml` 
-et des éventuels fichiers `toml` ajoutés dans le répertoire `./config.d`.  
-__ATTENTION :__ 
-- les paramètres identiques dans plusieurs fichiers seront écrasés par ceux du dernier fichier pris en compte
-dans `config.d`. 
-- Un tableau ne peut pas être partagé entre plusieurs fichiers.
-- `Viper` gère les paramètres en `lower case` sauf dans les maps, donc les paramètres sont ceux de l'API `Keycloak` 
-  mais il faut remplacer les majuscules par un `_` avec la lettre en minuscule.
-  Ex : `ImplicitFlowEnabled` devient `implicit_flow_enabled`
+La configuration de keycloakUpdater se fait à l'aide du fichier `config.toml`.
 
-Le fichier [`config.toml.example`](config.toml.example) est un exemple de configuration. 
-Le compte utilisateur `keycloak` stipulé doit avoir l'intégralité des droits d'administration sur le serveur keycloak.
+Voir [l'exemple](/test/sample) pour plus de précisions. 
+On voit qu'il y a 3 sections à remplir
+- [access] contenant les informations d'accès à keycloak
+- [logger] contenant la configuration du fichier de log
+- [stock] contenant le chemin vers le répertoire où seront posés les fichiers de configuration des clients et du realm ainsi que le fichier stock des users
 
-### Configuration d'un client'
-La configuration des clients se fait avec la balise 
-(soit dans le fichier `config.toml` soit dans un fichier dédié dans le répertoire `config.d`)
-```toml
-[[client.nomduclient]]
-```
-Celà suffit à créer un client.
-Pour la configuration complémentaire, il faut ajouter sous cette balise les paramètres de [`ClientRepresentation`
-dans l'API Keycloak](https://www.keycloak.org/docs-api/17.0/rest-api/index.html#_clientrepresentation).
-__ATTENTION :__ tout n'est pas encore développé.
+
+
+### Configuration d'un client/ du realm
+Il faut poser un fichier `toml` dans le répertoire précisé dans la balise `clientsAndRealmFolder` de la section `stock`
+du fichier principal de configuration. 
+Ce fichier doit contenir les paramètres [documentés](https://www.keycloak.org/docs-api/18.0/rest-api/) dans l'API d'administration de Keycloak.
+Le realm correspond à [`RealmRepresentation`](https://www.keycloak.org/docs-api/18.0/rest-api/#_realmrepresentation)
+Un client correspond à [`ClientRepresentation`](https://www.keycloak.org/docs-api/18.0/rest-api/#_clientrepresentation)
 
 ### Configuration des utilisateurs
 Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le chemin peut être ajusté dans `config.toml`.
@@ -63,10 +59,16 @@ docker restart keycloak
   ```bash
   go test -tags=integration
   ```
+  __ATTENTION :__ si les tests d'intégration sont lancés via un IDE, ils seront lancés parallèlement,
+  ce qui causera des soucis. Pour éviter ça il faut rajouter le paramètre `-p 1` pour que ce soit lancé à la suite.
+
+
 ## Erreurs
 - `panic: 401 Unauthorized: invalid_grant: Invalid user credentials` 
   -> il faut s'assurer que le user est bien créé dans `Keycloak`, qu'il a les droits nécessaires
   et que ses credentials sont bien configurés dans le fichier de config (voir `## Pour tester via Docker`)
+- `PANIC  [2022-05-11 11:06:18] Could not connect to keycloak: reached retry deadline`
+  Il peut s'agir d'un problème de version avec un autre container Keycloak. Il faut stopper l'autre conteneur ou aligner les versions.
 ## Format Excel
 Le niveau peut prendre 0, A ou B:
 - 0: utilisateur administratif (compte de service, ou administrateur)
