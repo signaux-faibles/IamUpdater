@@ -6,17 +6,25 @@ import (
 
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 )
 
 func main() {
+	conf, err := config.InitConfig("/workspace/config.toml")
+	if err != nil {
+		panic(err)
+	}
+
+	logger.ConfigureWith(*conf.Logger)
+
 	if len(os.Args) == 1 {
-		keycloak()
-		wekan()
+		keycloak(conf)
+		wekan(conf)
 	} else if len(os.Args) == 2 {
 		if os.Args[1] == "keycloak" {
-			keycloak()
+			keycloak(conf)
 		} else if os.Args[1] == "wekan" {
-			wekan()
+			wekan(conf)
 		} else {
 			usage()
 		}
@@ -29,14 +37,7 @@ func usage() {
 	fmt.Println("usage: keycloakUpdater [keycloak|wekan]")
 }
 
-func keycloak() {
-	conf, err := config.InitConfig("/workspace/config.toml")
-	if err != nil {
-		panic(err)
-	}
-
-	logger.ConfigureWith(*conf.Logger)
-
+func keycloak(conf structs.Config) {
 	clientId := conf.Stock.ClientForRoles
 	kc, err := NewKeycloakContext(conf.Access)
 	if err != nil {
@@ -47,6 +48,6 @@ func keycloak() {
 	}
 }
 
-func wekan() {
+func wekan(conf structs.Config) {
 	fmt.Println("Wekan boilerplate not (yet) implemented")
 }
