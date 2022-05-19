@@ -1,18 +1,37 @@
 [realm]
-accessCodeLifespan = 900
-accessTokenLifespan = 900
-accessTokenLifespanForImplicitFlow = 1800
-bruteForceProtected = true
 displayName = "Signaux Faibles"
 displayNameHtml = '<div class="kc-logo-text"><span>Signaux Faibles</span></div>'
 emailTheme = "signaux-faibles"
 loginTheme = "signaux-faibles"
+accessCodeLifespan = 120
+accessTokenLifespan = 900
+accessTokenLifespanForImplicitFlow = 1800
+oauth2DevicePollingInterval = 600
+maxFailureWaitSeconds = 900
 minimumQuickLoginWaitSeconds = 5
+waitIncrementSeconds = 60
+quickLoginCheckMilliSeconds = 1_000
+maxDeltaTimeSeconds = 43_200
+failureFactor = 30
+actionTokenGeneratedByUserLifespan = 1_200
 rememberMe = true
 resetPasswordAllowed = true
+bruteForceProtected = true
+passwordPolicy = "forceExpiredPasswordChange(63) and length(12) and notUsername(undefined) and passwordHistory(3) and digits(1) and specialChars(1) and lowerCase(1) and upperCase(1)"
+eventsEnabled = true
+enabledEventTypes = ["SEND_RESET_PASSWORD", "REMOVE_TOTP", "REVOKE_GRANT", "UPDATE_TOTP", "LOGIN_ERROR", "CLIENT_LOGIN", "RESET_PASSWORD_ERROR", "IMPERSONATE_ERROR", "CODE_TO_TOKEN_ERROR", "CUSTOM_REQUIRED_ACTION", "RESTART_AUTHENTICATION", "IMPERSONATE", "UPDATE_PROFILE_ERROR", "LOGIN", "UPDATE_PASSWORD_ERROR", "CLIENT_INITIATED_ACCOUNT_LINKING", "TOKEN_EXCHANGE", "LOGOUT", "REGISTER", "CLIENT_REGISTER", "IDENTITY_PROVIDER_LINK_ACCOUNT", "UPDATE_PASSWORD", "CLIENT_DELETE", "FEDERATED_IDENTITY_LINK_ERROR", "IDENTITY_PROVIDER_FIRST_LOGIN", "CLIENT_DELETE_ERROR", "VERIFY_EMAIL", "CLIENT_LOGIN_ERROR", "RESTART_AUTHENTICATION_ERROR", "EXECUTE_ACTIONS", "REMOVE_FEDERATED_IDENTITY_ERROR", "TOKEN_EXCHANGE_ERROR", "PERMISSION_TOKEN", "SEND_IDENTITY_PROVIDER_LINK_ERROR", "EXECUTE_ACTION_TOKEN_ERROR", "SEND_VERIFY_EMAIL", "EXECUTE_ACTIONS_ERROR", "REMOVE_FEDERATED_IDENTITY", "IDENTITY_PROVIDER_POST_LOGIN", "IDENTITY_PROVIDER_LINK_ACCOUNT_ERROR", "UPDATE_EMAIL", "REGISTER_ERROR", "REVOKE_GRANT_ERROR", "EXECUTE_ACTION_TOKEN", "LOGOUT_ERROR", "UPDATE_EMAIL_ERROR", "CLIENT_UPDATE_ERROR", "UPDATE_PROFILE", "CLIENT_REGISTER_ERROR", "FEDERATED_IDENTITY_LINK", "SEND_IDENTITY_PROVIDER_LINK", "SEND_VERIFY_EMAIL_ERROR", "RESET_PASSWORD", "CLIENT_INITIATED_ACCOUNT_LINKING_ERROR", "REMOVE_TOTP_ERROR", "VERIFY_EMAIL_ERROR", "SEND_RESET_PASSWORD_ERROR", "CLIENT_UPDATE", "CUSTOM_REQUIRED_ACTION_ERROR", "IDENTITY_PROVIDER_POST_LOGIN_ERROR", "UPDATE_TOTP_ERROR", "CODE_TO_TOKEN", "IDENTITY_PROVIDER_FIRST_LOGIN_ERROR"]
+adminEventsEnabled = true
 
 [realm.smtpServer]
-from = "Authentification Signaux Faibles"
-fromDisplayName = "noreply@localhost"
-host = "localhost"
-port = "25"
+from = "noreply@signaux-faibles.beta.gouv.fr"
+fromDisplayName = "Authentification Signaux Faibles"
+host = "{{ smtp_host }}"
+port = "{{ smtp_port }}"
+#
+#
+[realm.attributes]
+oauth2DevicePollinInterval = "600"
+#clientOfflineSessionMaxLifespan = "0"
+#clientSessionIdleTimeout = "0"
+#clientSessionMaxLifespan = "0"9
+#clientOfflineSessionIdleTimeout = "0"

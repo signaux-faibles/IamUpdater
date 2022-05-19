@@ -65,15 +65,15 @@ Il faut monter un volume avec les fichiers de configuration dans le répertoire 
 
 ## Erreurs
 - `panic: 401 Unauthorized: invalid_grant: Invalid user credentials` 
-  -> il faut s'assurer que le user est bien créé dans `Keycloak`, qu'il a les droits nécessaires
+  -> il faut s'assurer que l'utilisateur est bien créé dans `Keycloak`, qu'il a les droits nécessaires
   et que ses credentials sont bien configurés dans le fichier de config (voir `## Pour tester via Docker`)
 - `PANIC  [2022-05-11 11:06:18] Could not connect to keycloak: reached retry deadline`
-  Il peut s'agir d'un problème de version avec un autre container Keycloak. Il faut stopper l'autre conteneur ou aligner les versions.
+  Il peut s'agir d'un problème de version avec un autre conteneur Keycloak. Il faut stopper l'autre conteneur ou aligner les versions.
 ## Format Excel
-Le niveau peut prendre 0, A ou B:
-- 0: utilisateur administratif (compte de service, ou administrateur)
-- A: utilisateur de l'application niveau A
-- B: utilisateur de l'application niveau B
+Le niveau peut prendre 0, A ou B :
+- 0 : utilisateur administratif (compte de service ou administrateur)
+- A : utilisateur de l'application niveau A
+- B : utilisateur de l'application niveau B
 
 La zone géographique peut être le numéro d'un département, ou d'une région renseignée dans l'onglet `zones` du fichier excel.
 
