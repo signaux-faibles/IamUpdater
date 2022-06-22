@@ -47,15 +47,7 @@ func (roles Roles) compare(otherRoles Roles) (Roles, Roles) {
 	return toCreate, toDelete
 }
 
-func rolesFromGocloakRoles(roles []gocloak.Role) Roles {
-	var r Roles
-	for _, i := range roles {
-		r.add(*i.Name)
-	}
-	return r
-}
-
-func rolesFromGocloakPRoles(roles []*gocloak.Role) Roles {
+func rolesFromGocloakRoles(roles []*gocloak.Role) Roles {
 	var r Roles
 	for _, i := range roles {
 		r.add(*i.Name)

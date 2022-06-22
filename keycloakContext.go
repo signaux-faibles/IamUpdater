@@ -245,7 +245,7 @@ func (kc *KeycloakContext) disableUser(u gocloak.User, internalClientID string) 
 	for _, r := range roles {
 		ro = append(ro, *r)
 	}
-	fields.AddArray("roles", rolesFromGocloakPRoles(roles))
+	fields.AddArray("roles", rolesFromGocloakRoles(roles))
 	logger.Info("remove roles from user", fields)
 	err = kc.API.DeleteClientRoleFromUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalClientID, *u.ID, ro)
 	if err != nil {
@@ -294,7 +294,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 		if err != nil {
 			return err
 		}
-		accountRoles := rolesFromGocloakPRoles(accountPRoles)
+		accountRoles := rolesFromGocloakRoles(accountPRoles)
 
 		u := userMap[*user.Username]
 		ug := u.ToGocloakUser()
@@ -316,7 +316,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 			}
 		}
 
-		novel, old := userMap[*user.Username].roles().compare(rolesFromGocloakPRoles(roles))
+		novel, old := userMap[*user.Username].roles().compare(rolesFromGocloakRoles(roles))
 		if len(old) > 0 {
 			fields.AddArray("oldRoles", old)
 			logger.Info("deleting unused roles", fields)
