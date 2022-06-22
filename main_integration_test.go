@@ -165,57 +165,61 @@ func TestClientSignauxFaiblesExists(t *testing.T) {
 
 func TestRoleUrssafExists(t *testing.T) {
 	asserte := assert.New(t)
+	rolesToTest := []string{"urssaf"}
 
-	clientRoleUrssaf := "urssaf"
-	searchClientRolePGE := gocloak.GetRoleParams{
-		Search: &clientRoleUrssaf,
+	for _, role := range rolesToTest {
+
+		searchClientRolePGE := gocloak.GetRoleParams{
+			Search: &role,
+		}
+
+		clientSG, _ := kc.getClient(signauxfaibleClientID)
+		rolesFromAPI, err := kc.API.GetClientRoles(
+			context.Background(),
+			kc.JWT.AccessToken,
+			*kc.Realm.Realm,
+			*clientSG.ID,
+			searchClientRolePGE,
+		)
+		if err != nil {
+			t.Fatalf("error getting client roles : %v", err)
+		}
+		asserte.Len(rolesFromAPI, 1)
+		expected := rolesFromAPI[0]
+
+		// on compare les résultats de l'API avec le contenu de l'objet KeycloakContext
+		clientRolesFromContext := kc.ClientRoles[signauxfaibleClientID]
+		asserte.Contains(clientRolesFromContext, expected)
+
+		actual := kc.GetRoleFromRoleName(signauxfaibleClientID, role)
+		asserte.Equal(expected, actual)
 	}
-
-	clientSG, _ := kc.getClient(signauxfaibleClientID)
-	rolesFromAPI, err := kc.API.GetClientRoles(
-		context.Background(),
-		kc.JWT.AccessToken,
-		*kc.Realm.Realm,
-		*clientSG.ID,
-		searchClientRolePGE,
-	)
-	if err != nil {
-		t.Fatalf("error getting client roles : %v", err)
-	}
-	asserte.Len(rolesFromAPI, 1)
-	expected := rolesFromAPI[0]
-
-	// on compare les résultats de l'API avec le contenu de l'objet KeycloakContext
-	clientRolesFromContext := kc.ClientRoles[signauxfaibleClientID]
-	asserte.Contains(clientRolesFromContext, expected)
-
-	actual := kc.GetRoleFromRoleName(signauxfaibleClientID, clientRoleUrssaf)
-	asserte.Equal(expected, actual)
 }
 
 func TestRoleUrssafIsAssignedToAll(t *testing.T) {
 	asserte := assert.New(t)
-
-	// given
 	clientSG, _ := kc.getClient(signauxfaibleClientID)
-	urssaf := "urssaf"
-	roleUrssaf := kc.GetRoleFromRoleName(signauxfaibleClientID, urssaf)
+	rolesToTest := []string{"urssaf"}
 
-	usersFromAPI, err := kc.API.GetUsersByClientRoleName(
-		context.Background(),
-		kc.JWT.AccessToken,
-		*kc.Realm.Realm,
-		*clientSG.ID,
-		*roleUrssaf.Name,
-		gocloak.GetUsersByRoleParams{},
-	)
-	if err != nil {
-		t.Fatalf("error getting keycloak users by role pge : %v", err)
+	for _, role := range rolesToTest {
+		roleUrssaf := kc.GetRoleFromRoleName(signauxfaibleClientID, role)
+
+		usersFromAPI, err := kc.API.GetUsersByClientRoleName(
+			context.Background(),
+			kc.JWT.AccessToken,
+			*kc.Realm.Realm,
+			*clientSG.ID,
+			*roleUrssaf.Name,
+			gocloak.GetUsersByRoleParams{},
+		)
+		if err != nil {
+			t.Fatalf("error getting keycloak users by role pge : %v", err)
+		}
+
+		// il y a actuellement 2 users dans le fichier de provisionning excel
+		// les 2 doivent avoir le rôle urssaf
+		asserte.Len(usersFromAPI, 2)
 	}
-
-	// il y a actuellement 2 users dans le fichier de provisionning excel
-	// les 2 doivent avoir le rôle urssaf
-	asserte.Len(usersFromAPI, 2)
 }
 
 func TestKeycloakUpdate(t *testing.T) {
