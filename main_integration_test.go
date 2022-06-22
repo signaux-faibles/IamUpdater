@@ -21,6 +21,8 @@ import (
 var kc KeycloakContext
 var conf structs.Config
 
+var signauxfaibleClientID = "signauxfaibles"
+
 func TestMain(m *testing.M) {
 	fields := logger.DataForMethod("TestMain")
 
@@ -96,7 +98,6 @@ func kill(resource *dockertest.Resource) {
 
 func TestKeycloakInitialisation(t *testing.T) {
 	asserte := assert.New(t)
-
 	//var conf structs.Config
 	var err error
 	if conf, err = config.InitConfig("test/resources/initialisation/test_config.toml"); err != nil {
@@ -119,12 +120,12 @@ func TestKeycloakInitialisation(t *testing.T) {
 	asserte.Equal(5, *kc.Realm.MinimumQuickLoginWaitSeconds)
 	asserte.True(*kc.Realm.RememberMe)
 
-	clientSF, found := kc.getClient("signauxfaibles")
+	clientSF, found := kc.getClient(signauxfaibleClientID)
 	asserte.True(found)
 	asserte.NotNil(clientSF)
 	asserte.True(*clientSF.PublicClient)
 	asserte.Contains(*clientSF.RedirectURIs, "https://signaux-faibles.beta.gouv.fr/*", "https://localhost:8080/*")
-	asserte.Len(kc.ClientRoles["signauxfaibles"], 144)
+	asserte.Len(kc.ClientRoles[signauxfaibleClientID], 145)
 
 	clientAnother, found := kc.getClient("another")
 	asserte.True(found)
@@ -136,8 +137,90 @@ func TestKeycloakInitialisation(t *testing.T) {
 	asserte.Nil(err)
 	asserte.NotNil(user)
 
+	user, err = kc.GetUser("john.doe@zone51.gov.fr")
+	asserte.Nil(err)
+	asserte.NotNil(user)
+
 	err = logUser(*clientSF, user)
 	asserte.Nil(err)
+}
+
+// TestClientSignauxFaiblesExists teste l'existence du Client "signauxfaibles" par l'API
+func TestClientSignauxFaiblesExists(t *testing.T) {
+	asserte := assert.New(t)
+
+	searchClientRequest := gocloak.GetClientsParams{
+		ClientID: &signauxfaibleClientID,
+	}
+	clientSG, err := kc.API.GetClients(context.Background(), kc.JWT.AccessToken, *kc.Realm.Realm, searchClientRequest)
+	if err != nil {
+		t.Fatalf("error getting keycloak users by role pge : %v", err)
+	}
+	//clientSG := searchClientByName(t, "signauxfaibles")
+	actual, found := kc.getClient(signauxfaibleClientID)
+	asserte.True(found)
+	asserte.Len(clientSG, 1)
+	asserte.Contains(clientSG, actual)
+}
+
+func TestRolesExistences(t *testing.T) {
+
+	asserte := assert.New(t)
+	rolesToTest := []string{"urssaf", "dgefp", "bdf", "score", "detection", "pge"}
+
+	for _, role := range rolesToTest {
+
+		searchClientRolePGE := gocloak.GetRoleParams{
+			Search: &role,
+		}
+
+		clientSG, _ := kc.getClient(signauxfaibleClientID)
+		rolesFromAPI, err := kc.API.GetClientRoles(
+			context.Background(),
+			kc.JWT.AccessToken,
+			*kc.Realm.Realm,
+			*clientSG.ID,
+			searchClientRolePGE,
+		)
+		if err != nil {
+			t.Fatalf("error getting client roles : %v", err)
+		}
+		asserte.Lenf(rolesFromAPI, 1, "erreur pour le rôle %v", role)
+		expected := rolesFromAPI[0]
+
+		// on compare les résultats de l'API avec le contenu de l'objet KeycloakContext
+		clientRolesFromContext := kc.ClientRoles[signauxfaibleClientID]
+		asserte.Contains(clientRolesFromContext, expected)
+
+		actual := kc.GetRoleFromRoleName(signauxfaibleClientID, role)
+		asserte.Equalf(expected, actual, "erreur pour le rôle %v", role)
+	}
+}
+
+func TestRolesAssignedToAll(t *testing.T) {
+	asserte := assert.New(t)
+	clientSG, _ := kc.getClient(signauxfaibleClientID)
+	rolesToTest := []string{"score", "detection", "pge"}
+
+	for _, role := range rolesToTest {
+		roleUrssaf := kc.GetRoleFromRoleName(signauxfaibleClientID, role)
+
+		usersFromAPI, err := kc.API.GetUsersByClientRoleName(
+			context.Background(),
+			kc.JWT.AccessToken,
+			*kc.Realm.Realm,
+			*clientSG.ID,
+			*roleUrssaf.Name,
+			gocloak.GetUsersByRoleParams{},
+		)
+		if err != nil {
+			t.Fatalf("erreur lors de la récupération des users payant le rôle %v : %v", role, err)
+		}
+
+		// il y a actuellement 2 users dans le fichier de provisionning excel
+		// les 2 doivent avoir le rôle urssaf
+		asserte.Lenf(usersFromAPI, 2, "erreur pour le rôle %v", role)
+	}
 }
 
 func TestKeycloakUpdate(t *testing.T) {
@@ -149,7 +232,7 @@ func TestKeycloakUpdate(t *testing.T) {
 	asserte.Nil(err)
 	asserte.NotNil(disabledUser)
 
-	clientSF, found := kc.getClient("signauxfaibles")
+	clientSF, found := kc.getClient(signauxfaibleClientID)
 	asserte.True(found)
 
 	// le user doit encore pouvoir se logguer
@@ -170,7 +253,7 @@ func TestKeycloakUpdate(t *testing.T) {
 	}
 
 	// des rôles ont été supprimés dans le fichier de rôles
-	asserte.Len(kc.ClientRoles["signauxfaibles"], 25)
+	asserte.Len(kc.ClientRoles[signauxfaibleClientID], 26)
 
 	// on vérifie
 	err = logUser(*clientSF, disabledUser)

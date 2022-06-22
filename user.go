@@ -34,7 +34,7 @@ func (user User) roles() Roles {
 		roles = append(roles, "dgefp")
 	}
 	if user.niveau != "0" {
-		roles = append(roles, "score", "detection")
+		roles = append(roles, "score", "detection", "pge")
 		if user.accesGeographique != "" {
 			roles = append(roles, user.accesGeographique)
 		}
