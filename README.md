@@ -11,11 +11,6 @@ git clone https://github.com/signaux-faibles/keycloakUpdater
 go build
 ```
 
-## Préparation de Keycloak
-Si vous ne souhaitez pas utiliser le realm master, créez en un autre et spécifiez son nom dans `config.toml`
-
-Créez un client avec le nom de votre choix, en prenant soin de spécifier ce nom dans `config.toml`
-
 ## Configuration
 La configuration de keycloakUpdater se fait à l'aide du fichier `config.toml`.
 
@@ -38,7 +33,6 @@ Un client correspond à [`ClientRepresentation`](https://www.keycloak.org/docs-a
 Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le chemin peut être ajusté dans `config.toml`.
 
 
-
 ### Lancer les tests `go`
 - Lancer les tests dans tous les packages
   ```bash
@@ -48,8 +42,12 @@ Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le 
   ```bash
   go test -tags=integration
   ```
-  __ATTENTION :__ si les tests d'intégration sont lancés via un IDE, ils seront lancés parallèlement,
+  __ATTENTION :__ 
+- si les tests d'intégration sont lancés via un IDE, ils seront lancés parallèlement,
   ce qui causera des soucis. Pour éviter ça il faut rajouter le paramètre `-p 1` pour que ce soit lancé à la suite.
+- 2 containers keycloak ne peuvent pas tourner en même temps à cause d'`Infinispan`, voir l'erreur ci dessous
+  > Could not connect to keycloak: reached retry deadline
+   
 
 ### Tester localement
 ```bash
