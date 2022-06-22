@@ -19,7 +19,7 @@ docker run --detach --publish 8080:8080 --name keycloak --env KEYCLOAK_USER=kcad
 echo "waiting 15s while keycloak is starting..."
 sleep 15
 
-echo "starting keycloakUpdater..."
-cd test/localhost/
-./keycloakUpdater
-cd -
+#echo "starting keycloakUpdater..."
+#cd test/localhost/
+#./keycloakUpdater
+#cd -
