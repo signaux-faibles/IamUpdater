@@ -1,4 +1,4 @@
-name: CI v2
+name: CI
 
 on:
   push:
@@ -28,7 +28,6 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.18.x
-        id: go
 
       - name: Build package
         run: go build -v .
@@ -71,7 +70,6 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
-          context: ./build-container
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
