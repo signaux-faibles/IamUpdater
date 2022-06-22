@@ -1,3 +1,5 @@
+[![CI](https://github.com/signaux-faibles/keycloakUpdater/actions/workflows/pipeline.yml/badge.svg)](https://github.com/signaux-faibles/keycloakUpdater/actions/workflows/pipeline.yml)
+
 # KeycloakUpdater pour signaux-faibles
 Cet outil permet :
 - de maintenir à jour à la base des utilisateurs Keycloak ainsi que leurs droits à partir d'un fichier excel.
