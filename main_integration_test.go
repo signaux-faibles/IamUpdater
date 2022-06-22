@@ -125,7 +125,7 @@ func TestKeycloakInitialisation(t *testing.T) {
 	asserte.NotNil(clientSF)
 	asserte.True(*clientSF.PublicClient)
 	asserte.Contains(*clientSF.RedirectURIs, "https://signaux-faibles.beta.gouv.fr/*", "https://localhost:8080/*")
-	asserte.Len(kc.ClientRoles[signauxfaibleClientID], 144)
+	asserte.Len(kc.ClientRoles[signauxfaibleClientID], 145)
 
 	clientAnother, found := kc.getClient("another")
 	asserte.True(found)
@@ -163,9 +163,10 @@ func TestClientSignauxFaiblesExists(t *testing.T) {
 	asserte.Contains(clientSG, actual)
 }
 
-func TestRoleUrssafExists(t *testing.T) {
+func TestRolesExistences(t *testing.T) {
+
 	asserte := assert.New(t)
-	rolesToTest := []string{"urssaf"}
+	rolesToTest := []string{"urssaf", "dgefp", "bdf", "score", "detection", "pge"}
 
 	for _, role := range rolesToTest {
 
@@ -184,7 +185,7 @@ func TestRoleUrssafExists(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error getting client roles : %v", err)
 		}
-		asserte.Len(rolesFromAPI, 1)
+		asserte.Lenf(rolesFromAPI, 1, "erreur pour le rôle %v", role)
 		expected := rolesFromAPI[0]
 
 		// on compare les résultats de l'API avec le contenu de l'objet KeycloakContext
@@ -192,14 +193,14 @@ func TestRoleUrssafExists(t *testing.T) {
 		asserte.Contains(clientRolesFromContext, expected)
 
 		actual := kc.GetRoleFromRoleName(signauxfaibleClientID, role)
-		asserte.Equal(expected, actual)
+		asserte.Equalf(expected, actual, "erreur pour le rôle %v", role)
 	}
 }
 
-func TestRoleUrssafIsAssignedToAll(t *testing.T) {
+func TestRolesAssignedToAll(t *testing.T) {
 	asserte := assert.New(t)
 	clientSG, _ := kc.getClient(signauxfaibleClientID)
-	rolesToTest := []string{"urssaf"}
+	rolesToTest := []string{"score", "detection", "pge"}
 
 	for _, role := range rolesToTest {
 		roleUrssaf := kc.GetRoleFromRoleName(signauxfaibleClientID, role)
@@ -213,12 +214,12 @@ func TestRoleUrssafIsAssignedToAll(t *testing.T) {
 			gocloak.GetUsersByRoleParams{},
 		)
 		if err != nil {
-			t.Fatalf("error getting keycloak users by role pge : %v", err)
+			t.Fatalf("erreur lors de la récupération des users payant le rôle %v : %v", role, err)
 		}
 
 		// il y a actuellement 2 users dans le fichier de provisionning excel
 		// les 2 doivent avoir le rôle urssaf
-		asserte.Len(usersFromAPI, 2)
+		asserte.Lenf(usersFromAPI, 2, "erreur pour le rôle %v", role)
 	}
 }
 
@@ -252,7 +253,7 @@ func TestKeycloakUpdate(t *testing.T) {
 	}
 
 	// des rôles ont été supprimés dans le fichier de rôles
-	asserte.Len(kc.ClientRoles[signauxfaibleClientID], 25)
+	asserte.Len(kc.ClientRoles[signauxfaibleClientID], 26)
 
 	// on vérifie
 	err = logUser(*clientSF, disabledUser)
