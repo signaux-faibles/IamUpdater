@@ -20,7 +20,6 @@ import (
 
 var kc KeycloakContext
 var conf structs.Config
-
 var signauxfaibleClientID = "signauxfaibles"
 
 func TestMain(m *testing.M) {
@@ -64,6 +63,7 @@ func TestMain(m *testing.M) {
 		kill(keycloak)
 		logger.ErrorE("Could not set expiration on container keycloak", fields, err)
 	}
+	logger.Infof("keycloak started with username %v", conf.Access.Username)
 	keycloakPort := keycloak.GetPort("8080/tcp")
 	fields.AddAny("port", keycloakPort)
 	logger.Info("keycloak started", fields)
@@ -108,7 +108,7 @@ func TestKeycloakInitialisation(t *testing.T) {
 
 	// update all
 	if err = UpdateAll(&kc, conf.Stock.ClientForRoles, conf.Realm, conf.Clients, conf.Stock.UsersAndRolesFilename, conf.Access.Username); err != nil {
-		panic(err)
+		t.Fatalf("erreur pendant l'update : %v", err)
 	}
 
 	// assertions about realm
