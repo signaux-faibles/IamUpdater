@@ -5,6 +5,7 @@ import (
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"strconv"
 )
 
 func UpdateAll(
@@ -34,17 +35,22 @@ func UpdateAll(
 	}
 
 	// checking users
+	logger.Info("checking users", fields)
 	missing, obsolete, update, current := users.Compare(*kc)
+	if sure := areYouSureForUsers(len(missing)+len(obsolete)+len(update), len(current)); !sure {
+		return errors.Errorf("trop de modifications utilisateurs")
+	}
 
+	// gather roles, newRoles are created before users, oldRoles are deleted after users
+	logger.Info("checking roles", fields)
+	neededRoles := neededRoles(compositeRoles, users)
+	newRoles, oldRoles := neededRoles.compare(kc.GetClientRoles()[clientId])
+
+	logger.Info("starting keycloak configuration", fields)
 	// realmName conf
 	if realm != nil {
 		kc.SaveMasterRealm(*realm)
 	}
-
-	// gather roles, newRoles are created before users, oldRoles are deleted after users
-	logger.Info("checking roles and creating new ones", fields)
-	neededRoles := neededRoles(compositeRoles, users)
-	newRoles, oldRoles := neededRoles.compare(kc.GetClientRoles()[clientId])
 
 	// clients conf
 	if err = kc.SaveClients(clients); err != nil {
@@ -62,7 +68,7 @@ func UpdateAll(
 		logger.Panic(err)
 	}
 
-	if err = kc.CreateUsers(missing.GetNewGocloakUsers(), users, clientId); err != nil {
+	if err = kc.CreateUsers(missing, users, clientId); err != nil {
 		logger.Panic(err)
 	}
 
@@ -101,15 +107,9 @@ func UpdateAll(
 	return nil
 }
 
-func doesObsoletesContainsConfiguredUser(excelUsers []gocloak.User, currentUser gocloak.User) []gocloak.User {
-	if excelUsers == nil {
-		return nil
-	}
-	for index, current := range excelUsers {
-		if current.Username == currentUser.Username {
-			logger.Panicf("currentUser %v is not in stock file", currentUser)
-			return append(excelUsers[:index], excelUsers[index+1:]...)
-		}
-	}
-	return excelUsers
+func areYouSureForUsers(nbChanges, nbUnchanges int) bool {
+	fields := logger.DataForMethod("areYouSureForUsers")
+	logger.Info("nombre d'utilisateurs à rajouter/supprimer/activer : "+strconv.Itoa(nbChanges), fields)
+	logger.Info("nombre d'utilisateurs à mettre à jour au niveau des rôles : "+strconv.Itoa(nbUnchanges), fields)
+	return true
 }
