@@ -13,6 +13,7 @@ import (
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"os"
 	"strconv"
 	"testing"
@@ -111,6 +112,7 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 		nil,
 		testFilename,
 		testUser,
+		10,
 	)
 
 	expectedError := errors.Errorf("configured user is not in stock file (%s) : %s", testFilename, testUser)
@@ -130,7 +132,15 @@ func TestKeycloakInitialisation(t *testing.T) {
 	logger.ConfigureWith(*conf.Logger)
 
 	// update all
-	if err = UpdateAll(&kc, conf.Stock.ClientForRoles, conf.Realm, conf.Clients, conf.Stock.UsersAndRolesFilename, conf.Access.Username); err != nil {
+	if err = UpdateAll(
+		&kc,
+		conf.Stock.ClientForRoles,
+		conf.Realm,
+		conf.Clients,
+		conf.Stock.UsersAndRolesFilename,
+		conf.Access.Username,
+		10,
+	); err != nil {
 		t.Fatalf("erreur pendant l'update : %v", err)
 	}
 
@@ -245,6 +255,32 @@ func TestRolesAssignedToAll(t *testing.T) {
 	}
 }
 
+func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
+	asserte := assert.New(t)
+	var err error
+	var conf structs.Config
+
+	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
+		panic(err)
+	}
+	// configure logger
+	logger.ConfigureWith(*conf.Logger)
+
+	stdin := readStdin("false")
+	// update all
+	actual := UpdateAll(
+		&kc,
+		conf.Stock.ClientForRoles,
+		conf.Realm,
+		conf.Clients,
+		conf.Stock.UsersAndRolesFilename,
+		conf.Access.Username,
+		4,
+	)
+	os.Stdin = stdin
+	asserte.EqualError(actual, "Trop de modifications utilisateurs.")
+}
+
 func TestKeycloakUpdate(t *testing.T) {
 	asserte := assert.New(t)
 	var conf structs.Config
@@ -258,7 +294,7 @@ func TestKeycloakUpdate(t *testing.T) {
 	clientSF, found := kc.getClient(signauxfaibleClientID)
 	asserte.True(found)
 
-	// le user doit encore pouvoir se logguer
+	// le user doit encore pouvoir se loguer
 	// avant l'exécution de l'update
 	err = logUser(*clientSF, disabledUser)
 	asserte.Nil(err)
@@ -270,7 +306,15 @@ func TestKeycloakUpdate(t *testing.T) {
 	logger.ConfigureWith(*conf.Logger)
 
 	// update all
-	err = UpdateAll(&kc, conf.Stock.ClientForRoles, conf.Realm, conf.Clients, conf.Stock.UsersAndRolesFilename, conf.Access.Username)
+	err = UpdateAll(
+		&kc,
+		conf.Stock.ClientForRoles,
+		conf.Realm,
+		conf.Clients,
+		conf.Stock.UsersAndRolesFilename,
+		conf.Access.Username,
+		10,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -284,6 +328,18 @@ func TestKeycloakUpdate(t *testing.T) {
 	apiError, ok := err.(*gocloak.APIError)
 	asserte.True(ok)
 	asserte.Equal(400, apiError.Code)
+}
+
+func readStdin(message string) *os.File {
+	r, w, err := os.Pipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	origStdin := os.Stdin
+	os.Stdin = r
+
+	w.WriteString(message)
+	return origStdin
 }
 
 func logUser(client gocloak.Client, user gocloak.User) error {

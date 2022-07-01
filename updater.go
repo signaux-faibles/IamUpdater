@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"os"
 	"strconv"
 )
 
@@ -15,6 +18,7 @@ func UpdateAll(
 	clients []*gocloak.Client,
 	filename string,
 	configuredUsername string,
+	acceptedChanges int,
 ) error {
 	fields := logger.DataForMethod("UpdateAll")
 
@@ -23,6 +27,7 @@ func UpdateAll(
 	}
 
 	logger.Info("START", fields)
+	logger.Info("accepte "+strconv.Itoa(acceptedChanges)+"changements pour les users", fields)
 
 	// loading desired state for users, composites roles
 	logger.Info("loading excel stock file", fields)
@@ -37,8 +42,10 @@ func UpdateAll(
 	// checking users
 	logger.Info("checking users", fields)
 	missing, obsolete, update, current := users.Compare(*kc)
-	if sure := areYouSureForUsers(len(missing)+len(obsolete)+len(update), len(current)); !sure {
-		return errors.Errorf("trop de modifications utilisateurs")
+	changes := len(missing) + len(obsolete) + len(update)
+	keeps := len(current)
+	if sure := areYouSureTooApplyChanges(changes, keeps, acceptedChanges); !sure {
+		return errors.New("Trop de modifications utilisateurs.")
 	}
 
 	// gather roles, newRoles are created before users, oldRoles are deleted after users
@@ -107,9 +114,29 @@ func UpdateAll(
 	return nil
 }
 
-func areYouSureForUsers(nbChanges, nbUnchanges int) bool {
-	fields := logger.DataForMethod("areYouSureForUsers")
-	logger.Info("nombre d'utilisateurs à rajouter/supprimer/activer : "+strconv.Itoa(nbChanges), fields)
-	logger.Info("nombre d'utilisateurs à mettre à jour au niveau des rôles : "+strconv.Itoa(nbUnchanges), fields)
+func areYouSureTooApplyChanges(changes, keeps, acceptedChanges int) bool {
+	fields := logger.DataForMethod("areYouSureTooApplyChanges")
+	logger.Info("nombre d'utilisateurs à rajouter/supprimer/activer : "+strconv.Itoa(changes), fields)
+	logger.Info("nombre d'utilisateurs à conserver : "+strconv.Itoa(keeps), fields)
+	condition1 := changes > acceptedChanges
+	if condition1 {
+		fmt.Println("Nombre d'utilisateurs à rajouter/supprimer/activer : " + strconv.Itoa(changes))
+	}
+	condition2 := keeps < 1
+	if condition2 {
+		fmt.Println("Nombre d'utilisateurs à conserver : " + strconv.Itoa(keeps))
+	}
+	if condition1 || condition2 {
+		fmt.Println("Voulez vous continuez ? (t/F) :")
+		var reader = bufio.NewReader(os.Stdin)
+		input, _ := reader.ReadString('\n')
+		logger.Info("application des modifications : "+input, fields)
+		if sure, err := strconv.ParseBool(input); err == nil {
+			return sure
+		}
+		// par defaut
+		return false
+	}
+	// pas trop de modif
 	return true
 }
