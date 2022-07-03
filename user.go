@@ -56,7 +56,7 @@ func (kc KeycloakContext) GetUser(username string) (gocloak.User, error) {
 }
 
 // Compare returns missing, obsoletes, disabled users from kc.Users from []user
-func (users Users) Compare(kc KeycloakContext) (UserSlice, []gocloak.User, []gocloak.User, []gocloak.User) {
+func (users Users) Compare(kc KeycloakContext) ([]gocloak.User, []gocloak.User, []gocloak.User, []gocloak.User) {
 	var missing []User
 	var enable []gocloak.User
 	var obsolete []gocloak.User
@@ -81,14 +81,10 @@ func (users Users) Compare(kc KeycloakContext) (UserSlice, []gocloak.User, []goc
 			current = append(current, *kcu)
 		}
 	}
-	return missing, obsolete, enable, current
+	return toGocloakUsers(missing), obsolete, enable, current
 }
 
-// UserSlice is a transparent name
-type UserSlice []User
-
-// GetNewGocloakUsers returns an array of gocloak.User objects to create
-func (users UserSlice) GetNewGocloakUsers() []gocloak.User {
+func toGocloakUsers(users []User) []gocloak.User {
 	var u []gocloak.User
 	for _, user := range users {
 		u = append(u, user.ToGocloakUser())

@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"os"
+	"strconv"
 )
 
 func UpdateAll(
@@ -13,17 +17,43 @@ func UpdateAll(
 	realm *gocloak.RealmRepresentation,
 	clients []*gocloak.Client,
 	filename string,
-	currentUsername string,
+	configuredUsername string,
+	acceptedChanges int,
 ) error {
 	fields := logger.DataForMethod("UpdateAll")
-	var err error
-	var currentUser gocloak.User
-	if currentUser, err = kc.GetUser(currentUsername); err != nil {
-		return errors.Wrap(err, "current user not found : "+currentUsername)
+
+	if _, err := kc.GetUser(configuredUsername); err != nil {
+		return errors.Wrap(err, "configured user does not exist in keycloak : "+configuredUsername)
 	}
 
 	logger.Info("START", fields)
+	logger.Info("accepte "+strconv.Itoa(acceptedChanges)+"changements pour les users", fields)
 
+	// loading desired state for users, composites roles
+	logger.Info("loading excel stock file", fields)
+	users, compositeRoles, err := loadExcel(filename)
+	if err != nil {
+		return err
+	}
+	if _, exists := users[configuredUsername]; !exists {
+		return errors.Errorf("configured user is not in stock file (%s) : %s", filename, configuredUsername)
+	}
+
+	// checking users
+	logger.Info("checking users", fields)
+	missing, obsolete, update, current := users.Compare(*kc)
+	changes := len(missing) + len(obsolete) + len(update)
+	keeps := len(current)
+	if sure := areYouSureTooApplyChanges(changes, keeps, acceptedChanges); !sure {
+		return errors.New("Trop de modifications utilisateurs.")
+	}
+
+	// gather roles, newRoles are created before users, oldRoles are deleted after users
+	logger.Info("checking roles", fields)
+	neededRoles := neededRoles(compositeRoles, users)
+	newRoles, oldRoles := neededRoles.compare(kc.GetClientRoles()[clientId])
+
+	logger.Info("starting keycloak configuration", fields)
 	// realmName conf
 	if realm != nil {
 		kc.SaveMasterRealm(*realm)
@@ -33,16 +63,6 @@ func UpdateAll(
 	if err = kc.SaveClients(clients); err != nil {
 		return errors.Wrap(err, "error when saving clients")
 	}
-
-	// loading desired state for users, composites roles
-	users, compositeRoles, err := loadExcel(filename)
-	if err != nil {
-		logger.Panic(err)
-	}
-	// gather roles, newRoles are created before users, oldRoles are deleted after users
-	logger.Info("checking roles and creating new ones", fields)
-	neededRoles := neededRoles(compositeRoles, users)
-	newRoles, oldRoles := neededRoles.compare(kc.GetClientRoles()[clientId])
 
 	i, err := kc.CreateClientRoles(clientId, newRoles)
 	if err != nil {
@@ -55,15 +75,11 @@ func UpdateAll(
 		logger.Panic(err)
 	}
 
-	// checking users
-	missing, obsolete, update, current := users.Compare(*kc)
-
-	if err = kc.CreateUsers(missing.GetNewGocloakUsers(), users, clientId); err != nil {
+	if err = kc.CreateUsers(missing, users, clientId); err != nil {
 		logger.Panic(err)
 	}
 
 	// disable obsolete users
-	obsolete = removeUser(obsolete, currentUser)
 	if err = kc.DisableUsers(obsolete, clientId); err != nil {
 		logger.Panic(err)
 	}
@@ -98,14 +114,29 @@ func UpdateAll(
 	return nil
 }
 
-func removeUser(users []gocloak.User, toRemove gocloak.User) []gocloak.User {
-	if users == nil {
-		return nil
+func areYouSureTooApplyChanges(changes, keeps, acceptedChanges int) bool {
+	fields := logger.DataForMethod("areYouSureTooApplyChanges")
+	logger.Info("nombre d'utilisateurs à rajouter/supprimer/activer : "+strconv.Itoa(changes), fields)
+	logger.Info("nombre d'utilisateurs à conserver : "+strconv.Itoa(keeps), fields)
+	condition1 := changes > acceptedChanges
+	if condition1 {
+		fmt.Println("Nombre d'utilisateurs à rajouter/supprimer/activer : " + strconv.Itoa(changes))
 	}
-	for index, current := range users {
-		if current.Username == toRemove.Username {
-			return append(users[:index], users[index+1:]...)
+	condition2 := keeps < 1
+	if condition2 {
+		fmt.Println("Nombre d'utilisateurs à conserver : " + strconv.Itoa(keeps))
+	}
+	if condition1 || condition2 {
+		fmt.Println("Voulez vous continuez ? (t/F) :")
+		var reader = bufio.NewReader(os.Stdin)
+		input, _ := reader.ReadString('\n')
+		logger.Info("application des modifications : "+input, fields)
+		if sure, err := strconv.ParseBool(input); err == nil {
+			return sure
 		}
+		// par defaut
+		return false
 	}
-	return users
+	// pas trop de modif
+	return true
 }

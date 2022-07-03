@@ -5,6 +5,8 @@ import (
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
+const AcceptedChanges int = 10
+
 func main() {
 	conf, err := config.InitConfig("./config.toml")
 	if err != nil {
@@ -18,7 +20,15 @@ func main() {
 	if err != nil {
 		logger.Panic(err)
 	}
-	if err = UpdateAll(&kc, clientId, conf.Realm, conf.Clients, conf.Stock.UsersAndRolesFilename, conf.Access.Username); err != nil {
+	if err = UpdateAll(
+		&kc,
+		clientId,
+		conf.Realm,
+		conf.Clients,
+		conf.Stock.UsersAndRolesFilename,
+		conf.Access.Username,
+		AcceptedChanges,
+	); err != nil {
 		panic(err)
 	}
 }
