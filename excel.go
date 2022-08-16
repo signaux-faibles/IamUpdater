@@ -57,17 +57,6 @@ func loadExcel(excelFileName, referentielFilename string) (Users, map[string]Rol
 			users[email] = user
 		}
 	}
-	//compositeRoles := make(map[string]Roles)
-	//for _, z := range zones[1:] {
-	//	compositeRoles[z[zoneFields["REGION"]]] = append(
-	//		compositeRoles[z[zoneFields["REGION"]]],
-	//		z[zoneFields["DEPARTEMENT"]],
-	//	)
-	//	compositeRoles[z[zoneFields["ANCIENNE REGION"]]] = append(
-	//		compositeRoles[z[zoneFields["ANCIENNE REGION"]]],
-	//		z[zoneFields["DEPARTEMENT"]],
-	//	)
-	//}
 	compositeRoles := loadReferentiel(referentielFilename)
 	return users, compositeRoles, nil
 }
