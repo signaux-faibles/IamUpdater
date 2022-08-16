@@ -32,7 +32,8 @@ func UpdateAll(
 
 	// loading desired state for users, composites roles
 	logger.Info("loading excel stock file", fields)
-	users, compositeRoles, err := loadExcel(excelFilename, referentielFilename)
+	users, err := loadExcel(excelFilename)
+	compositeRoles := loadReferentiel(referentielFilename)
 	if err != nil {
 		return err
 	}

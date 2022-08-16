@@ -6,10 +6,10 @@ import (
 	"github.com/tealeg/xlsx/v3"
 )
 
-func loadExcel(excelFileName, referentielFilename string) (Users, map[string]Roles, error) {
+func loadExcel(excelFileName string) (Users, error) {
 	xlFile, err := xlsx.OpenFile(excelFileName)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	var table [][]string
 	var zones [][]string
@@ -57,8 +57,7 @@ func loadExcel(excelFileName, referentielFilename string) (Users, map[string]Rol
 			users[email] = user
 		}
 	}
-	compositeRoles := loadReferentiel(referentielFilename)
-	return users, compositeRoles, nil
+	return users, nil
 }
 
 func loadSheet(sheet xlsx.Sheet) [][]string {
