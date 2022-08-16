@@ -16,7 +16,8 @@ func UpdateAll(
 	clientId string,
 	realm *gocloak.RealmRepresentation,
 	clients []*gocloak.Client,
-	filename string,
+	excelFilename string,
+	referentielFilename string,
 	configuredUsername string,
 	acceptedChanges int,
 ) error {
@@ -31,12 +32,12 @@ func UpdateAll(
 
 	// loading desired state for users, composites roles
 	logger.Info("loading excel stock file", fields)
-	users, compositeRoles, err := loadExcel(filename)
+	users, compositeRoles, err := loadExcel(excelFilename, referentielFilename)
 	if err != nil {
 		return err
 	}
 	if _, exists := users[configuredUsername]; !exists {
-		return errors.Errorf("configured user is not in stock file (%s) : %s", filename, configuredUsername)
+		return errors.Errorf("configured user is not in stock file (%s) : %s", excelFilename, configuredUsername)
 	}
 
 	// checking users

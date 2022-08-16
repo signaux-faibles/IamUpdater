@@ -9,7 +9,7 @@ import (
 
 func Test_readExcel(t *testing.T) {
 	t.Log("test de lecture excel")
-	users, userMap, err := loadExcel("./userBase.xlsx")
+	users, userMap, err := loadExcel("./userBase.xlsx", "./referentiel.csv")
 	if err != nil {
 		t.Fatalf("ne peut lire le fichier d'exemple: %s", err.Error())
 	}

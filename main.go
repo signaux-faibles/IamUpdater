@@ -26,6 +26,7 @@ func main() {
 		conf.Realm,
 		conf.Clients,
 		conf.Stock.UsersAndRolesFilename,
+		"referentiel.csv",
 		conf.Access.Username,
 		AcceptedChanges,
 	); err != nil {

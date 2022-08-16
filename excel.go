@@ -6,7 +6,7 @@ import (
 	"github.com/tealeg/xlsx/v3"
 )
 
-func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
+func loadExcel(excelFileName, referentielFilename string) (Users, map[string]Roles, error) {
 	xlFile, err := xlsx.OpenFile(excelFileName)
 	if err != nil {
 		return nil, nil, err
@@ -57,17 +57,18 @@ func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 			users[email] = user
 		}
 	}
-	compositeRoles := make(map[string]Roles)
-	for _, z := range zones[1:] {
-		compositeRoles[z[zoneFields["REGION"]]] = append(
-			compositeRoles[z[zoneFields["REGION"]]],
-			z[zoneFields["DEPARTEMENT"]],
-		)
-		compositeRoles[z[zoneFields["ANCIENNE REGION"]]] = append(
-			compositeRoles[z[zoneFields["ANCIENNE REGION"]]],
-			z[zoneFields["DEPARTEMENT"]],
-		)
-	}
+	//compositeRoles := make(map[string]Roles)
+	//for _, z := range zones[1:] {
+	//	compositeRoles[z[zoneFields["REGION"]]] = append(
+	//		compositeRoles[z[zoneFields["REGION"]]],
+	//		z[zoneFields["DEPARTEMENT"]],
+	//	)
+	//	compositeRoles[z[zoneFields["ANCIENNE REGION"]]] = append(
+	//		compositeRoles[z[zoneFields["ANCIENNE REGION"]]],
+	//		z[zoneFields["DEPARTEMENT"]],
+	//	)
+	//}
+	compositeRoles := loadReferentiel(referentielFilename)
 	return users, compositeRoles, nil
 }
 
