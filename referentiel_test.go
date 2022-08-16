@@ -8,7 +8,8 @@ import (
 func Test_loadReferentiel(t *testing.T) {
   assertions := assert.New(t)
   t.Log("test de lecture des rôles géographiques")
-  referentiel := loadReferentiel("referentiel.csv")
+  referentiel, err := loadReferentiel("referentiel.csv")
+  assertions.Nil(err)
   assertions.Len(referentiel, 35)
 
   rolesLaReunion := referentiel["La Réunion"]

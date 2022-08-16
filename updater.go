@@ -21,6 +21,9 @@ func UpdateAll(
 	configuredUsername string,
 	acceptedChanges int,
 ) error {
+	var err error
+	var users Users
+	var compositeRoles map[string]Roles
 	fields := logger.DataForMethod("UpdateAll")
 
 	if _, err := kc.GetUser(configuredUsername); err != nil {
@@ -32,9 +35,10 @@ func UpdateAll(
 
 	// loading desired state for users, composites roles
 	logger.Info("loading excel stock file", fields)
-	users, err := loadExcel(excelFilename)
-	compositeRoles := loadReferentiel(referentielFilename)
-	if err != nil {
+	if users, err = loadExcel(excelFilename); err != nil {
+		return err
+	}
+	if compositeRoles, err = loadReferentiel(referentielFilename); err != nil {
 		return err
 	}
 	if _, exists := users[configuredUsername]; !exists {

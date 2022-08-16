@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/csv"
-	"log"
 	"os"
 )
 
@@ -21,11 +20,11 @@ func buildReferentiel(input [][]string) map[string]Roles {
 	return compositeRoles
 }
 
-func loadReferentiel(filename string) map[string]Roles {
+func loadReferentiel(filename string) (map[string]Roles, error) {
 	// open file
 	f, err := os.Open(filename)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// remember to close the file at the end of the program
@@ -36,11 +35,11 @@ func loadReferentiel(filename string) map[string]Roles {
 	csvReader.Comma = ';'
 	data, err := csvReader.ReadAll()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// convert records to array of structs
 	compositesRoles := buildReferentiel(data)
 
-	return compositesRoles
+	return compositesRoles, nil
 }
