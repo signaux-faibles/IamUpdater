@@ -1,0 +1,12 @@
+---
+niveau: A
+email: john.doe@zone51.gov.fr
+prenom: John
+nom: Doe
+segment: Listens the wind
+fonction: Recouvrement et accompagnement des entreprises
+employeur: Pentagon
+goup:
+scope:
+  - et
+accesGeographique: 51

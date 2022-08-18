@@ -298,14 +298,14 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 
 		u := userMap[*user.Username]
 		ug := u.ToGocloakUser()
-		if user.LastName != nil && u.nom != *user.LastName ||
-			user.LastName != nil && u.prenom != *user.FirstName ||
+		if user.LastName != nil && u.Nom != *user.LastName ||
+			user.LastName != nil && u.Prenom != *user.FirstName ||
 			!compareAttributes(user.Attributes, ug.Attributes) {
 
 			update := gocloak.User{
 				ID:         user.ID,
-				FirstName:  &u.prenom,
-				LastName:   &u.nom,
+				FirstName:  &u.Prenom,
+				LastName:   &u.Nom,
 				Attributes: ug.Attributes,
 			}
 			logger.Info("updating user name and attributes", fields)

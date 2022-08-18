@@ -2,6 +2,9 @@ package main
 
 import (
 	"errors"
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"gopkg.in/yaml.v3"
+	"os"
 	"sort"
 	"strings"
 
@@ -10,16 +13,16 @@ import (
 
 // User is the definition of an user in excel state
 type User struct {
-	niveau            string
-	email             string
-	prenom            string
-	nom               string
-	segment           string
-	fonction          string
-	employeur         string
-	goup              string
-	scope             []string
-	accesGeographique string
+	Niveau            string
+	Email             string
+	Prenom            string
+	Nom               string
+	Segment           string
+	Fonction          string
+	Employeur         string
+	Goup              string
+	Scope             []string
+	AccesGeographique string `yaml:"accesGeographique"`
 }
 
 // Users is the collection of wanted users
@@ -27,22 +30,28 @@ type Users map[string]User
 
 func (user User) roles() Roles {
 	var roles Roles
-	if user.niveau == "a" {
+	if user.Niveau == "a" {
 		roles = append(roles, "urssaf", "dgefp", "bdf")
 	}
-	if user.niveau == "b" {
+	if user.Niveau == "b" {
 		roles = append(roles, "dgefp")
 	}
-	if user.niveau != "0" {
+	if user.Niveau != "0" {
 		roles = append(roles, "score", "detection", "pge")
-		if user.accesGeographique != "" {
-			roles = append(roles, user.accesGeographique)
+		if user.AccesGeographique != "" {
+			roles = append(roles, user.AccesGeographique)
 		}
-		if !(len(user.scope) == 1 && user.scope[0] == "") {
-			roles = append(roles, user.scope...)
+		if !(len(user.Scope) == 1 && user.Scope[0] == "") {
+			roles = append(roles, user.Scope...)
 		}
 	}
 	return roles
+}
+
+func (users Users) addUser(input User) Users {
+	user := input.format()
+	users[user.Email] = user
+	return users
 }
 
 // GetUser resolves existing user from its username
@@ -63,7 +72,7 @@ func (users Users) Compare(kc KeycloakContext) ([]gocloak.User, []gocloak.User, 
 	var current []gocloak.User
 
 	for _, u := range users {
-		kcu, err := kc.GetUser(u.email)
+		kcu, err := kc.GetUser(u.Email)
 		if err != nil {
 			missing = append(missing, u)
 		}
@@ -96,21 +105,21 @@ func toGocloakUsers(users []User) []gocloak.User {
 func (user User) ToGocloakUser() gocloak.User {
 	t := true
 	attributes := make(map[string][]string)
-	if user.goup != "" {
-		attributes["goup_path"] = []string{user.goup}
+	if user.Goup != "" {
+		attributes["goup_path"] = []string{user.Goup}
 	}
-	attributes["fonction"] = []string{user.fonction}
-	attributes["employeur"] = []string{user.employeur}
+	attributes["fonction"] = []string{user.Fonction}
+	attributes["employeur"] = []string{user.Employeur}
 
-	if user.segment != "" {
-		attributes["segment"] = []string{user.segment}
+	if user.Segment != "" {
+		attributes["segment"] = []string{user.Segment}
 	}
 	return gocloak.User{
-		Username:      &user.email,
-		Email:         &user.email,
+		Username:      &user.Email,
+		Email:         &user.Email,
 		EmailVerified: &t,
-		FirstName:     &user.prenom,
-		LastName:      &user.nom,
+		FirstName:     &user.Prenom,
+		LastName:      &user.Nom,
 		Enabled:       &t,
 		Attributes:    &attributes,
 	}
@@ -140,4 +149,43 @@ func compareAttributes(a *map[string][]string, b *map[string][]string) bool {
 		}
 	}
 	return true
+}
+
+func (user User) format() User {
+	r := User{
+		Niveau:            strings.ToLower(user.Niveau),
+		Email:             strings.Trim(strings.ToLower(user.Email), " "),
+		Nom:               strings.ToUpper(user.Nom),
+		Prenom:            strings.ToTitle(user.Prenom),
+		Segment:           strings.ToUpper(user.Segment),
+		Fonction:          user.Fonction,
+		Employeur:         strings.ToUpper(user.Employeur),
+		Goup:              user.Goup,
+		Scope:             user.Scope,
+		AccesGeographique: user.AccesGeographique,
+	}
+	return r
+}
+
+func loadUsers(usersFilename []string) (Users, error) {
+	users := make(Users)
+	fields := logger.DataForMethod("loadUsers")
+	if len(usersFilename) <= 0 {
+		logger.Error("pas de fiche utilisateur", fields)
+		errors.New("pas de fiche utilisateur à charger")
+	}
+	for _, f := range usersFilename {
+		fields.AddAny("file", f)
+		logger.Debug("charge la fiche", fields)
+		current := User{}
+		data, err := os.ReadFile(f)
+		if err != nil {
+			return nil, err
+		}
+		if err = yaml.Unmarshal(data, &current); err != nil {
+			return nil, err
+		}
+		users.addUser(current)
+	}
+	return users, nil
 }

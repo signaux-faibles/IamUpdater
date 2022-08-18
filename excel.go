@@ -1,9 +1,8 @@
 package main
 
 import (
-	"strings"
-
 	"github.com/tealeg/xlsx/v3"
+	"strings"
 )
 
 func loadExcel(excelFileName string) (Users, error) {
@@ -40,19 +39,19 @@ func loadExcel(excelFileName string) (Users, error) {
 
 		if email != "" && len(userRow[fields["PRENOM"]]) > 1 {
 			user := User{
-				niveau:            strings.ToLower(niveau),
-				email:             email,
-				nom:               strings.ToUpper(userRow[fields["NOM"]]),
-				prenom:            strings.ToUpper(userRow[fields["PRENOM"]][0:1]) + strings.ToLower(userRow[fields["PRENOM"]][1:]),
-				segment:           userRow[fields["SEGMENT"]],
-				fonction:          userRow[fields["FONCTION"]],
-				employeur:         userRow[fields["ENTITES"]],
-				goup:              userRow[fields["GOUP"]],
-				accesGeographique: userRow[fields["ACCES GEOGRAPHIQUE"]],
+				Niveau:            strings.ToLower(niveau),
+				Email:             email,
+				Nom:               strings.ToUpper(userRow[fields["NOM"]]),
+				Prenom:            strings.ToUpper(userRow[fields["PRENOM"]][0:1]) + strings.ToLower(userRow[fields["PRENOM"]][1:]),
+				Segment:           userRow[fields["SEGMENT"]],
+				Fonction:          userRow[fields["FONCTION"]],
+				Employeur:         userRow[fields["ENTITES"]],
+				Goup:              userRow[fields["GOUP"]],
+				AccesGeographique: userRow[fields["ACCES GEOGRAPHIQUE"]],
 			}
 			scope := strings.Split(userRow[fields["SCOPE"]], ",")
 			if len(scope) != 1 || scope[0] != "" {
-				user.scope = scope
+				user.Scope = scope
 			}
 			users[email] = user
 		}

@@ -5,10 +5,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
@@ -102,24 +102,27 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 	asserte := assert.New(t)
 
 	testUser := "ti_admin"
-	testFilename := "test/resources/userNotInExcel/userBase.xlsx"
+	testFilenames := []string{
+		"test/users/john_doe.yml",
+		"test/users/raphael_squelbut.yml",
+		"test/users/un_mec_pas_de_l_urssaf.yml",
+	}
 
-	// erreur in configuration : access.username should be in usersAndRolesFilename
+	// erreur in configuration : access.username should be in usersFolder
 	err := UpdateAll(
 		&kc,
 		"peuimporte",
 		nil,
 		nil,
-		testFilename,
-		"referentiel.csv",
+		testFilenames,
+		"regions_et_departements.csv",
 		testUser,
 		10,
 	)
 
-	expectedError := errors.Errorf("configured user is not in stock file (%s) : %s", testFilename, testUser)
-
 	asserte.NotNil(err)
-	asserte.EqualError(expectedError, err.Error())
+	expectedMessage := fmt.Sprintf("configured user is not in users folder (%s) : %s", testFilenames, testUser)
+	asserte.EqualError(err, expectedMessage)
 }
 
 func TestKeycloakInitialisation(t *testing.T) {
@@ -132,14 +135,21 @@ func TestKeycloakInitialisation(t *testing.T) {
 	//configure logger
 	logger.ConfigureWith(*conf.Logger)
 
+	usersFilenames := []string{
+		"test/users/admin.yml",
+		"test/users/john_doe.yml",
+		"test/users/raphael_squelbut.yml",
+		"test/users/un_mec_pas_de_l_urssaf.yml",
+	}
+
 	// update all
 	if err = UpdateAll(
 		&kc,
-		conf.Stock.ClientForRoles,
+		conf.Stock.DefaultClient,
 		conf.Realm,
 		conf.Clients,
-		conf.Stock.UsersAndRolesFilename,
-		"referentiel.csv",
+		usersFilenames,
+		"regions_et_departements.csv",
 		conf.Access.Username,
 		10,
 	); err != nil {
@@ -265,18 +275,25 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
 		panic(err)
 	}
+
+	usersFilenames := []string{
+		"test/users/admin.yml",
+		"test/users/john_doe_v2.yml",
+		"test/users/raphael_squelbut_v2.yml",
+	}
+
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
 
-	stdin := readStdin("false")
+	stdin := readStdin("false\n")
 	// update all
 	actual := UpdateAll(
 		&kc,
-		conf.Stock.ClientForRoles,
+		conf.Stock.DefaultClient,
 		conf.Realm,
 		conf.Clients,
-		conf.Stock.UsersAndRolesFilename,
-		"referentiel.csv",
+		usersFilenames,
+		"regions_et_departements.csv",
 		conf.Access.Username,
 		4,
 	)
@@ -307,15 +324,19 @@ func TestKeycloakUpdate(t *testing.T) {
 	}
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
-
+	usersFilenames := []string{
+		"test/users/admin.yml",
+		"test/users/john_doe_v2.yml",
+		"test/users/raphael_squelbut_v2.yml",
+	}
 	// update all
 	err = UpdateAll(
 		&kc,
-		conf.Stock.ClientForRoles,
+		conf.Stock.DefaultClient,
 		conf.Realm,
 		conf.Clients,
-		conf.Stock.UsersAndRolesFilename,
-		"test/resources/update/referentiel.csv",
+		usersFilenames,
+		"test/resources/regions_et_departements_faux.csv",
 		conf.Access.Username,
 		10,
 	)

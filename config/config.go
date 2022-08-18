@@ -7,7 +7,6 @@ import (
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -31,6 +30,35 @@ func InitConfig(configFilename string) (structs.Config, error) {
 	return conf, nil
 }
 
+func GetUsersFilenames(c structs.Config) ([]string, error) {
+	var r []string
+	fields := logger.DataForMethod("GetUsersFilenames")
+	usersDirectoryPath := c.Stock.UsersFolder
+	fields.AddAny("usersFolder", usersDirectoryPath)
+	files, err := os.ReadDir(usersDirectoryPath)
+	if err != nil {
+		return nil, err
+	}
+	if len(files) <= 0 {
+		errors.New("le répertoire " + usersDirectoryPath + " est vide")
+	}
+	for _, f := range files {
+		info, err := f.Info()
+		if err != nil {
+			return nil, err
+		}
+		fields.AddAny("file", info.Name())
+		if info.IsDir() || !strings.HasSuffix(info.Name(), ".yml") {
+			logger.Error("ne prend pas en compte le fichier", fields)
+			errors.New("le répertoire " + usersDirectoryPath + " contient un répertoire ou bien un fichier non yaml (*.yml) : " + info.Name())
+		}
+		logger.Debug("charge la fiche", fields)
+		r = append(r, usersDirectoryPath+string(os.PathSeparator)+info.Name())
+	}
+	return r, nil
+
+}
+
 func readAllConfigFiles(filenames []string) []structs.Config {
 	var r = make([]structs.Config, 0)
 	for _, filename := range filenames {
@@ -48,22 +76,22 @@ func getAllConfigFilenames(filename string) []string {
 		logger.Panicf("error reading clients config file : %s", err)
 	}
 	r = append(r, filename)
-	var files []fs.FileInfo
+	var files []fs.DirEntry
 	config := extractConfig(filename)
 	folder := config.Stock.ClientsAndRealmFolder
 	if folder == "" {
 		logger.Warnf("no configuration folder is defined")
 		return r
 	}
-	if _, err = ioutil.ReadFile(config.Stock.UsersAndRolesFilename); err != nil {
-		logger.Panicf("error reading stock file : %s", err)
+	if _, err = os.ReadDir(config.Stock.UsersFolder); err != nil {
+		logger.Panicf("error reading stock file %s : %s", config.Stock.UsersFolder, err)
 	}
-	if files, err = ioutil.ReadDir(folder); err != nil {
+	if files, err = os.ReadDir(folder); err != nil {
 		logger.Panicf("error reading clients config folder : %s", err)
 	}
 
 	for _, f := range files {
-		filename := folder + "/" + f.Name()
+		filename := folder + string(os.PathSeparator) + f.Name()
 		if !strings.HasSuffix(filename, ".toml") {
 			logger.Debugf("ignore config file %s", filename)
 			continue
