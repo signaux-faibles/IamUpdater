@@ -103,9 +103,9 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 
 	testUser := "ti_admin"
 	testFilenames := []string{
-		"test/users/john_doe.yml",
-		"test/users/raphael_squelbut.yml",
-		"test/users/un_mec_pas_de_l_urssaf.yml",
+		"test/sample/users/john_doe.yml",
+		"test/sample/users/raphael_squelbut.yml",
+		"test/sample/users/un_mec_pas_de_l_urssaf.yml",
 	}
 
 	// erreur in configuration : access.username should be in usersFolder
@@ -136,10 +136,10 @@ func TestKeycloakInitialisation(t *testing.T) {
 	logger.ConfigureWith(*conf.Logger)
 
 	usersFilenames := []string{
-		"test/users/admin.yml",
-		"test/users/john_doe.yml",
-		"test/users/raphael_squelbut.yml",
-		"test/users/un_mec_pas_de_l_urssaf.yml",
+		"test/sample/users/admin.yml",
+		"test/sample/users/john_doe.yml",
+		"test/sample/users/raphael_squelbut.yml",
+		"test/sample/users/un_mec_pas_de_l_urssaf.yml",
 	}
 
 	// update all
@@ -277,9 +277,9 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 	}
 
 	usersFilenames := []string{
-		"test/users/admin.yml",
-		"test/users/john_doe_v2.yml",
-		"test/users/raphael_squelbut_v2.yml",
+		"test/sample/users/admin.yml",
+		"test/sample/users/john_doe_v2.yml",
+		"test/sample/users/raphael_squelbut_v2.yml",
 	}
 
 	// configure logger
@@ -325,9 +325,9 @@ func TestKeycloakUpdate(t *testing.T) {
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
 	usersFilenames := []string{
-		"test/users/admin.yml",
-		"test/users/john_doe_v2.yml",
-		"test/users/raphael_squelbut_v2.yml",
+		"test/sample/users/admin.yml",
+		"test/sample/users/john_doe_v2.yml",
+		"test/sample/users/raphael_squelbut_v2.yml",
 	}
 	// update all
 	err = UpdateAll(

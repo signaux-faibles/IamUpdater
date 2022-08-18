@@ -13,4 +13,4 @@ timestampFormat = "2006-01-02 15:04:05"
 [stock]
 clientsAndRealmFolder = "test/resources/test_config.d"
 defaultClient = "signauxfaibles"
-usersFolder = "test/users"
+usersFolder = "test/sample/users"

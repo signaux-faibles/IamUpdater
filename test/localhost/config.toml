@@ -13,4 +13,4 @@ timestampFormat = "2006-01-02 15:04:05"
 [stock]
 clientsAndRealmFolder = "../sample/clients.d" # repertoire contenant les fichiers de configuration des clients et du realm
 defaultClient = "signauxfaibles"
-usersFolder = "../sample/userBase.xlsx"
+usersFolder = "../sample/users"

@@ -40,7 +40,7 @@ func GetUsersFilenames(c structs.Config) ([]string, error) {
 		return nil, err
 	}
 	if len(files) <= 0 {
-		errors.New("le répertoire " + usersDirectoryPath + " est vide")
+		return nil, errors.New("le répertoire " + usersDirectoryPath + " est vide")
 	}
 	for _, f := range files {
 		info, err := f.Info()
@@ -50,7 +50,7 @@ func GetUsersFilenames(c structs.Config) ([]string, error) {
 		fields.AddAny("file", info.Name())
 		if info.IsDir() || !strings.HasSuffix(info.Name(), ".yml") {
 			logger.Error("ne prend pas en compte le fichier", fields)
-			errors.New("le répertoire " + usersDirectoryPath + " contient un répertoire ou bien un fichier non yaml (*.yml) : " + info.Name())
+			return nil, errors.New("le répertoire " + usersDirectoryPath + " contient un répertoire ou bien un fichier non yaml (*.yml) : " + info.Name())
 		}
 		logger.Debug("charge la fiche", fields)
 		r = append(r, usersDirectoryPath+string(os.PathSeparator)+info.Name())
@@ -84,7 +84,7 @@ func getAllConfigFilenames(filename string) []string {
 		return r
 	}
 	if _, err = os.ReadDir(config.Stock.UsersFolder); err != nil {
-		logger.Panicf("error reading stock file %s : %s", config.Stock.UsersFolder, err)
+		logger.Panicf("error reading users files folder %s : %s", config.Stock.UsersFolder, err)
 	}
 	if files, err = os.ReadDir(folder); err != nil {
 		logger.Panicf("error reading clients config folder : %s", err)

@@ -9,9 +9,9 @@ func Test_loadUsers(t *testing.T) {
 	assertions := assert.New(t)
 	t.Log("test de chargement des users")
 	filenames := []string{
-		"test/users/john_doe.yml",
-		"test/users/raphael_squelbut.yml",
-		"test/users/un_mec_pas_de_l_urssaf.yml",
+		"test/sample/users/john_doe.yml",
+		"test/sample/users/raphael_squelbut.yml",
+		"test/sample/users/un_mec_pas_de_l_urssaf.yml",
 	}
 	users, err := loadUsers(filenames)
 	if err != nil {
