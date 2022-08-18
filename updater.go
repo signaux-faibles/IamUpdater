@@ -16,10 +16,14 @@ func UpdateAll(
 	clientId string,
 	realm *gocloak.RealmRepresentation,
 	clients []*gocloak.Client,
-	filename string,
+	usersFilenames []string,
+	referentielFilename string,
 	configuredUsername string,
 	acceptedChanges int,
 ) error {
+	var err error
+	var users Users
+	var compositeRoles map[string]Roles
 	fields := logger.DataForMethod("UpdateAll")
 
 	if _, err := kc.GetUser(configuredUsername); err != nil {
@@ -27,16 +31,19 @@ func UpdateAll(
 	}
 
 	logger.Info("START", fields)
-	logger.Info("accepte "+strconv.Itoa(acceptedChanges)+"changements pour les users", fields)
+	logger.Info("accepte "+strconv.Itoa(acceptedChanges)+" changements pour les users", fields)
 
 	// loading desired state for users, composites roles
 	logger.Info("loading excel stock file", fields)
-	users, compositeRoles, err := loadExcel(filename)
-	if err != nil {
+	if users, err = loadUsers(usersFilenames); err != nil {
 		return err
 	}
+	if compositeRoles, err = loadReferentiel(referentielFilename); err != nil {
+		return err
+	}
+
 	if _, exists := users[configuredUsername]; !exists {
-		return errors.Errorf("configured user is not in stock file (%s) : %s", filename, configuredUsername)
+		return errors.Errorf("configured user is not in users folder (%s) : %s", usersFilenames, configuredUsername)
 	}
 
 	// checking users
@@ -44,7 +51,7 @@ func UpdateAll(
 	missing, obsolete, update, current := users.Compare(*kc)
 	changes := len(missing) + len(obsolete) + len(update)
 	keeps := len(current)
-	if sure := areYouSureTooApplyChanges(changes, keeps, acceptedChanges); !sure {
+	if sure := areYouSureToApplyChanges(changes, keeps, acceptedChanges); !sure {
 		return errors.New("Trop de modifications utilisateurs.")
 	}
 
@@ -114,8 +121,8 @@ func UpdateAll(
 	return nil
 }
 
-func areYouSureTooApplyChanges(changes, keeps, acceptedChanges int) bool {
-	fields := logger.DataForMethod("areYouSureTooApplyChanges")
+func areYouSureToApplyChanges(changes, keeps, acceptedChanges int) bool {
+	fields := logger.DataForMethod("areYouSureToApplyChanges")
 	logger.Info("nombre d'utilisateurs à rajouter/supprimer/activer : "+strconv.Itoa(changes), fields)
 	logger.Info("nombre d'utilisateurs à conserver : "+strconv.Itoa(keeps), fields)
 	condition1 := changes > acceptedChanges

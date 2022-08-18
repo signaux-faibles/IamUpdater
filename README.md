@@ -32,7 +32,8 @@ Le realm correspond à [`RealmRepresentation`](https://www.keycloak.org/docs-api
 Un client correspond à [`ClientRepresentation`](https://www.keycloak.org/docs-api/18.0/rest-api/#_clientrepresentation)
 
 ### Configuration des utilisateurs
-Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le chemin peut être ajusté dans `config.toml`.
+Les habilitations sont maintenant définies dvia des fiches personnelles enregistrées dans un repository `git` (à définir)
+Le chemin peut être ajusté dans `config.toml`.
 
 
 ### Lancer les tests `go`

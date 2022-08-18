@@ -12,10 +12,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	usersFilenames, err := config.GetUsersFilenames(conf)
+	if err != nil {
+		panic(err)
+	}
 	logger.ConfigureWith(*conf.Logger)
 
-	clientId := conf.Stock.ClientForRoles
+	clientId := conf.Stock.DefaultClient
 	kc, err := NewKeycloakContext(conf.Access)
 	if err != nil {
 		logger.Panic(err)
@@ -25,7 +28,8 @@ func main() {
 		clientId,
 		conf.Realm,
 		conf.Clients,
-		conf.Stock.UsersAndRolesFilename,
+		usersFilenames,
+		"regions_et_departements.csv",
 		conf.Access.Username,
 		AcceptedChanges,
 	); err != nil {

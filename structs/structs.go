@@ -1,11 +1,13 @@
 package structs
 
-import "github.com/Nerzal/gocloak/v11"
+import (
+	"github.com/Nerzal/gocloak/v11"
+)
 
 type Stock struct {
 	ClientsAndRealmFolder string
-	ClientForRoles        string
-	UsersAndRolesFilename string
+	DefaultClient         string
+	UsersFolder           string
 }
 
 type Config struct {
