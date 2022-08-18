@@ -29,7 +29,7 @@ func main() {
 		conf.Realm,
 		conf.Clients,
 		usersFilenames,
-		"regions_et_departements_faux.csv",
+		"regions_et_departements.csv",
 		conf.Access.Username,
 		AcceptedChanges,
 	); err != nil {
