@@ -172,7 +172,7 @@ func loadUsers(usersFilename []string) (Users, error) {
 	fields := logger.DataForMethod("loadUsers")
 	if len(usersFilename) <= 0 {
 		logger.Error("pas de fiche utilisateur", fields)
-		errors.New("pas de fiche utilisateur à charger")
+		return nil, errors.New("pas de fiche utilisateur à charger")
 	}
 	for _, f := range usersFilename {
 		fields.AddAny("file", f)
