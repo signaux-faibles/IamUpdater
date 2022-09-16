@@ -17,6 +17,7 @@ require (
 	github.com/snowzach/writerhook v0.0.0-20180327172656-2eef47d6a0bf
 	github.com/stretchr/testify v1.8.0
 	github.com/tealeg/xlsx/v3 v3.2.4
+	golang.org/x/tools v0.0.0-20210106214847-113979e3529a
 )
 
 require (

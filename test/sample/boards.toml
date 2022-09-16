@@ -1,0 +1,34 @@
+[sf]
+    "France entière" = [
+        "tableau-crp-ara",
+        "tableau-crp-bfc",
+        "tableau-crp-pdl",
+        "tableau-crp-cvl",
+        "tableau-crp-norm",
+        "tableau-crp-paca",
+        "tableau-crp-hdf",
+        "tableau-crp-ge",
+        "tableau-crp-na",
+        "tableau-crp-bret",
+        "tableau-crp-corse",
+        "tableau-crp-oc",
+        "tableau-crp-idf",
+        "tableau-crp-guadeloupe",
+        "tableau-crp-martinique",
+        "tableau-crp-guyane",
+        "tableau-crp-la-reunion",
+        "tableau-crp-mayotte",
+        "tableau-crp-guyane",
+    ]
+    "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
+    # "Auvergne-Rhône-Alpes" = ["tableau-crp-ara"]
