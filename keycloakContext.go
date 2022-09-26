@@ -190,7 +190,7 @@ func (kc *KeycloakContext) CreateUsers(users []gocloak.User, userMap Users, clie
 			logger.WarnE("unable to create user", fields, err)
 		}
 
-		roles := userMap[*user.Username].roles().GetKeycloakRoles(clientName, *kc)
+		roles := userMap[Username(*user.Username)].roles().GetKeycloakRoles(clientName, *kc)
 		fields.AddRoles(roles)
 		if roles != nil {
 			logger.Info("adding roles to user", fields)
@@ -296,7 +296,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 		}
 		accountRoles := rolesFromGocloakRoles(accountPRoles)
 
-		u := userMap[*user.Username]
+		u := userMap[Username(*user.Username)]
 		ug := u.ToGocloakUser()
 		if user.LastName != nil && u.nom != *user.LastName ||
 			user.LastName != nil && u.prenom != *user.FirstName ||
@@ -316,7 +316,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 			}
 		}
 
-		novel, old := userMap[*user.Username].roles().compare(rolesFromGocloakRoles(roles))
+		novel, old := userMap[Username(*user.Username)].roles().compare(rolesFromGocloakRoles(roles))
 		if len(old) > 0 {
 			fields.AddArray("oldRoles", old)
 			logger.Info("deleting unused roles", fields)

@@ -8,10 +8,13 @@ import (
 	"github.com/Nerzal/gocloak/v11"
 )
 
+type Username string
+type Boardslug string
+
 // User is the definition of an user in excel state
 type User struct {
 	niveau            string
-	email             string
+	email             Username
 	prenom            string
 	nom               string
 	segment           string
@@ -20,10 +23,12 @@ type User struct {
 	goup              string
 	scope             []string
 	accesGeographique string
+	boards            []string
 }
 
 // Users is the collection of wanted users
-type Users map[string]User
+type Users map[Username]User
+type UsersBoards map[Boardslug]User
 
 func (user User) roles() Roles {
 	var roles Roles
@@ -46,9 +51,9 @@ func (user User) roles() Roles {
 }
 
 // GetUser resolves existing user from its username
-func (kc KeycloakContext) GetUser(username string) (gocloak.User, error) {
+func (kc KeycloakContext) GetUser(username Username) (gocloak.User, error) {
 	for _, u := range kc.Users {
-		if u != nil && u.Username != nil && strings.EqualFold(*u.Username, username) {
+		if u != nil && u.Username != nil && strings.EqualFold(*u.Username, string(username)) {
 			return *u, nil
 		}
 	}
@@ -73,7 +78,7 @@ func (users Users) Compare(kc KeycloakContext) ([]gocloak.User, []gocloak.User, 
 	}
 
 	for _, kcu := range kc.Users {
-		if _, ok := users[strings.ToLower(*kcu.Username)]; !ok {
+		if _, ok := users[Username(strings.ToLower(*kcu.Username))]; !ok {
 			if *kcu.Enabled {
 				obsolete = append(obsolete, *kcu)
 			}
@@ -105,9 +110,10 @@ func (user User) ToGocloakUser() gocloak.User {
 	if user.segment != "" {
 		attributes["segment"] = []string{user.segment}
 	}
+	email := string(user.email)
 	return gocloak.User{
-		Username:      &user.email,
-		Email:         &user.email,
+		Username:      &email,
+		Email:         &email,
 		EmailVerified: &t,
 		FirstName:     &user.prenom,
 		LastName:      &user.nom,

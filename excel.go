@@ -36,7 +36,7 @@ func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 
 	for _, userRow := range table[1:] {
 		niveau := userRow[fields["NIVEAU HABILITATION"]]
-		email := strings.Trim(strings.ToLower(userRow[fields["ADRESSE MAIL"]]), " ")
+		email := Username(strings.Trim(strings.ToLower(userRow[fields["ADRESSE MAIL"]]), " "))
 
 		if email != "" && len(userRow[fields["PRENOM"]]) > 1 {
 			user := User{
@@ -49,6 +49,7 @@ func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 				employeur:         userRow[fields["ENTITES"]],
 				goup:              userRow[fields["GOUP"]],
 				accesGeographique: userRow[fields["ACCES GEOGRAPHIQUE"]],
+				boards:            strings.Split(userRow[fields["BOARDS"]], ","),
 			}
 			scope := strings.Split(userRow[fields["SCOPE"]], ",")
 			if len(scope) != 1 || scope[0] != "" {

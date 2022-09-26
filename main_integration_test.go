@@ -1,13 +1,8 @@
-//go:build integration
-// +build integration
-
 package main
 
 import (
 	"context"
 	"github.com/Nerzal/gocloak/v11"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
@@ -15,91 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
-	"strconv"
 	"testing"
-	"time"
 )
 
-var kc KeycloakContext
-var signauxfaibleClientID = "signauxfaibles"
-
-const keycloakAdmin = "ti_admin"
-const keycloakPassword = "pwd"
-
-func TestMain(m *testing.M) {
-	fields := logger.DataForMethod("TestMain")
-
-	var err error
-
-	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		logger.Panicf("Could not connect to docker: %s", err)
-	}
-	// pulls an image, creates a container based on it and runs it
-	keycloakContainerName := "keycloakUpdater-ti-" + strconv.Itoa(time.Now().Nanosecond())
-	fields.AddAny("container", keycloakContainerName)
-	logger.Info("trying start keycloak", fields)
-
-	keycloak, err := pool.RunWithOptions(
-		&dockertest.RunOptions{
-			Name:       keycloakContainerName,
-			Repository: "ghcr.io/signaux-faibles/conteneurs/keycloak",
-			Tag:        "v1.0.0",
-			Env:        []string{"KEYCLOAK_USER=" + keycloakAdmin, "KEYCLOAK_PASSWORD=" + keycloakPassword},
-		},
-		func(config *docker.HostConfig) {
-			// set AutoRemove to true so that stopped container goes away by itself
-			config.AutoRemove = true
-			config.RestartPolicy = docker.RestartPolicy{
-				Name: "no",
-			}
-		},
-	)
-	if err != nil {
-		kill(keycloak)
-		logger.ErrorE("Could not start keycloak", fields, err)
-	}
-	// container stops after 60 seconds
-	if err = keycloak.Expire(120); err != nil {
-		kill(keycloak)
-		logger.ErrorE("Could not set expiration on container keycloak", fields, err)
-	}
-	logger.Infof("keycloak started with username %v", keycloakAdmin)
-	keycloakPort := keycloak.GetPort("8080/tcp")
-	fields.AddAny("port", keycloakPort)
-	logger.Info("keycloak started", fields)
-	//exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	if err := pool.Retry(func() error {
-		var err error
-		kc, err = Init("http://localhost:"+keycloakPort, "master", keycloakAdmin, keycloakPassword)
-		if err != nil {
-			logger.Info("keycloak is not ready", fields)
-			return err
-		}
-		return nil
-	}); err != nil {
-		logger.Panicf("Could not connect to keycloak: %s", err)
-	}
-
-	code := m.Run()
-	kill(keycloak)
-	// You can't defer this because os.Exit doesn't care for defer
-
-	os.Exit(code)
-}
-
-func kill(resource *dockertest.Resource) {
-	if resource == nil {
-		return
-	}
-	if err := resource.Close(); err != nil {
-		logger.Panicf("Could not purge resource: %s", err)
-	}
-}
-
 func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t *testing.T) {
-	asserte := assert.New(t)
+	ass := assert.New(t)
 
 	testUser := "ti_admin"
 	testFilename := "test/resources/userNotInExcel/userBase.xlsx"
@@ -117,12 +32,12 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 
 	expectedError := errors.Errorf("configured user is not in stock file (%s) : %s", testFilename, testUser)
 
-	asserte.NotNil(err)
-	asserte.EqualError(expectedError, err.Error())
+	ass.NotNil(err)
+	ass.EqualError(expectedError, err.Error())
 }
 
 func TestKeycloakInitialisation(t *testing.T) {
-	asserte := assert.New(t)
+	ass := assert.New(t)
 	var conf structs.Config
 	var err error
 	if conf, err = config.InitConfig("test/resources/initialisation/test_config.toml"); err != nil {
@@ -145,41 +60,41 @@ func TestKeycloakInitialisation(t *testing.T) {
 	}
 
 	// assertions about realm
-	asserte.Equal("master", *kc.Realm.Realm)
-	asserte.Equal("Signaux Faibles", *kc.Realm.DisplayName)
-	asserte.Equal("signaux-faibles", *kc.Realm.EmailTheme)
-	asserte.Equal("signaux-faibles", *kc.Realm.LoginTheme)
-	asserte.NotNil(kc.Realm.SMTPServer)
-	asserte.Equal(5, *kc.Realm.MinimumQuickLoginWaitSeconds)
-	asserte.True(*kc.Realm.RememberMe)
+	ass.Equal("master", *kc.Realm.Realm)
+	ass.Equal("Signaux Faibles", *kc.Realm.DisplayName)
+	ass.Equal("signaux-faibles", *kc.Realm.EmailTheme)
+	ass.Equal("signaux-faibles", *kc.Realm.LoginTheme)
+	ass.NotNil(kc.Realm.SMTPServer)
+	ass.Equal(5, *kc.Realm.MinimumQuickLoginWaitSeconds)
+	ass.True(*kc.Realm.RememberMe)
 
 	clientSF, found := kc.getClient(signauxfaibleClientID)
-	asserte.True(found)
-	asserte.NotNil(clientSF)
-	asserte.True(*clientSF.PublicClient)
-	asserte.Contains(*clientSF.RedirectURIs, "https://signaux-faibles.beta.gouv.fr/*", "https://localhost:8080/*")
-	asserte.Len(kc.ClientRoles[signauxfaibleClientID], 145)
+	ass.True(found)
+	ass.NotNil(clientSF)
+	ass.True(*clientSF.PublicClient)
+	ass.Contains(*clientSF.RedirectURIs, "https://signaux-faibles.beta.gouv.fr/*", "https://localhost:8080/*")
+	ass.Len(kc.ClientRoles[signauxfaibleClientID], 145)
 
 	clientAnother, found := kc.getClient("another")
-	asserte.True(found)
-	asserte.NotNil(clientAnother)
-	asserte.False(*clientAnother.PublicClient)
-	asserte.Len(kc.ClientRoles["another"], 1) // il y a au minimum 1 rôle pour 1 client
+	ass.True(found)
+	ass.NotNil(clientAnother)
+	ass.False(*clientAnother.PublicClient)
+	ass.Len(kc.ClientRoles["another"], 1) // il y a au minimum 1 rôle pour 1 client
 
 	user, err := kc.GetUser("raphael.squelbut@shodo.io")
-	asserte.Nil(err)
-	asserte.NotNil(user)
+	ass.Nil(err)
+	ass.NotNil(user)
 
 	emptyUser := gocloak.User{}
 	if user != emptyUser {
 		err = logUser(*clientSF, user)
-		asserte.Nil(err)
+		ass.Nil(err)
 	}
 }
 
 // TestClientSignauxFaiblesExists teste l'existence du Client "signauxfaibles" par l'API
 func TestClientSignauxFaiblesExists(t *testing.T) {
-	asserte := assert.New(t)
+	ass := assert.New(t)
 
 	searchClientRequest := gocloak.GetClientsParams{
 		ClientID: &signauxfaibleClientID,
@@ -190,14 +105,14 @@ func TestClientSignauxFaiblesExists(t *testing.T) {
 	}
 	//clientSG := searchClientByName(t, "signauxfaibles")
 	actual, found := kc.getClient(signauxfaibleClientID)
-	asserte.True(found)
-	asserte.Len(clientSG, 1)
-	asserte.Contains(clientSG, actual)
+	ass.True(found)
+	ass.Len(clientSG, 1)
+	ass.Contains(clientSG, actual)
 }
 
 func TestRolesExistences(t *testing.T) {
 
-	asserte := assert.New(t)
+	ass := assert.New(t)
 	rolesToTest := []string{"urssaf", "dgefp", "bdf", "score", "detection", "pge"}
 
 	for _, role := range rolesToTest {
@@ -217,20 +132,20 @@ func TestRolesExistences(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error getting client roles : %v", err)
 		}
-		asserte.Lenf(rolesFromAPI, 1, "erreur pour le rôle %v", role)
+		ass.Lenf(rolesFromAPI, 1, "erreur pour le rôle %v", role)
 		expected := rolesFromAPI[0]
 
 		// on compare les résultats de l'API avec le contenu de l'objet KeycloakContext
 		clientRolesFromContext := kc.ClientRoles[signauxfaibleClientID]
-		asserte.Contains(clientRolesFromContext, expected)
+		ass.Contains(clientRolesFromContext, expected)
 
 		actual := kc.GetRoleFromRoleName(signauxfaibleClientID, role)
-		asserte.Equalf(expected, actual, "erreur pour le rôle %v", role)
+		ass.Equalf(expected, actual, "erreur pour le rôle %v", role)
 	}
 }
 
 func TestRolesAssignedToAll(t *testing.T) {
-	asserte := assert.New(t)
+	ass := assert.New(t)
 	clientSG, _ := kc.getClient(signauxfaibleClientID)
 	rolesToTest := []string{"score", "detection", "pge"}
 
@@ -249,14 +164,14 @@ func TestRolesAssignedToAll(t *testing.T) {
 			t.Fatalf("erreur lors de la récupération des users payant le rôle %v : %v", role, err)
 		}
 
-		// il y a actuellement 2 users dans le fichier de provisionning excel
-		// les 2 doivent avoir le rôle urssaf
-		asserte.Len(usersFromAPI, 3)
+		// il y a actuellement 3 users dans le fichier de provisionning excel
+		// les 3 doivent avoir le rôle urssaf
+		ass.Len(usersFromAPI, 3)
 	}
 }
 
 func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
-	asserte := assert.New(t)
+	ass := assert.New(t)
 	var err error
 	var conf structs.Config
 
@@ -278,26 +193,26 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 		4,
 	)
 	os.Stdin = stdin
-	asserte.EqualError(actual, "Trop de modifications utilisateurs.")
+	ass.EqualError(actual, "Trop de modifications utilisateurs.")
 }
 
 func TestKeycloakUpdate(t *testing.T) {
-	asserte := assert.New(t)
+	ass := assert.New(t)
 	var conf structs.Config
 
 	// voir le fichier
 	// le user raphael.squelbut@shodo.io a été créé au test précédent
 	disabledUser, err := kc.GetUser("raphael.squelbut@shodo.io")
-	asserte.Nil(err)
-	asserte.NotNil(disabledUser)
+	ass.Nil(err)
+	ass.NotNil(disabledUser)
 
 	clientSF, found := kc.getClient(signauxfaibleClientID)
-	asserte.True(found)
+	ass.True(found)
 
 	// le user doit encore pouvoir se loguer
 	// avant l'exécution de l'update
 	err = logUser(*clientSF, disabledUser)
-	asserte.Nil(err)
+	ass.Nil(err)
 
 	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
 		panic(err)
@@ -320,14 +235,14 @@ func TestKeycloakUpdate(t *testing.T) {
 	}
 
 	// des rôles ont été supprimés dans le fichier de rôles
-	asserte.Len(kc.ClientRoles[signauxfaibleClientID], 26)
+	ass.Len(kc.ClientRoles[signauxfaibleClientID], 26)
 
 	// on vérifie
 	err = logUser(*clientSF, disabledUser)
-	asserte.NotNil(err)
+	ass.NotNil(err)
 	apiError, ok := err.(*gocloak.APIError)
-	asserte.True(ok)
-	asserte.Equal(400, apiError.Code)
+	ass.True(ok)
+	ass.Equal(400, apiError.Code)
 }
 
 func readStdin(message string) *os.File {
