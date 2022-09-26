@@ -26,7 +26,7 @@ func main() {
 		conf.Realm,
 		conf.Clients,
 		conf.Stock.UsersAndRolesFilename,
-		conf.Access.Username,
+		Username(conf.Access.Username),
 		AcceptedChanges,
 	); err != nil {
 		panic(err)

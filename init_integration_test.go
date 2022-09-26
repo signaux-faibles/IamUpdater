@@ -5,16 +5,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"strconv"
+	"testing"
+	"time"
+
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/libwekan"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"os"
-	"strconv"
-	"testing"
-	"time"
 )
 
 var kc KeycloakContext
@@ -22,6 +23,8 @@ var wekan libwekan.Wekan
 var signauxfaibleClientID = "signauxfaibles"
 var cwd, _ = os.Getwd()
 var mongoUrl string
+var excelUsers Users
+var excelUserMap map[string]Roles
 
 const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
@@ -34,6 +37,10 @@ func TestMain(m *testing.M) {
 	}
 	keycloak := startKeycloak(err, pool)
 	mongo := startWekanDB(err, pool)
+	excelUsers, excelUserMap, err = loadExcel("./userBase.xlsx")
+	if err != nil {
+		logger.Panicf("Could not read excel test cases")
+	}
 
 	code := m.Run()
 	kill(keycloak)

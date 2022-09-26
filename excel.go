@@ -72,6 +72,9 @@ func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 	return users, compositeRoles, nil
 }
 
+func splitBoards(boards string) {
+	
+}
 func loadSheet(sheet xlsx.Sheet) [][]string {
 	var r [][]string
 	_ = sheet.ForEachRow(func(row *xlsx.Row) error {

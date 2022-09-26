@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
+	"log"
+	"os"
+	"testing"
+
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/assert"
-	"log"
-	"os"
-	"testing"
 )
 
 func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t *testing.T) {
@@ -26,7 +27,7 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 		nil,
 		nil,
 		testFilename,
-		testUser,
+		Username(testUser),
 		10,
 	)
 
@@ -53,7 +54,7 @@ func TestKeycloakInitialisation(t *testing.T) {
 		conf.Realm,
 		conf.Clients,
 		conf.Stock.UsersAndRolesFilename,
-		conf.Access.Username,
+		Username(conf.Access.Username),
 		10,
 	); err != nil {
 		t.Fatalf("erreur pendant l'update : %v", err)
@@ -189,7 +190,7 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 		conf.Realm,
 		conf.Clients,
 		conf.Stock.UsersAndRolesFilename,
-		conf.Access.Username,
+		Username(conf.Access.Username),
 		4,
 	)
 	os.Stdin = stdin
@@ -227,7 +228,7 @@ func TestKeycloakUpdate(t *testing.T) {
 		conf.Realm,
 		conf.Clients,
 		conf.Stock.UsersAndRolesFilename,
-		conf.Access.Username,
+		Username(conf.Access.Username),
 		10,
 	)
 	if err != nil {

@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
-	"os"
-	"strconv"
 )
 
 func UpdateAll(
@@ -17,13 +18,13 @@ func UpdateAll(
 	realm *gocloak.RealmRepresentation,
 	clients []*gocloak.Client,
 	filename string,
-	configuredUsername string,
+	configuredUsername Username,
 	acceptedChanges int,
 ) error {
 	fields := logger.DataForMethod("UpdateAll")
 
 	if _, err := kc.GetUser(configuredUsername); err != nil {
-		return errors.Wrap(err, "configured user does not exist in keycloak : "+configuredUsername)
+		return errors.Wrap(err, string("configured user does not exist in keycloak : "+configuredUsername))
 	}
 
 	logger.Info("START", fields)

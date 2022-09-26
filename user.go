@@ -9,7 +9,7 @@ import (
 )
 
 type Username string
-type Boardslug string
+type BoardSlug string
 
 // User is the definition of an user in excel state
 type User struct {
@@ -28,7 +28,6 @@ type User struct {
 
 // Users is the collection of wanted users
 type Users map[Username]User
-type UsersBoards map[Boardslug]User
 
 func (user User) roles() Roles {
 	var roles Roles
