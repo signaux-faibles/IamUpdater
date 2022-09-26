@@ -9,7 +9,7 @@ import (
 func Test_WekanUpdate(t *testing.T) {
 	ass := assert.New(t)
 
-	err := WekanUpdate(&kc, mongoUrl, "wekan", "signaux.faibles")
+	err := WekanUpdate(mongoUrl, "wekan", "signaux.faibles", "test/sample/userBase.xlsx")
 
 	ass.Nil(err)
 }
