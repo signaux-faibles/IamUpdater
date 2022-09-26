@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"modifiedAt":{"$numberInt":"-1"}},"name":"modifiedAt_-1"},{"v":{"$numberInt":"2"},"key":{"userId":{"$numberInt":"1"}},"name":"userId_1"}],"uuid":"2d16e6a2bf8747fe873bd6521eda6cb7","collectionName":"unsaved-edits","type":"collection"}

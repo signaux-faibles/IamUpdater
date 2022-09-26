@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"cardCommentId":{"$numberInt":"1"}},"name":"cardCommentId_1","unique":true}],"uuid":"d7ac85e7d7dd4c02a37713b253c937e5","collectionName":"card_comment_reactions","type":"collection"}

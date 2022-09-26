@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"modifiedAt":{"$numberInt":"-1"}},"name":"modifiedAt_-1"},{"v":{"$numberInt":"2"},"key":{"boardIds":{"$numberInt":"1"}},"name":"boardIds_1"}],"uuid":"d21a22094ff84626a0d0ede7f542a910","collectionName":"customFields","type":"collection"}
