@@ -40,13 +40,13 @@ func WekanUpdate(url, database, admin, filename string) error {
 	}
 
 	targetBoardsMembers := users.listBoards()
-	for boardSlug, boardMembers := range wantedBoards {
-
+	for boardSlug, boardMembers := range targetBoardsMembers {
+		SetMembers(wekan, boardSlug, boardMembers)
 	}
 	return err
 }
 
-func SetMembers(wekan libwekan.Wekan, boardSlug BoardSlug, members UserSlice) {
+func SetMembers(wekan libwekan.Wekan, boardSlug BoardSlug, boardMembers UserSlice) {
 
 }
 
@@ -162,29 +162,29 @@ func (users WekanUsers) Usernames() []Username {
 	return usernames
 }
 
-func intersect(usernamesA []Username, usernamesB []Username) (both []Username, onlyA []Username, onlyB []Username) {
-	for _, usernameA := range usernamesA {
+func intersect[E comparable](elementsA []E, elementsB []E) (both []E, onlyA []E, onlyB []E) {
+	for _, elementA := range elementsA {
 		foundBoth := false
-		for _, usernameB := range usernamesB {
-			if usernameA == usernameB {
-				both = append(both, usernameA)
+		for _, elementB := range elementsB {
+			if elementA == elementB {
+				both = append(both, elementA)
 				foundBoth = true
 			}
 		}
 		if !foundBoth {
-			onlyA = append(onlyA, usernameA)
+			onlyA = append(onlyA, elementA)
 		}
 	}
 
-	for _, usernameB := range usernamesB {
+	for _, elementB := range elementsB {
 		foundBoth := false
-		for _, usernameA := range usernamesA {
-			if usernameA == usernameB {
+		for _, elementA := range elementsA {
+			if elementA == elementB {
 				foundBoth = true
 			}
 		}
 		if !foundBoth {
-			onlyB = append(onlyB, usernameB)
+			onlyB = append(onlyB, elementB)
 		}
 	}
 	return both, onlyA, onlyB
