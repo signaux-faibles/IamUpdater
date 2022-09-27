@@ -2,7 +2,9 @@ module github.com/signaux-faibles/keycloakUpdater/v2
 
 go 1.18
 
-replace github.com/signaux-faibles/libwekan => /home/christophe/Project/libwekan
+//replace github.com/signaux-faibles/libwekan => /home/christophe/Project/libwekan
+//replace github.com/signaux-faibles/libwekan => /Users/raphaelsquelbut/devhome/workspace/signaux-faibles/libwekan
+replace github.com/signaux-faibles/libwekan => ../libwekan
 
 require (
 	github.com/BurntSushi/toml v1.1.0

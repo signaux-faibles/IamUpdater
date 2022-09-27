@@ -29,6 +29,8 @@ func WekanUpdate(url, database, admin, filename string) error {
 		return err
 	}
 
+	//wekan.DisableUsers(context.Background(), WekanUsers(disable))
+
 	disable.DisableUsers(wekan)
 	if err != nil {
 		return err
@@ -64,22 +66,22 @@ func (wekanUsers WekanUsers) CreateUsers(wekan libwekan.Wekan) error {
 }
 
 func (wekanUsers WekanUsers) DisableUsers(wekan libwekan.Wekan) error {
-	for _, wekanUser := range wekanUsers {
-		_, err := wekan.DisableUser(context.Background(), wekanUser)
-		if err != nil {
-			return err
-		}
-	}
+	//for _, wekanUser := range wekanUsers {
+	//	_, err := wekan.DisableUser(context.Background(), wekanUser)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }
 
 func (wekanUsers WekanUsers) EnableUsers(wekan libwekan.Wekan) error {
-	for _, wekanUser := range wekanUsers {
-		_, err := wekan.EnableUser(context.Background(), wekanUser)
-		if err != nil {
-			return err
-		}
-	}
+	//for _, wekanUser := range wekanUsers {
+	//	_, err := wekan.EnableUser(context.Background(), wekanUser)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }
 
