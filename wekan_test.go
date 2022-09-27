@@ -7,11 +7,11 @@ import (
 
 func Test_intersect(t *testing.T) {
 	ass := assert.New(t)
-	arrayWithA := []string{"A", "AA", "AB", "BA"}
-	arrayWithB := []string{"B", "BB", "AB", "BA"}
-	both, a, b := intersect(arrayWithA, arrayWithB)
+	firstArray := []string{"Albert", "Arthur", "Abbigaelle", "Barbara"}
+	secondArray := []string{"Abbigaelle", "Bambi", "Björn", "Barbara"}
+	both, a, b := intersect(firstArray, secondArray)
 
-	ass.Exactly([]string{"AB", "BA"}, both)
-	ass.Exactly([]string{"A", "AA"}, a)
-	ass.Exactly([]string{"B", "BB"}, b)
+	ass.Exactly([]string{"Abbigaelle", "Barbara"}, both)
+	ass.Exactly([]string{"Albert", "Arthur"}, a)
+	ass.Exactly([]string{"Bambi", "Björn"}, b)
 }
