@@ -14,12 +14,17 @@ type UserSlice []User
 
 func WekanUpdate(url, database, admin, filename string) error {
 	wekan, err := libwekan.Connect(context.TODO(), url, database, libwekan.Username(admin))
+	//wekan.AdminUser(context.TODO())
 	if err != nil {
 		return err
 	}
 
-	users, _, err := loadExcel(filename)
-	enable, disable, both, err := users.NeededChanges(wekan)
+	usersFromExcel, _, err := loadExcel(filename)
+	wekanUsers, err := wekan.GetUsers(context.TODO())
+	if err != nil {
+		return err
+	}
+	enable, disable, both, err := usersFromExcel.NeededChanges(wekanUsers)
 	if err != nil {
 		return err
 	}
@@ -41,7 +46,7 @@ func WekanUpdate(url, database, admin, filename string) error {
 		return err
 	}
 
-	targetBoardsMembers := users.listBoards()
+	targetBoardsMembers := usersFromExcel.listBoards()
 	for boardSlug, boardMembers := range targetBoardsMembers {
 		SetMembers(wekan, boardSlug, boardMembers)
 	}
@@ -98,8 +103,13 @@ func (users Users) listBoards() WekanBoardsUsers {
 	return wekanBoardsUsers
 }
 
-func (users Users) NeededChanges(wekan libwekan.Wekan) (creations WekanUsers, enable WekanUsers, disable WekanUsers, err error) {
-	wekanUsers, err := wekan.GetUsers(context.Background())
+func (users Users) NeededChanges(wekanUsers libwekan.Users) (
+	creations WekanUsers,
+	enable WekanUsers,
+	disable WekanUsers,
+	err error,
+) {
+
 	if err != nil {
 		return nil, nil, nil, err
 	}
