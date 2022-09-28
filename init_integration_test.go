@@ -39,15 +39,19 @@ func TestMain(m *testing.M) {
 		logger.Panicf("Could not connect to docker: %s", err)
 	}
 	mongo := startWekanDB(pool)
-	// keycloak := startKeycloak(pool)
+	keycloak := startKeycloak(pool)
 	excelUsers1, excelUserMap1, err = loadExcel("test/resources/wekanUpdate_states/1.xlsx")
+	if err != nil {
+		logger.Panicf("Could not read excel test cases")
+	}
+
 	excelUsers2, excelUserMap2, err = loadExcel("test/resources/wekanUpdate_states/2.xlsx")
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
 	}
 
 	code := m.Run()
-	// kill(keycloak)
+	kill(keycloak)
 	kill(mongo)
 	// You can't defer this because os.Exit doesn't care for defer
 
