@@ -1,10 +1,12 @@
+//go:build integration
+// +build integration
+
 package main
 
 import (
 	"context"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/signaux-faibles/libwekan"
 	"github.com/stretchr/testify/assert"
 )
@@ -12,7 +14,6 @@ import (
 func TestWekan_WekanUpdate(t *testing.T) {
 	ass := assert.New(t)
 	adminUser, _ := wekan.AdminUser(context.Background())
-	spew.Dump(adminUser)
 	ass.False(adminUser.LoginDisabled)
 	absentUser, err := wekan.GetUserFromUsername(context.Background(), "raphael.squelbut@shodo.io")
 	ass.IsType(libwekan.UnknownUserError{}, err)

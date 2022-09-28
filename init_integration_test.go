@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package main
 
 import (
@@ -25,9 +28,7 @@ var signauxfaibleClientID = "signauxfaibles"
 var cwd, _ = os.Getwd()
 var mongoUrl string
 var excelUsers1 Users
-var excelUserMap1 map[string]Roles
 var excelUsers2 Users
-var excelUserMap2 map[string]Roles
 
 const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
@@ -40,12 +41,12 @@ func TestMain(m *testing.M) {
 	}
 	mongo := startWekanDB(pool)
 	keycloak := startKeycloak(pool)
-	excelUsers1, excelUserMap1, err = loadExcel("test/resources/wekanUpdate_states/1.xlsx")
+	excelUsers1, _, err = loadExcel("test/resources/wekanUpdate_states/1.xlsx")
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
 	}
 
-	excelUsers2, excelUserMap2, err = loadExcel("test/resources/wekanUpdate_states/2.xlsx")
+	excelUsers2, _, err = loadExcel("test/resources/wekanUpdate_states/2.xlsx")
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
 	}
