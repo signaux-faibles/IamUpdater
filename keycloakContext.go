@@ -433,15 +433,3 @@ func (kc KeycloakContext) getClients(clientIDs ...string) map[string]*gocloak.Cl
 	}
 	return clientsMap
 }
-
-func contains(array []string, item string) bool {
-	if array == nil {
-		return false
-	}
-	for _, s := range array {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}

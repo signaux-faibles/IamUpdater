@@ -9,7 +9,6 @@ import (
 )
 
 type WekanBoardsUsers map[BoardSlug][]User
-type WekanUsers libwekan.Users
 type UserSlice []User
 
 func WekanUpdate(url, database, admin, filename string) error {
@@ -24,24 +23,22 @@ func WekanUpdate(url, database, admin, filename string) error {
 	if err != nil {
 		return err
 	}
-	enable, disable, both, err := usersFromExcel.NeededChanges(wekanUsers)
+	creations, enable, disable, err := usersFromExcel.WekanSelect().ListWekanChanges(wekanUsers)
 	if err != nil {
 		return err
 	}
 
-	err = enable.EnableUsers(wekan)
+	err = wekan.CreateUsers(context.Background(), creations)
 	if err != nil {
 		return err
 	}
 
-	//wekan.DisableUsers(context.Background(), WekanUsers(disable))
-
-	disable.DisableUsers(wekan)
+	err = wekan.EnableUsers(context.Background(), enable)
 	if err != nil {
 		return err
 	}
 
-	both.EnableUsers(wekan)
+	err = wekan.DisableUsers(context.Background(), disable)
 	if err != nil {
 		return err
 	}
@@ -57,39 +54,6 @@ func SetMembers(wekan libwekan.Wekan, boardSlug BoardSlug, boardMembers UserSlic
 
 }
 
-func (wekanUsers WekanUsers) CreateUsers(wekan libwekan.Wekan) error {
-	for _, wekanUser := range wekanUsers {
-		_, err := wekan.InsertUser(context.Background(), wekanUser)
-		if _, ok := err.(libwekan.UserAlreadyExistsError); ok {
-			continue
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (wekanUsers WekanUsers) DisableUsers(wekan libwekan.Wekan) error {
-	//for _, wekanUser := range wekanUsers {
-	//	_, err := wekan.DisableUser(context.Background(), wekanUser)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-	return nil
-}
-
-func (wekanUsers WekanUsers) EnableUsers(wekan libwekan.Wekan) error {
-	//for _, wekanUser := range wekanUsers {
-	//	_, err := wekan.EnableUser(context.Background(), wekanUser)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-	return nil
-}
-
 func (users Users) listBoards() WekanBoardsUsers {
 	wekanBoardsUsers := make(WekanBoardsUsers)
 	for _, user := range users {
@@ -103,10 +67,10 @@ func (users Users) listBoards() WekanBoardsUsers {
 	return wekanBoardsUsers
 }
 
-func (users Users) NeededChanges(wekanUsers libwekan.Users) (
-	creations WekanUsers,
-	enable WekanUsers,
-	disable WekanUsers,
+func (users Users) ListWekanChanges(wekanUsers libwekan.Users) (
+	creations libwekan.Users,
+	enable libwekan.Users,
+	disable libwekan.Users,
 	err error,
 ) {
 
@@ -114,18 +78,24 @@ func (users Users) NeededChanges(wekanUsers libwekan.Users) (
 		return nil, nil, nil, err
 	}
 
-	both, onlyWekan, onlyUsers := intersect(WekanUsers(wekanUsers).Usernames(), users.Usernames())
-	enable = WekanUsers(wekanUsers).UsernamesFilter(both)
-	disable = WekanUsers(wekanUsers).UsernamesFilter(onlyWekan)
-	creations = users.UsernamesFilter(onlyUsers).BuildWekanUsers()
+	wekanUsernames := mapSlice(wekanUsers, usernameFromWekanUser)
+
+	both, onlyWekan, notInWekan := intersect(wekanUsernames, users.Usernames())
+	creations = UsernamesSelect(users, notInWekan).BuildWekanUsers()
+	enable = WekanUsernamesSelect(wekanUsers, both)
+	disable = WekanUsernamesSelect(wekanUsers, onlyWekan)
 
 	return creations, enable, disable, nil
 }
 
-func (users UserSlice) BuildWekanUsers() WekanUsers {
-	var wekanUsers WekanUsers
+func usernameFromWekanUser(user libwekan.User) Username {
+	return Username(user.Username)
+}
+
+func (users Users) BuildWekanUsers() libwekan.Users {
+	var wekanUsers libwekan.Users
 	for _, user := range users {
-		initials := user.prenom[0:1] + user.nom[0:1]
+		initials := firstChar(user.prenom) + firstChar(user.nom)
 		fullname := fmt.Sprintf("%s %s", strings.ToUpper(user.nom), user.prenom)
 		wekanUser := libwekan.BuildUser(string(user.email), initials, fullname)
 		wekanUsers = append(wekanUsers, wekanUser)
@@ -133,16 +103,23 @@ func (users UserSlice) BuildWekanUsers() WekanUsers {
 	return wekanUsers
 }
 
-func (users WekanUsers) UsernamesFilter(usernames []Username) WekanUsers {
-	wekanUsersMap := users.Map()
-	var filteredUsers WekanUsers
+func firstChar(s string) string {
+	if len(s) > 0 {
+		return s[0:1]
+	}
+	return ""
+}
+
+func WekanUsernamesSelect(users libwekan.Users, usernames []Username) libwekan.Users {
+	wekanUsersMap := Map(users)
+	var filteredUsers libwekan.Users
 	for _, username := range usernames {
 		filteredUsers = append(filteredUsers, wekanUsersMap[username])
 	}
 	return filteredUsers
 }
 
-func (users WekanUsers) Map() map[Username]libwekan.User {
+func Map(users libwekan.Users) map[Username]libwekan.User {
 	wekanUsersMap := make(map[Username]libwekan.User)
 	for _, user := range users {
 		wekanUsersMap[Username(user.Username)] = user
@@ -150,12 +127,21 @@ func (users WekanUsers) Map() map[Username]libwekan.User {
 	return wekanUsersMap
 }
 
-func (users Users) UsernamesFilter(usernames []Username) UserSlice {
-	var filteredUsers UserSlice
-	for _, username := range usernames {
-		filteredUsers = append(filteredUsers, users[username])
+func UsernamesSelect(users Users, usernames []Username) Users {
+	isInUsername := func(username Username, void User) bool {
+		return contains(usernames, username)
 	}
-	return filteredUsers
+	return mapSelect(users, isInUsername)
+}
+
+func (users Users) WekanSelect() Users {
+	wekanUsers := make(Users)
+	for username, user := range users {
+		if contains(user.scope, "wekan") {
+			wekanUsers[username] = user
+		}
+	}
+	return wekanUsers
 }
 
 func (users Users) Usernames() []Username {
@@ -164,40 +150,4 @@ func (users Users) Usernames() []Username {
 		usernames = append(usernames, user.email)
 	}
 	return usernames
-}
-
-func (users WekanUsers) Usernames() []Username {
-	var usernames []Username
-	for _, user := range users {
-		usernames = append(usernames, Username(user.Username))
-	}
-	return usernames
-}
-
-func intersect[E comparable](elementsA []E, elementsB []E) (both []E, onlyA []E, onlyB []E) {
-	for _, elementA := range elementsA {
-		foundBoth := false
-		for _, elementB := range elementsB {
-			if elementA == elementB {
-				both = append(both, elementA)
-				foundBoth = true
-			}
-		}
-		if !foundBoth {
-			onlyA = append(onlyA, elementA)
-		}
-	}
-
-	for _, elementB := range elementsB {
-		foundBoth := false
-		for _, elementA := range elementsA {
-			if elementA == elementB {
-				foundBoth = true
-			}
-		}
-		if !foundBoth {
-			onlyB = append(onlyB, elementB)
-		}
-	}
-	return both, onlyA, onlyB
 }

@@ -1,5 +1,24 @@
 package main
 
+//import (
+//	"golang.org/x/exp/constraints"
+//	"strings"
+//	"testing"
+//)
+//
+//type StructureComparable struct {
+//	label string
+//}
+//
+//func (s *StructureComparable) index() int {
+//	return len(s.label)
+//}
+//
+//func Test_ordonne(t *testing.T) {
+//	tableau1 := []StructureComparable{{"fff"}, {"zzz"}, {"aaa"}}
+//	ordonne(tableau1)
+//}
+
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"

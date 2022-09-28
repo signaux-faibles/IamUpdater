@@ -180,25 +180,27 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 
 func restoreMongoDump(mongodb *dockertest.Resource) error {
 	fields := logger.DataForMethod("restoreMongoDump")
-	var b bytes.Buffer
-	output := bufio.NewWriter(&b)
+	var output bytes.Buffer
+	outputWriter := bufio.NewWriter(&output)
 
 	options := dockertest.ExecOptions{
-		StdOut: output,
-		StdErr: output,
+		StdOut: outputWriter,
+		StdErr: outputWriter,
 	}
-	//command := fmt.Sprintf("mongorestore --uri %s /dump", mongoUrl)
-	//fields.AddAny("command", command)
-	//logger.Info("Restaure le dump", fields)
-	//if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", command}, options); err != nil {
-	if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", "mongorestore  --uri mongodb://root:password@localhost/ /dump"}, options); err != nil {
+	command := "mongorestore  --uri mongodb://root:password@localhost/ /dump"
+	fields.AddAny("command", command)
+	logger.Info("Restaure le dump", fields)
+	if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", command}, options); err != nil {
 		fields.AddAny("exitCode", exitCode)
 		logger.ErrorE("Erreur lors de la restauration du dump", fields, err)
 		return err
 	}
+	//logger.Info(string(b), fields)
 	_, err := mongodb.Exec([]string{"/bin/bash", "-c", "mongo mongodb://root:password@localhost/wekan --authenticationDatabase admin --eval 'printjson(db.users.find({}).toArray())'"}, options)
 	if err != nil {
 		return err
 	}
-	return output.Flush()
+	outputWriter.Flush()
+	fmt.Println(output.String())
+	return nil
 }
