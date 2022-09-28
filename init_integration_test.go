@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package main
 
 import (
@@ -16,18 +13,21 @@ import (
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"github.com/signaux-faibles/libwekan"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var kc KeycloakContext
 
-// var wekan libwekan.Wekan
+var wekan libwekan.Wekan
 var signauxfaibleClientID = "signauxfaibles"
 var cwd, _ = os.Getwd()
 var mongoUrl string
-var excelUsers Users
-var excelUserMap map[string]Roles
+var excelUsers1 Users
+var excelUserMap1 map[string]Roles
+var excelUsers2 Users
+var excelUserMap2 map[string]Roles
 
 const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
@@ -39,14 +39,15 @@ func TestMain(m *testing.M) {
 		logger.Panicf("Could not connect to docker: %s", err)
 	}
 	mongo := startWekanDB(pool)
-	keycloak := startKeycloak(pool)
-	excelUsers, excelUserMap, err = loadExcel("./userBase.xlsx")
+	// keycloak := startKeycloak(pool)
+	excelUsers1, excelUserMap1, err = loadExcel("test/resources/wekanUpdate_states/1.xlsx")
+	excelUsers2, excelUserMap2, err = loadExcel("test/resources/wekanUpdate_states/2.xlsx")
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
 	}
 
 	code := m.Run()
-	kill(keycloak)
+	// kill(keycloak)
 	kill(mongo)
 	// You can't defer this because os.Exit doesn't care for defer
 
@@ -165,15 +166,10 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 	if err != nil {
 		logger.ErrorE("Erreur lors de la restauration du dump : %s", fields, err)
 	}
-	//wekan, err := libwekan.Connect(context.TODO(), mongoUrl, "wekan", "root")
-	//if err != nil {
-	//	logger.ErrorE("Erreur lors de la connexion à wekan", fields, err)
-	//}
-	//users, err := wekan.GetUsers(context.TODO())
-	//if err != nil {
-	//	logger.ErrorE("Erreur lors de la récupération des users", fields, err)
-	//}
-	//logger.Infof("nombre de users :%v", users)
+	wekan, err = libwekan.Connect(context.Background(), mongoUrl, "wekan", "signaux.faibles")
+	if err != nil {
+		logger.ErrorE("Erreur lors de la creation de l'objet libwekan.Wekan : %s", fields, err)
+	}
 	logger.Info("Mongo est prêt et restauré", fields)
 	return mongodb
 }
@@ -201,6 +197,6 @@ func restoreMongoDump(mongodb *dockertest.Resource) error {
 		return err
 	}
 	outputWriter.Flush()
-	fmt.Println(output.String())
+	// fmt.Println(output.String())
 	return nil
 }

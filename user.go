@@ -9,7 +9,6 @@ import (
 )
 
 type Username string
-type BoardSlug string
 
 // User is the definition of an user in excel state
 type User struct {
