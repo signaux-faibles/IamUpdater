@@ -1,15 +1,5 @@
 package main
 
-//type Orderable interface {
-//	index() constraints.Ordered
-//}
-//
-//func ordonne(unsorted []Orderable) {
-//	sort.Slice(unsorted, func(i, j int) bool {
-//		return unsorted[i].index() < unsorted[j].index()
-//	})
-//}
-
 func mapSlice[T any, M any](a []T, f func(T) M) []M {
 	n := make([]M, len(a))
 	for i, e := range a {
