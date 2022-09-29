@@ -48,21 +48,17 @@ func Test_mapSelect(t *testing.T) {
 		"a": 1,
 		"b": 2,
 	}
-	m1 := mapSelect(m, func(i string, e int) bool {
-		return e < 3
-	})
-	ass.Equal(expected, m1)
-	m2 := mapSelect(m, func(i string, b int) bool {
-		return i == "a" || i == "b"
-	})
-	ass.Equal(expected, m2)
+	m1 := mapSelect(m, lessThan3())
+	ass.Exactly(expected, m1)
+	m2 := mapSelect(m, onlyAorB())
+	ass.Exactly(expected, m2)
 }
 
 func Test_mapSlice(t *testing.T) {
 	ass := assert.New(t)
 	array := []string{"a", "aa", "aaa", "aaaa"}
-	result := mapSlice(array, func(e string) int { return len(e) })
-	ass.Equal([]int{1, 2, 3, 4}, result)
+	result := mapSlice(array, toLength())
+	ass.Exactly([]int{1, 2, 3, 4}, result)
 }
 
 func Test_mapifySlice(t *testing.T) {
@@ -74,13 +70,29 @@ func Test_mapifySlice(t *testing.T) {
 		3: "aaa",
 		4: "aaaa",
 	}
-	result := mapifySlice(array, func(e string) int { return len(e) })
-	ass.Equal(expected, result)
+	result := mapifySlice(array, toLength())
+	ass.Exactly(expected, result)
 }
 
 func Test_contains(t *testing.T) {
 	ass := assert.New(t)
 	array := []string{"a", "b", "c", "d"}
-	ass.False(contains(array, "e"))
-	ass.True(contains(array, "a"))
+	ass.Contains(array, "a")
+	ass.NotContains(array, "e")
+}
+
+func toLength() func(e string) int {
+	return func(e string) int { return len(e) }
+}
+
+func lessThan3() func(i string, e int) bool {
+	return func(i string, e int) bool {
+		return e < 3
+	}
+}
+
+func onlyAorB() func(i string, b int) bool {
+	return func(i string, b int) bool {
+		return i == "a" || i == "b"
+	}
 }
