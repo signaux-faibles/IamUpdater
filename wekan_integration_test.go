@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package main
 
 import (
@@ -42,6 +39,10 @@ func TestWekan_WekanUpdate(t *testing.T) {
 
 	adminUser, _ = wekan.AdminUser(context.Background())
 	ass.False(adminUser.LoginDisabled)
+
+	//
+	// effectue les mêmes tests avec un autre fichier excel
+	//
 	err = WekanUpdate(mongoUrl, "wekan", "signaux.faibles", "test/resources/wekanUpdate_states/2.xlsx")
 	ass.Nil(err)
 

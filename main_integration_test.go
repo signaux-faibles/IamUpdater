@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package main
 
 import (
@@ -257,7 +254,10 @@ func readStdin(message string) *os.File {
 	origStdin := os.Stdin
 	os.Stdin = r
 
-	w.WriteString(message)
+	_, err = w.WriteString(message)
+	if err != nil {
+		panic("ne peut lire STDIN")
+	}
 	return origStdin
 }
 

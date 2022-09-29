@@ -8,13 +8,15 @@ import (
 	"github.com/signaux-faibles/libwekan"
 )
 
-type UserSlice []User
-
 func WekanUpdate(url, database, admin, filename string) error {
-	wekan, err := libwekan.Connect(context.TODO(), url, database, libwekan.Username(admin))
+	wekan, err := libwekan.Init(context.TODO(), url, database, libwekan.Username(admin))
 	if err != nil {
 		return err
 	}
+	if err := wekan.Ping(); err != nil {
+		return err
+	}
+
 	wekanAdminUser, err := wekan.AdminUser(context.Background())
 	if err != nil {
 		return err
@@ -57,7 +59,10 @@ func WekanUpdate(url, database, admin, filename string) error {
 
 	wekanBoardsMembers := usersFromExcel.listBoards()
 	for boardSlug, boardMembers := range wekanBoardsMembers {
-		SetMembers(wekan, boardSlug, boardMembers)
+		err := SetMembers(wekan, boardSlug, boardMembers)
+		if err != nil {
+			return nil
+		}
 	}
 	return nil
 }
@@ -75,7 +80,7 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 	}
 	// wekan.AdminUser() est membre de toutes les boards, ajoutons le ici pour ne pas risquer de l'oublier dans les utilisateurs
 	wantedMembersUsernames := []libwekan.Username{admin.Username}
-	for username, _ := range boardMembers {
+	for username := range boardMembers {
 		wantedMembersUsernames = append(wantedMembersUsernames, libwekan.Username(username))
 	}
 	wantedMembers, err := wekan.GetUsersFromUsernames(context.Background(), wantedMembersUsernames)
@@ -84,7 +89,7 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 	}
 	wantedMembersIDs := mapSlice(wantedMembers, func(user libwekan.User) libwekan.UserID { return user.ID })
 
-	alreadyBoardMember, inactiveBoardMember, ongoingBoardMember := intersect(currentMembersIDs, wantedMembersIDs)
+	alreadyBoardMember, wantedInactiveBoardMember, ongoingBoardMember := intersect(currentMembersIDs, wantedMembersIDs)
 	for _, userID := range alreadyBoardMember {
 		err := wekan.EnsureUserIsActiveBoardMember(context.Background(), board.ID, userID)
 		if err != nil {
@@ -97,7 +102,7 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 			return err
 		}
 	}
-	for _, userID := range inactiveBoardMember {
+	for _, userID := range wantedInactiveBoardMember {
 		err := wekan.EnsureUserIsInactiveBoardMember(context.Background(), board.ID, userID)
 		if err != nil {
 			return err

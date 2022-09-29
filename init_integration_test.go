@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package main
 
 import (
@@ -28,7 +25,8 @@ var signauxfaibleClientID = "signauxfaibles"
 var cwd, _ = os.Getwd()
 var mongoUrl string
 var excelUsers1 Users
-var excelUsers2 Users
+
+//var excelUsers2 Users
 
 const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
@@ -39,21 +37,21 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		logger.Panicf("Could not connect to docker: %s", err)
 	}
-	mongo := startWekanDB(pool)
+	mongodb := startWekanDB(pool)
 	keycloak := startKeycloak(pool)
 	excelUsers1, _, err = loadExcel("test/resources/wekanUpdate_states/1.xlsx")
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
 	}
 
-	excelUsers2, _, err = loadExcel("test/resources/wekanUpdate_states/2.xlsx")
+	//excelUsers2, _, err = loadExcel("test/resources/wekanUpdate_states/2.xlsx")
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
 	}
 
 	code := m.Run()
 	kill(keycloak)
-	kill(mongo)
+	kill(mongodb)
 	// You can't defer this because os.Exit doesn't care for defer
 
 	os.Exit(code)
@@ -165,13 +163,14 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 		}
 		return db.Ping(context.TODO(), nil)
 	}); err != nil {
-		logger.ErrorE("N'arrive pas à démarrer Mongo: %s", fields, err)
+		kill(mongodb)
+		panic("N'arrive pas à démarrer Mongo")
 	}
 	err = restoreMongoDump(mongodb)
 	if err != nil {
 		logger.ErrorE("Erreur lors de la restauration du dump : %s", fields, err)
 	}
-	wekan, err = libwekan.Connect(context.Background(), mongoUrl, "wekan", "signaux.faibles")
+	wekan, err = libwekan.Init(context.Background(), mongoUrl, "wekan", "signaux.faibles")
 	if err != nil {
 		logger.ErrorE("Erreur lors de la creation de l'objet libwekan.Wekan : %s", fields, err)
 	}
@@ -184,24 +183,17 @@ func restoreMongoDump(mongodb *dockertest.Resource) error {
 	var output bytes.Buffer
 	outputWriter := bufio.NewWriter(&output)
 
-	options := dockertest.ExecOptions{
+	dockerOptions := dockertest.ExecOptions{
 		StdOut: outputWriter,
 		StdErr: outputWriter,
 	}
 	command := "mongorestore  --uri mongodb://root:password@localhost/ /dump"
 	fields.AddAny("command", command)
 	logger.Info("Restaure le dump", fields)
-	if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", command}, options); err != nil {
+	if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", command}, dockerOptions); err != nil {
 		fields.AddAny("exitCode", exitCode)
 		logger.ErrorE("Erreur lors de la restauration du dump", fields, err)
 		return err
 	}
-	//logger.Info(string(b), fields)
-	_, err := mongodb.Exec([]string{"/bin/bash", "-c", "mongo mongodb://root:password@localhost/wekan --authenticationDatabase admin --eval 'printjson(db.users.find({}).toArray())'"}, options)
-	if err != nil {
-		return err
-	}
-	outputWriter.Flush()
-	// fmt.Println(output.String())
-	return nil
+	return outputWriter.Flush()
 }
