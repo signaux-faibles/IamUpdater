@@ -26,6 +26,8 @@ var cwd, _ = os.Getwd()
 var mongoUrl string
 var excelUsers1 Users
 
+var ctx = context.Background()
+
 //var excelUsers2 Users
 
 const keycloakAdmin = "ti_admin"
@@ -38,7 +40,12 @@ func TestMain(m *testing.M) {
 		logger.Panicf("Could not connect to docker: %s", err)
 	}
 	mongodb := startWekanDB(pool)
-	keycloak := startKeycloak(pool)
+
+	var keycloak *dockertest.Resource
+	if !(os.Getenv("DISABLE_KEYCLOAK") == "yes") {
+		keycloak = startKeycloak(pool)
+	}
+
 	excelUsers1, _, err = loadExcel("test/resources/wekanUpdate_states/1.xlsx")
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
@@ -50,7 +57,10 @@ func TestMain(m *testing.M) {
 	}
 
 	code := m.Run()
-	kill(keycloak)
+
+	if !(os.Getenv("DISABLE_KEYCLOAK") == "yes") {
+		kill(keycloak)
+	}
 	kill(mongodb)
 	// You can't defer this because os.Exit doesn't care for defer
 

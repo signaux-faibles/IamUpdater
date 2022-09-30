@@ -9,27 +9,19 @@ import (
 )
 
 func WekanUpdate(url, database, admin, filename string) error {
-	wekan, err := libwekan.Init(context.TODO(), url, database, libwekan.Username(admin))
-	if err != nil {
-		return err
-	}
-	if err := wekan.Ping(); err != nil {
-		return err
-	}
-
-	wekanAdminUser, err := wekan.AdminUser(context.Background())
+	wekan, err := initWekan(url, database, admin)
 	if err != nil {
 		return err
 	}
 
-	usersFromExcel, _, err := loadExcel(filename)
+	allUsersFromExcel, _, err := loadExcel(filename)
 	if err != nil {
 		return err
 	}
+	usersFromExcel := allUsersFromExcel.selectScopeWekan()
 
-	// TODO: améliorer ça, objectif de s'assurer que l'admin reste bien actif
-	usersFromExcel[Username(wekanAdminUser.Username)] = User{
-		email: Username(wekanAdminUser.Username),
+	usersFromExcel[Username(wekan.AdminUsername())] = User{
+		email: Username(wekan.AdminUsername()),
 		scope: []string{"wekan"},
 	}
 
@@ -37,7 +29,7 @@ func WekanUpdate(url, database, admin, filename string) error {
 	if err != nil {
 		return err
 	}
-	creations, enable, disable, err := usersFromExcel.WekanSelect().ListWekanChanges(wekanUsers)
+	creations, enable, disable, err := usersFromExcel.ListWekanChanges(wekanUsers)
 	if err != nil {
 		return err
 	}
@@ -67,6 +59,22 @@ func WekanUpdate(url, database, admin, filename string) error {
 	return nil
 }
 
+func initWekan(url string, database string, admin string) (libwekan.Wekan, error) {
+	wekan, err := libwekan.Init(context.Background(), url, database, libwekan.Username(admin))
+	if err != nil {
+		return libwekan.Wekan{}, err
+	}
+
+	if err := wekan.Ping(context.Background()); err != nil {
+		return libwekan.Wekan{}, err
+	}
+	err = wekan.AssertHasAdmin(context.Background())
+	if err != nil {
+		return libwekan.Wekan{}, err
+	}
+	return wekan, nil
+}
+
 func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
 	board, err := wekan.GetBoardFromSlug(context.Background(), boardSlug)
 	if err != nil {
@@ -74,12 +82,8 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 	}
 	currentMembersIDs := mapSlice(board.Members, func(member libwekan.BoardMember) libwekan.UserID { return member.UserID })
 
-	admin, err := wekan.AdminUser(context.Background())
-	if err != nil {
-		return err
-	}
 	// wekan.AdminUser() est membre de toutes les boards, ajoutons le ici pour ne pas risquer de l'oublier dans les utilisateurs
-	wantedMembersUsernames := []libwekan.Username{admin.Username}
+	wantedMembersUsernames := []libwekan.Username{wekan.AdminUsername()}
 	for username := range boardMembers {
 		wantedMembersUsernames = append(wantedMembersUsernames, libwekan.Username(username))
 	}
@@ -110,7 +114,7 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 	}
 
 	// wekan.AdminUser() est administrateur de toutes les boards, appliquons la règle
-	return wekan.EnsureUserIsBoardAdmin(context.Background(), board.ID, admin.ID)
+	return wekan.EnsureUserIsBoardAdmin(context.Background(), board.ID, libwekan.UserID(wekan.AdminID()))
 }
 
 func (users Users) listBoards() map[libwekan.BoardSlug]Users {
@@ -198,7 +202,7 @@ func UsernamesSelect(users Users, usernames []Username) Users {
 	return mapSelect(users, isInUsername)
 }
 
-func (users Users) WekanSelect() Users {
+func (users Users) selectScopeWekan() Users {
 	wekanUsers := make(Users)
 	for username, user := range users {
 		if contains(user.scope, "wekan") {
