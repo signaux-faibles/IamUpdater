@@ -72,7 +72,7 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 	if err != nil {
 		return err
 	}
-	currentMembersIDs := mapSlice(board.Members, func(member libwekan.BoardMember) libwekan.UserID { return member.UserId })
+	currentMembersIDs := mapSlice(board.Members, func(member libwekan.BoardMember) libwekan.UserID { return member.UserID })
 
 	admin, err := wekan.AdminUser(context.Background())
 	if err != nil {
