@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"os"
 	"strconv"
 	"testing"
@@ -20,15 +21,13 @@ import (
 
 var kc KeycloakContext
 
-var wekan libwekan.Wekan
+var globalWekan libwekan.Wekan
 var signauxfaibleClientID = "signauxfaibles"
 var cwd, _ = os.Getwd()
 var mongoUrl string
-var excelUsers1 Users
+var mongodb *dockertest.Resource
 
 var ctx = context.Background()
-
-//var excelUsers2 Users
 
 const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
@@ -39,14 +38,14 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		logger.Panicf("Could not connect to docker: %s", err)
 	}
-	mongodb := startWekanDB(pool)
+	mongodb = startWekanDB(pool)
 
 	var keycloak *dockertest.Resource
 	if !(os.Getenv("DISABLE_KEYCLOAK") == "yes") {
 		keycloak = startKeycloak(pool)
 	}
 
-	excelUsers1, _, err = loadExcel("test/resources/wekanUpdate_states/1.xlsx")
+	// excelUsers1, _, err := loadExcel("test/resources/wekanUpdate_states/1.xlsx")
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
 	}
@@ -180,7 +179,7 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 	if err != nil {
 		logger.ErrorE("Erreur lors de la restauration du dump : %s", fields, err)
 	}
-	wekan, err = libwekan.Init(context.Background(), mongoUrl, "wekan", "signaux.faibles")
+	globalWekan, err = libwekan.Init(context.Background(), mongoUrl, "wekan", "signaux.faibles")
 	if err != nil {
 		logger.ErrorE("Erreur lors de la creation de l'objet libwekan.Wekan : %s", fields, err)
 	}
@@ -206,4 +205,30 @@ func restoreMongoDump(mongodb *dockertest.Resource) error {
 		return err
 	}
 	return outputWriter.Flush()
+}
+
+func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *testing.T) libwekan.Wekan {
+	databasename := t.Name() + suffix
+	fields := logger.DataForMethod("restoreMongoDump")
+	fields.AddAny("database", databasename)
+	var output bytes.Buffer
+	outputWriter := bufio.NewWriter(&output)
+
+	dockerOptions := dockertest.ExecOptions{
+		StdOut: outputWriter,
+		StdErr: outputWriter,
+	}
+	command := fmt.Sprintf("mongorestore  --uri mongodb://root:password@localhost/ /dump --nsFrom \"wekan.*\" --nsTo \"%s.*\"", databasename)
+	fields.AddAny("command", command)
+	logger.Info("Restaure le dump", fields)
+	if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", command}, dockerOptions); err != nil {
+		fields.AddAny("exitCode", exitCode)
+		logger.ErrorE("Erreur lors de la restauration du dump", fields, err)
+		require.Nil(t, err)
+	}
+	err := outputWriter.Flush()
+	require.Nil(t, err)
+	wekan, err := initWekan(mongoUrl, databasename, "signaux.faibles")
+	require.Nil(t, err)
+	return wekan
 }

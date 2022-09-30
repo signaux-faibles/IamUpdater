@@ -18,18 +18,25 @@ func WekanUpdate(url, database, admin, filename string) error {
 	if err != nil {
 		return err
 	}
-	usersFromExcel := allUsersFromExcel.selectScopeWekan()
 
-	usersFromExcel[Username(wekan.AdminUsername())] = User{
-		email: Username(wekan.AdminUsername()),
-		scope: []string{"wekan"},
-	}
-
-	wekanUsers, err := wekan.GetUsers(context.TODO())
+	err = ManageUsers(wekan, allUsersFromExcel)
 	if err != nil {
 		return err
 	}
-	creations, enable, disable, err := usersFromExcel.ListWekanChanges(wekanUsers)
+
+	return ManageBoardsMembers(wekan, allUsersFromExcel)
+}
+
+func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
+	wekanUsersfromConfig := fromConfig.selectScopeWekan()
+	addAdmin(wekanUsersfromConfig, wekan)
+
+	fromWekan, err := wekan.GetUsers(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	creations, enable, disable, err := wekanUsersfromConfig.ListWekanChanges(fromWekan)
 	if err != nil {
 		return err
 	}
@@ -44,19 +51,25 @@ func WekanUpdate(url, database, admin, filename string) error {
 		return err
 	}
 
-	err = wekan.DisableUsers(context.Background(), disable)
-	if err != nil {
-		return err
-	}
+	return wekan.DisableUsers(context.Background(), disable)
+}
 
-	wekanBoardsMembers := usersFromExcel.listBoards()
+func ManageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
+	wekanBoardsMembers := fromConfig.selectScopeWekan().listBoards()
 	for boardSlug, boardMembers := range wekanBoardsMembers {
 		err := SetMembers(wekan, boardSlug, boardMembers)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 	return nil
+}
+
+func addAdmin(usersFromExcel Users, wekan libwekan.Wekan) {
+	usersFromExcel[Username(wekan.AdminUsername())] = User{
+		email: Username(wekan.AdminUsername()),
+		scope: []string{"wekan"},
+	}
 }
 
 func initWekan(url string, database string, admin string) (libwekan.Wekan, error) {
@@ -82,7 +95,7 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 	}
 	currentMembersIDs := mapSlice(board.Members, func(member libwekan.BoardMember) libwekan.UserID { return member.UserID })
 
-	// wekan.AdminUser() est membre de toutes les boards, ajoutons le ici pour ne pas risquer de l'oublier dans les utilisateurs
+	// globalWekan.AdminUser() est membre de toutes les boards, ajoutons le ici pour ne pas risquer de l'oublier dans les utilisateurs
 	wantedMembersUsernames := []libwekan.Username{wekan.AdminUsername()}
 	for username := range boardMembers {
 		wantedMembersUsernames = append(wantedMembersUsernames, libwekan.Username(username))
@@ -113,7 +126,7 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 		}
 	}
 
-	// wekan.AdminUser() est administrateur de toutes les boards, appliquons la règle
+	// globalWekan.AdminUser() est administrateur de toutes les boards, appliquons la règle
 	return wekan.EnsureUserIsBoardAdmin(context.Background(), board.ID, libwekan.UserID(wekan.AdminID()))
 }
 
