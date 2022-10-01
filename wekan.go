@@ -55,7 +55,7 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 }
 
 func ManageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
-	wekanBoardsMembers := fromConfig.selectScopeWekan().listBoards()
+	wekanBoardsMembers := fromConfig.selectScopeWekan().inferBoardsMember()
 	for boardSlug, boardMembers := range wekanBoardsMembers {
 		err := SetMembers(wekan, boardSlug, boardMembers)
 		if err != nil {
@@ -130,7 +130,7 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 	return wekan.EnsureUserIsBoardAdmin(context.Background(), board.ID, libwekan.UserID(wekan.AdminID()))
 }
 
-func (users Users) listBoards() map[libwekan.BoardSlug]Users {
+func (users Users) inferBoardsMember() BoardsMembers {
 	wekanBoardsUserSlice := make(map[libwekan.BoardSlug][]User)
 	for _, user := range users {
 		for _, boardSlug := range user.boards {
@@ -141,11 +141,25 @@ func (users Users) listBoards() map[libwekan.BoardSlug]Users {
 		}
 	}
 
-	wekanBoardsUsers := make(map[libwekan.BoardSlug]Users)
+	wekanBoardsUsers := make(BoardsMembers)
 	for boardSlug, userSlice := range wekanBoardsUserSlice {
 		wekanBoardsUsers[boardSlug] = mapifySlice(userSlice, func(user User) Username { return user.email })
 	}
 	return wekanBoardsUsers
+}
+
+type BoardsMembers map[libwekan.BoardSlug]Users
+
+func (boardsMembers BoardsMembers) AddBoards(boards []libwekan.Board) BoardsMembers {
+	if boardsMembers == nil {
+		boardsMembers = make(BoardsMembers)
+	}
+	for _, b := range boards {
+		if _, ok := boardsMembers[b.Slug]; !ok {
+			boardsMembers[b.Slug] = make(Users)
+		}
+	}
+	return boardsMembers
 }
 
 func (users Users) ListWekanChanges(wekanUsers libwekan.Users) (
