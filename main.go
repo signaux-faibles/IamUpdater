@@ -14,18 +14,28 @@ func main() {
 	}
 
 	logger.ConfigureWith(*conf.Logger)
+	fields := logger.DataForMethod("main()")
 
 	clientId := conf.Stock.ClientForRoles
 	kc, err := NewKeycloakContext(conf.Access)
 	if err != nil {
 		logger.Panic(err)
 	}
-	if err = UpdateAll(
+
+	// loading desired state for users, composites roles
+	logger.Info("lecture du fichier excel stock", fields)
+	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
+	if err != nil {
+		logger.Panic(err)
+	}
+
+	if err = UpdateKeycloak(
 		&kc,
 		clientId,
 		conf.Realm,
 		conf.Clients,
-		conf.Stock.UsersAndRolesFilename,
+		users,
+		compositeRoles,
 		Username(conf.Access.Username),
 		AcceptedChanges,
 	); err != nil {

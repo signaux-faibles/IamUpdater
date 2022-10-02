@@ -9,6 +9,7 @@ import (
 
 // Roles is role collection in []string with some handy functions attached
 type Roles []string
+type CompositeRoles map[string]Roles
 
 func (roles *Roles) add(role string) {
 	if roles != nil {
