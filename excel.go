@@ -49,7 +49,8 @@ func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 				employeur:         userRow[fields["ENTITES"]],
 				goup:              userRow[fields["GOUP"]],
 				accesGeographique: userRow[fields["ACCES GEOGRAPHIQUE"]],
-				boards:            strings.Split(userRow[fields["BOARDS"]], ","),
+				boards:            strings.Split(strings.Trim(userRow[fields["BOARDS"]], ""), ","),
+				taskforce:         strings.Split(strings.Trim(userRow[fields["TASKFORCE"]], ""), ","),
 			}
 			scope := strings.Split(userRow[fields["SCOPE"]], ",")
 			if len(scope) != 1 || scope[0] != "" {
@@ -72,9 +73,6 @@ func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 	return users, compositeRoles, nil
 }
 
-func splitBoards(boards string) {
-	
-}
 func loadSheet(sheet xlsx.Sheet) [][]string {
 	var r [][]string
 	_ = sheet.ForEachRow(func(row *xlsx.Row) error {

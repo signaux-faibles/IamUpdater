@@ -23,6 +23,7 @@ type User struct {
 	scope             []string
 	accesGeographique string
 	boards            []string
+	taskforce         []string
 }
 
 // Users is the collection of wanted users

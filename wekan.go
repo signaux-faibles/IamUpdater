@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
-
 	"github.com/signaux-faibles/libwekan"
+	"strings"
 )
 
 func WekanUpdate(url, database, admin, filename string) error {
@@ -24,7 +24,12 @@ func WekanUpdate(url, database, admin, filename string) error {
 		return err
 	}
 
-	return ManageBoardsMembers(wekan, allUsersFromExcel)
+	err = ManageBoardsMembers(wekan, allUsersFromExcel)
+	if err != nil {
+		return err
+	}
+
+	return ManageBoardsLabelsTaskforce(wekan, allUsersFromExcel)
 }
 
 func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
@@ -36,10 +41,7 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 		return err
 	}
 
-	creations, enable, disable, err := wekanUsersfromConfig.ListWekanChanges(fromWekan)
-	if err != nil {
-		return err
-	}
+	creations, enable, disable := wekanUsersfromConfig.ListWekanChanges(fromWekan)
 
 	err = wekan.CreateUsers(context.Background(), creations)
 	if err != nil {
@@ -63,6 +65,10 @@ func ManageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 		}
 	}
 	return nil
+}
+
+func ManageBoardsLabelsTaskforce(wekan libwekan.Wekan, fromConfig Users) error {
+	return errors.New("not implemented")
 }
 
 func addAdmin(usersFromExcel Users, wekan libwekan.Wekan) {
@@ -166,21 +172,16 @@ func (users Users) ListWekanChanges(wekanUsers libwekan.Users) (
 	creations libwekan.Users,
 	enable libwekan.Users,
 	disable libwekan.Users,
-	err error,
 ) {
-
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
 	wekanUsernames := mapSlice(wekanUsers, usernameFromWekanUser)
+	configUsernames := users.Usernames()
 
-	both, onlyWekan, notInWekan := intersect(wekanUsernames, users.Usernames())
+	both, onlyWekan, notInWekan := intersect(wekanUsernames, configUsernames)
 	creations = UsernamesSelect(users, notInWekan).BuildWekanUsers()
 	enable = WekanUsernamesSelect(wekanUsers, both)
 	disable = WekanUsernamesSelect(wekanUsers, onlyWekan)
 
-	return creations, enable, disable, nil
+	return creations, enable, disable
 }
 
 func usernameFromWekanUser(user libwekan.User) Username {
@@ -241,8 +242,8 @@ func (users Users) selectScopeWekan() Users {
 
 func (users Users) Usernames() []Username {
 	var usernames []Username
-	for _, user := range users {
-		usernames = append(usernames, user.email)
+	for username := range users {
+		usernames = append(usernames, username)
 	}
 	return usernames
 }

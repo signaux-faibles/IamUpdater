@@ -19,7 +19,6 @@ require (
 	github.com/snowzach/writerhook v0.0.0-20180327172656-2eef47d6a0bf
 	github.com/stretchr/testify v1.8.0
 	github.com/tealeg/xlsx/v3 v3.2.4
-	golang.org/x/exp v0.0.0-20220921164117-439092de6870
 )
 
 require (
@@ -50,7 +49,7 @@ require (
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.2 // indirect
+	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/opencontainers/runc v1.1.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
