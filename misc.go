@@ -16,14 +16,24 @@ func mapifySlice[E any, I comparable](a []E, f func(E) I) map[I]E {
 	return n
 }
 
-func mapSelect[E any, I comparable](m map[I]E, f func(I, E) bool) map[I]E {
+func selectMap[E any, I comparable](m map[I]E, filter func(I, E) bool) map[I]E {
 	n := make(map[I]E)
 	for i, e := range m {
-		if f(i, e) {
+		if filter(i, e) {
 			n[i] = e
 		}
 	}
 	return n
+}
+
+func selectSlice[Element comparable](slice []Element, test func(Element) bool) []Element {
+	var newSlice []Element
+	for _, element := range slice {
+		if test(element) {
+			newSlice = append(newSlice, element)
+		}
+	}
+	return newSlice
 }
 
 func contains[E comparable](array []E, item E) bool {

@@ -21,7 +21,6 @@ import (
 
 var kc KeycloakContext
 
-//var globalWekan libwekan.Wekan
 var signauxfaibleClientID = "signauxfaibles"
 var cwd, _ = os.Getwd()
 var mongoUrl string
@@ -38,12 +37,12 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		logger.Panicf("Could not connect to docker: %s", err)
 	}
-	mongodb = startWekanDB(pool)
 
 	var keycloak *dockertest.Resource
 	if !(os.Getenv("DISABLE_KEYCLOAK") == "yes") {
 		keycloak = startKeycloak(pool)
 	}
+	mongodb = startWekanDB(pool)
 
 	// excelUsers1, _, err := loadExcel("test/resources/wekanUpdate_states/1.xlsx")
 	if err != nil {

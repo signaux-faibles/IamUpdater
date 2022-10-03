@@ -22,7 +22,7 @@ func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {
 		},
 	}
 
-	err := ManageUsers(wekan, usersWithoutScopeWekan)
+	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan, StageManageUsers)
 	ass.Nil(err)
 	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	ass.IsType(libwekan.UnknownUserError{}, actualErr)
@@ -40,7 +40,7 @@ func TestWekan_ManageUsers_withScopeWekan(t *testing.T) {
 		},
 	}
 
-	err := ManageUsers(wekan, usersWithScopeWekan)
+	err := pipeline.StopAfter(wekan, usersWithScopeWekan, StageManageUsers)
 	ass.Nil(err)
 	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	ass.Nil(actualErr)
@@ -48,7 +48,7 @@ func TestWekan_ManageUsers_withScopeWekan(t *testing.T) {
 }
 
 func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
-	// WHEN
+	// GIVEN
 	wekan := restoreMongoDumpInDatabase(mongodb, "", t)
 	ass := assert.New(t)
 	usernameDeTest := Username("wekan_user")
@@ -58,9 +58,8 @@ func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 			email: usernameDeTest,
 		},
 	}
-	ManageUsers(wekan, usersWithScopeWekan)
+	pipeline.StopAfter(wekan, usersWithScopeWekan, StageManageUsers)
 
-	// THEN
 	usersWithoutScopeWekan := Users{
 		usernameDeTest: User{
 			scope: []string{"not_wekan"},
@@ -68,8 +67,11 @@ func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 			//boards: []string{"tableau-crp-bfc"},
 		},
 	}
-	err := ManageUsers(wekan, usersWithoutScopeWekan)
+	// WHEN
+	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan, StageManageUsers)
 	ass.Nil(err)
+
+	// THEN
 	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	ass.Nil(actualErr)
 	ass.NotEmpty(actualUser)

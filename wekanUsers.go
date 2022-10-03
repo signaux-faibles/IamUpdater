@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+// ManageUsers
+// - objectif de traiter les utilisateurs Wekan
+// - création des utilisateurs inconnus dans Wekan
+// - désactivation des utilisateurs superflus
 func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 	wekanUsersfromConfig := fromConfig.selectScopeWekan()
 	addAdmin(wekanUsersfromConfig, wekan)
@@ -63,7 +67,7 @@ func UsernamesSelect(users Users, usernames []Username) Users {
 	isInUsername := func(username Username, void User) bool {
 		return contains(usernames, username)
 	}
-	return mapSelect(users, isInUsername)
+	return selectMap(users, isInUsername)
 }
 
 func (users Users) selectScopeWekan() Users {

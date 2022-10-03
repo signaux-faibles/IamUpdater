@@ -22,10 +22,9 @@ func TestWekan_ManageBoardsMembers_withoutBoard(t *testing.T) {
 			boards: []string{},
 		},
 	}
-	ManageUsers(wekan, usersWithoutBoards)
 
 	// THEN
-	err := ManageBoardsMembers(wekan, usersWithoutBoards)
+	err := pipeline.StopAfter(wekan, usersWithoutBoards, StageManageBoardsMembers)
 	ass.Nil(err)
 	actualUser, _ := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	actualBFCBoard, _ := wekan.GetBoardFromSlug(ctx, libwekan.BoardSlug(boardDeTest))
@@ -45,10 +44,9 @@ func TestWekan_ManageBoardsMembers_withBoard(t *testing.T) {
 			boards: []string{boardDeTest},
 		},
 	}
-	ManageUsers(wekan, usersWithBoards)
 
 	// THEN
-	err := ManageBoardsMembers(wekan, usersWithBoards)
+	err := pipeline.StopAfter(wekan, usersWithBoards, StageManageBoardsMembers)
 	ass.Nil(err)
 	actualUser, _ := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	actualBFCBoard, _ := wekan.GetBoardFromSlug(ctx, libwekan.BoardSlug(boardDeTest))
@@ -67,8 +65,7 @@ func TestWekan_ManageBoardsMembers_removeFromBoard(t *testing.T) {
 			boards: []string{boardDeTest},
 		},
 	}
-	ManageUsers(wekan, usersWithBoards)
-	ManageBoardsMembers(wekan, usersWithBoards)
+	pipeline.StopAfter(wekan, usersWithBoards, StageManageBoardsMembers)
 	usersWithoutBoards := Users{
 		usernameDeTest: User{
 			scope:  []string{"wekan"},
@@ -76,17 +73,15 @@ func TestWekan_ManageBoardsMembers_removeFromBoard(t *testing.T) {
 			boards: []string{},
 		},
 	}
-	ManageUsers(wekan, usersWithoutBoards)
 
 	// THEN
-	err := ManageBoardsMembers(wekan, usersWithoutBoards)
+	err := pipeline.StopAfter(wekan, usersWithoutBoards, StageManageBoardsMembers)
 	ass.Nil(err)
 	actualUser, _ := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	actualBFCBoard, _ := wekan.GetBoardFromSlug(ctx, libwekan.BoardSlug(boardDeTest))
 	ass.True(actualBFCBoard.UserIsMember(actualUser))
 	// Fail:
 	ass.False(actualBFCBoard.UserIsActiveMember(actualUser))
-	// Hello Raphaël,
 	// ce fail provient du fait que la board tableau-crp-bfc n'est plus dans le fichier de configuration…
 	// À cause de cela, elle n'est plus référencée dans l'objet BoardsMembers en input, et alors la
 	// fonction ne fait rien sur cette board… Logique !
@@ -96,5 +91,4 @@ func TestWekan_ManageBoardsMembers_removeFromBoard(t *testing.T) {
 	// dont le slug correspond à une expression régulière, que l'on pourrait passer en amont (ou en aval) de l'appel
 	// de la fonction pour ajouter les boards vides lorsque cela est nécessaire.
 	// Cela va demander de revoir la signature de la fonction ManageBoardsMembers, dans tous les cas…
-
 }

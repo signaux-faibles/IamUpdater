@@ -2,8 +2,55 @@ package main
 
 import (
 	"context"
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/libwekan"
 )
+
+type Pipeline []PipelineStage
+
+type PipelineStage struct {
+	run func(libwekan.Wekan, Users) error
+	id  string
+}
+
+func (pipeline Pipeline) Run(wekan libwekan.Wekan, fromConfig Users) error {
+	for _, stage := range pipeline {
+		err := stage.run(wekan, fromConfig)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastStage PipelineStage) error {
+	fields := logger.DataForMethod("StopAfter")
+	for _, stage := range pipeline {
+		fields.AddAny("stage", stage.id)
+		logger.Info("Application du pipeline", fields)
+		err := stage.run(wekan, fromConfig)
+		if err != nil || stage.id == lastStage.id {
+			return err
+		}
+	}
+	return nil
+}
+
+var StageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
+var StageManageBoardsMembers = PipelineStage{ManageBoardsMembers, "ManageBoardsMembers"}
+var StageAddMissingRules = PipelineStage{AddMissingRules, "AddMissingRules"}
+var StageRemoveExtraRules = PipelineStage{RemoveExtraRules, "RemoveExtraRules"}
+var StageAddMissingCardsMembers = PipelineStage{AddMissingCardsMembers, "AddMissingCardsMembers"}
+var StageRemoveExtraCardsMembers = PipelineStage{RemoveExtraCardsMembers, "RemoveExtraCardsMembers"}
+
+var pipeline = Pipeline{
+	StageManageUsers,
+	StageManageBoardsMembers,
+	StageAddMissingRules,
+	StageRemoveExtraRules,
+	StageAddMissingCardsMembers,
+	StageRemoveExtraCardsMembers,
+}
 
 func WekanUpdate(url, database, admin, filename string) error {
 	wekan, err := initWekan(url, database, admin)
@@ -16,17 +63,7 @@ func WekanUpdate(url, database, admin, filename string) error {
 		return err
 	}
 
-	err = ManageUsers(wekan, allUsersFromExcel)
-	if err != nil {
-		return err
-	}
-
-	err = ManageBoardsMembers(wekan, allUsersFromExcel)
-	if err != nil {
-		return err
-	}
-
-	return ManageBoardsLabelsTaskforce(wekan, allUsersFromExcel)
+	return pipeline.Run(wekan, allUsersFromExcel)
 }
 
 func addAdmin(usersFromExcel Users, wekan libwekan.Wekan) {

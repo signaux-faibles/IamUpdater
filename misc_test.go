@@ -48,9 +48,9 @@ func Test_mapSelect(t *testing.T) {
 		"a": 1,
 		"b": 2,
 	}
-	m1 := mapSelect(m, lessThan3())
+	m1 := selectMap(m, lessThan3())
 	ass.Exactly(expected, m1)
-	m2 := mapSelect(m, onlyAorB())
+	m2 := selectMap(m, onlyAorB())
 	ass.Exactly(expected, m2)
 }
 
