@@ -1,6 +1,7 @@
 //go:build integration
 // +build integration
 
+// nolint:errcheck
 package main
 
 import (

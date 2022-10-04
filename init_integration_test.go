@@ -1,3 +1,7 @@
+//go:build integration
+// +build integration
+
+// nolint:errcheck
 package main
 
 import (
@@ -5,13 +9,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/require"
 	"os"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/libwekan"
