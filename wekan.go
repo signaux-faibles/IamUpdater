@@ -46,10 +46,10 @@ var StageRemoveExtraCardsMembers = PipelineStage{RemoveExtraCardsMembers, "Remov
 var pipeline = Pipeline{
 	StageManageUsers,
 	StageManageBoardsMembers,
-	StageAddMissingRules,
-	StageRemoveExtraRules,
 	StageAddMissingCardsMembers,
 	StageRemoveExtraCardsMembers,
+	StageAddMissingRules,
+	StageRemoveExtraRules,
 }
 
 func WekanUpdate(url, database, admin string, users Users, slugDomainRegexp string) error {
@@ -57,7 +57,6 @@ func WekanUpdate(url, database, admin string, users Users, slugDomainRegexp stri
 	if err != nil {
 		return err
 	}
-
 	return pipeline.Run(wekan, users)
 }
 

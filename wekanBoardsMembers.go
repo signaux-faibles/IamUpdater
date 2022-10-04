@@ -7,6 +7,12 @@ import (
 
 func ManageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 	wekanBoardsMembers := fromConfig.selectScopeWekan().inferBoardsMember()
+	domainBoards, err := wekan.SelectDomainBoards(context.Background())
+	if err != nil {
+		return err
+	}
+	wekanBoardsMembers.AddBoards(domainBoards)
+
 	for boardSlug, boardMembers := range wekanBoardsMembers {
 		err := SetMembers(wekan, boardSlug, boardMembers)
 		if err != nil {
