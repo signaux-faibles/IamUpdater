@@ -52,8 +52,8 @@ var pipeline = Pipeline{
 	StageRemoveExtraCardsMembers,
 }
 
-func WekanUpdate(url, database, admin string, users Users) error {
-	wekan, err := initWekan(url, database, admin)
+func WekanUpdate(url, database, admin string, users Users, slugDomainRegexp string) error {
+	wekan, err := initWekan(url, database, admin, slugDomainRegexp)
 	if err != nil {
 		return err
 	}
@@ -68,8 +68,8 @@ func addAdmin(usersFromExcel Users, wekan libwekan.Wekan) {
 	}
 }
 
-func initWekan(url string, database string, admin string) (libwekan.Wekan, error) {
-	wekan, err := libwekan.Init(context.Background(), url, database, libwekan.Username(admin))
+func initWekan(url string, database string, admin string, slugDomainRegexp string) (libwekan.Wekan, error) {
+	wekan, err := libwekan.Init(context.Background(), url, database, libwekan.Username(admin), slugDomainRegexp)
 	if err != nil {
 		return libwekan.Wekan{}, err
 	}

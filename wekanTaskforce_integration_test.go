@@ -12,7 +12,7 @@ import (
 
 func TestWekan_AddMissingRules_(t *testing.T) {
 	// GIVEN
-	wekan := restoreMongoDumpInDatabase(mongodb, "", t)
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
 
 	usernameDeTest := Username("wekanUser")

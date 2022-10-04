@@ -10,7 +10,7 @@ import (
 )
 
 func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {
-	wekan := restoreMongoDumpInDatabase(mongodb, "", t)
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
 	usersWithoutScopeWekan := make(Users)
 	usernameDeTest := Username("no_wekan")
@@ -30,7 +30,7 @@ func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {
 }
 
 func TestWekan_ManageUsers_withScopeWekan(t *testing.T) {
-	wekan := restoreMongoDumpInDatabase(mongodb, "", t)
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
 	usernameDeTest := Username("wekan_user")
 	usersWithScopeWekan := Users{
@@ -49,7 +49,7 @@ func TestWekan_ManageUsers_withScopeWekan(t *testing.T) {
 
 func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 	// GIVEN
-	wekan := restoreMongoDumpInDatabase(mongodb, "", t)
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
 	usernameDeTest := Username("wekan_user")
 	usersWithScopeWekan := Users{

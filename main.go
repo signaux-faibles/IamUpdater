@@ -47,6 +47,7 @@ func main() {
 		conf.Mongo.Database,
 		conf.Wekan.AdminUsername,
 		users,
+		conf.Wekan.SlugDomainRegexp,
 	)
 
 	if err != nil {

@@ -34,6 +34,8 @@ const keycloakPassword = "pwd"
 func TestMain(m *testing.M) {
 	var err error
 	pool, err := dockertest.NewPool("")
+	pool.MaxWait = time.Minute * 2
+
 	if err != nil {
 		logger.Panicf("Could not connect to docker: %s", err)
 	}
@@ -88,7 +90,11 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 			Name:       keycloakContainerName,
 			Repository: "ghcr.io/signaux-faibles/conteneurs/keycloak",
 			Tag:        "v1.0.0",
-			Env:        []string{"KEYCLOAK_USER=" + keycloakAdmin, "KEYCLOAK_PASSWORD=" + keycloakPassword},
+			Env: []string{
+				"KEYCLOAK_USER=" + keycloakAdmin,
+				"KEYCLOAK_PASSWORD=" + keycloakPassword,
+				"DB_VENDOR=h2",
+			},
 		},
 		func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
@@ -102,11 +108,12 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		kill(keycloak)
 		logger.ErrorE("Could not start keycloak", fields, err)
 	}
-	// container stops after 60 seconds
-	if err = keycloak.Expire(120); err != nil {
+	// container stops after 120 seconds
+	if err = keycloak.Expire(240); err != nil {
 		kill(keycloak)
 		logger.ErrorE("Could not set expiration on container keycloak", fields, err)
 	}
+
 	logger.Infof("keycloak a démarré avec l'admin %v", keycloakAdmin)
 	keycloakPort := keycloak.GetPort("8080/tcp")
 	fields.AddAny("port", keycloakPort)
@@ -206,7 +213,7 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 //	return outputWriter.Flush()
 //}
 
-func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *testing.T) libwekan.Wekan {
+func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *testing.T, slugDomainRegexp string) libwekan.Wekan {
 	databasename := t.Name() + suffix
 	fields := logger.DataForMethod("restoreMongoDump")
 	fields.AddAny("database", databasename)
@@ -227,7 +234,7 @@ func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *
 	}
 	err := outputWriter.Flush()
 	require.Nil(t, err)
-	wekan, err := initWekan(mongoUrl, databasename, "signaux.faibles")
+	wekan, err := initWekan(mongoUrl, databasename, "signaux.faibles", slugDomainRegexp)
 	require.Nil(t, err)
 	return wekan
 }
