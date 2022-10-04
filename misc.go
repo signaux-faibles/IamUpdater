@@ -75,3 +75,12 @@ func intersect[E comparable](elementsA []E, elementsB []E) (both []E, onlyA []E,
 	}
 	return both, onlyA, onlyB
 }
+
+func apply[Element any](elements []Element, fn func(Element) error) error {
+	for _, element := range elements {
+		if err := fn(element); err != nil {
+			return err
+		}
+	}
+	return nil
+}

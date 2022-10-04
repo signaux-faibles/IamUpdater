@@ -38,18 +38,14 @@ func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastS
 
 var StageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
 var StageManageBoardsMembers = PipelineStage{ManageBoardsMembers, "ManageBoardsMembers"}
-var StageAddMissingRules = PipelineStage{AddMissingRules, "AddMissingRules"}
-var StageRemoveExtraRules = PipelineStage{RemoveExtraRules, "RemoveExtraRules"}
-var StageAddMissingCardsMembers = PipelineStage{AddMissingCardsMembers, "AddMissingCardsMembers"}
-var StageRemoveExtraCardsMembers = PipelineStage{RemoveExtraCardsMembers, "RemoveExtraCardsMembers"}
+var StageAddMissingRulesAndCardMembership = PipelineStage{AddMissingRulesAndCardMembership, "AddMissingRulesAndCardMembership"}
+var StageRemoveExtraRulesAndCardMembership = PipelineStage{RemoveExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
 
 var pipeline = Pipeline{
 	StageManageUsers,
 	StageManageBoardsMembers,
-	StageAddMissingCardsMembers,
-	StageRemoveExtraCardsMembers,
-	StageAddMissingRules,
-	StageRemoveExtraRules,
+	StageAddMissingRulesAndCardMembership,
+	StageRemoveExtraRulesAndCardMembership,
 }
 
 func WekanUpdate(url, database, admin string, users Users, slugDomainRegexp string) error {

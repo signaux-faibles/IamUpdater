@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func TestWekan_AddMissingRules_(t *testing.T) {
+func TestTaskforce_AddMissingRules_(t *testing.T) {
 	// GIVEN
 	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
@@ -35,7 +35,7 @@ func TestWekan_AddMissingRules_(t *testing.T) {
 	wekan.InsertBoardLabel(ctx, board, boardLabel)
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRules)
+	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
 	require.Nil(t, err)
 
 	// THEN
@@ -45,6 +45,22 @@ func TestWekan_AddMissingRules_(t *testing.T) {
 	actual := rules[0]
 	ass.Equal(string(usernameDeTest), string(actual.Action.Username))
 	ass.Equal(boardLabel.ID, actual.Trigger.LabelID)
+}
+
+func TestTaskforce_RemoveRuleWithID(t *testing.T) {
+	t.Fatal("test not implemented")
+}
+
+func TestTaskforce_SelectRuleFromID(t *testing.T) {
+	t.Fatal("test not implemented")
+}
+
+func TestTaskforce_EnsureRuleExists(t *testing.T) {
+	t.Fatal("test not implemented")
+}
+
+func TestTaskforce_RemoveExtraRulesAndCardsMembership(t *testing.T) {
+	t.Fatal("test not implemented")
 }
 
 //func Test_ManageBoardsLabelsTaskforce_whenEverythingsFine(t *testing.T) {
