@@ -40,7 +40,34 @@ func AddMissingRules(wekan libwekan.Wekan, users Users) error {
 }
 
 func RemoveExtraRules(wekan libwekan.Wekan, users Users) error {
-	return errors.New("not implemented")
+	domainBoards, err := wekan.SelectDomainBoards(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, board := range domainBoards {
+		rules, err := wekan.SelectRulesFromBoardID(context.Background(), board.ID)
+		if err != nil {
+			return err
+		}
+		for _, rule := range rules {
+			user, ok := users[Username(rule.Action.Username)]
+			if !ok {
+				err := wekan.RemoveRuleWithID(context.Background(), rule.ID)
+				if err != nil {
+					return nil
+				}
+			}
+			label := board.GetLabelByID(rule.Trigger.LabelID)
+			if userHasTaskforceLabel(user)(label) {
+				err := wekan.RemoveRuleWithID(context.Background(), rule.ID)
+				if err != nil {
+					return nil
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func AddMissingCardsMembers(wekan libwekan.Wekan, users Users) error {
