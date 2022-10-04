@@ -25,6 +25,7 @@ func AddMissingRules(wekan libwekan.Wekan, users Users) error {
 				return err
 			}
 			labels := selectSlice(board.Labels, userHasTaskforceLabel(user))
+
 			for _, label := range labels {
 				fields.AddAny("label", label.Name)
 				logger.Info("s'assure de la présence de la règle", fields)
@@ -38,10 +39,6 @@ func AddMissingRules(wekan libwekan.Wekan, users Users) error {
 	return nil
 }
 
-func userHasTaskforceLabel(user User) func(label libwekan.BoardLabel) bool {
-	return func(label libwekan.BoardLabel) bool { return contains(user.taskforce, string(label.Name)) }
-}
-
 func RemoveExtraRules(wekan libwekan.Wekan, users Users) error {
 	return errors.New("not implemented")
 }
@@ -52,4 +49,8 @@ func AddMissingCardsMembers(wekan libwekan.Wekan, users Users) error {
 
 func RemoveExtraCardsMembers(wekan libwekan.Wekan, users Users) error {
 	return errors.New("not implemented")
+}
+
+func userHasTaskforceLabel(user User) func(label libwekan.BoardLabel) bool {
+	return func(label libwekan.BoardLabel) bool { return contains(user.taskforce, string(label.Name)) }
 }

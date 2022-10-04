@@ -26,7 +26,8 @@ type Mongo struct {
 }
 
 type Wekan struct {
-	AdminUsername string `toml:"adminUserName"`
+	AdminUsername    string `toml:"adminUserName"`
+	SlugDomainRegexp string `toml:"slugDomainRegexp"`
 }
 
 type Access struct {
