@@ -52,18 +52,13 @@ var pipeline = Pipeline{
 	StageRemoveExtraCardsMembers,
 }
 
-func WekanUpdate(url, database, admin, filename string) error {
+func WekanUpdate(url, database, admin string, users Users) error {
 	wekan, err := initWekan(url, database, admin)
 	if err != nil {
 		return err
 	}
 
-	allUsersFromExcel, _, err := loadExcel(filename)
-	if err != nil {
-		return err
-	}
-
-	return pipeline.Run(wekan, allUsersFromExcel)
+	return pipeline.Run(wekan, users)
 }
 
 func addAdmin(usersFromExcel Users, wekan libwekan.Wekan) {

@@ -41,5 +41,15 @@ func main() {
 	); err != nil {
 		panic(err)
 	}
-	//WekanUpdate(")
+
+	err = WekanUpdate(
+		conf.Mongo.Url,
+		conf.Mongo.Database,
+		conf.Wekan.AdminUsername,
+		users,
+	)
+
+	if err != nil {
+		panic(err)
+	}
 }
