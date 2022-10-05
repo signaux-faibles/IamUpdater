@@ -2,7 +2,7 @@ package main
 
 import "sort"
 
-type Geographique struct {
+type Geographie struct {
 	value []row
 }
 
@@ -14,7 +14,7 @@ type row struct {
 
 var franceEntiere = "France Entière"
 
-var referentiel = Geographique{
+var referentiel = Geographie{
 	[]row{
 		{"Grand Est", "Alsace", "67"},
 		{"Grand Est", "Alsace", "68"},
@@ -120,30 +120,22 @@ var referentiel = Geographique{
 	},
 }
 
-func (ref Geographique) toRoles() map[string]Roles {
-	roles := make(map[string]Roles)
-	roleFranceEntiere := Roles{}
+func (ref Geographie) toRoles() CompositeRoles {
+	roles := make(CompositeRoles)
 	for _, row := range ref.value {
-		addDepartement(roles, row.Region, row.Departement)
-		addDepartement(roles, row.AncienneRegion, row.Departement)
-		roleFranceEntiere.add(row.Departement)
+		roles.addRole(row.Region, row.Departement)
+		roles.addRole(row.AncienneRegion, row.Departement)
+		roles.addRole(franceEntiere, row.Departement)
 	}
-	roles[franceEntiere] = roleFranceEntiere
 	ordonne(roles)
 	return roles
 }
 
-func ordonne(roles map[string]Roles) {
+func ordonne(roles CompositeRoles) {
 	keys := make([]string, 0, len(roles))
 	for k := range roles {
 		keys = append(keys, k)
 		sort.Strings(roles[k])
 	}
 	sort.Strings(keys)
-}
-
-func addDepartement(input map[string]Roles, region, departement string) {
-	departements := input[region]
-	departements.add(departement)
-	input[region] = departements
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_role_with_niveau_a(t *testing.T) {
+func TestUser_roles_with_niveau_a(t *testing.T) {
 	ass := assert.New(t)
 	user := User{niveau: "a"}
 	actual := user.roles()
@@ -14,7 +14,7 @@ func Test_role_with_niveau_a(t *testing.T) {
 	ass.ElementsMatch(actual, expected)
 }
 
-func Test_role_with_niveau_b(t *testing.T) {
+func TestUser_roles_with_niveau_b(t *testing.T) {
 	ass := assert.New(t)
 	user := User{niveau: "b"}
 	actual := user.roles()
@@ -23,7 +23,7 @@ func Test_role_with_niveau_b(t *testing.T) {
 	ass.ElementsMatch(actual, expected)
 }
 
-func Test_role_with_scopes(t *testing.T) {
+func TestUser_roles_with_scopes(t *testing.T) {
 	ass := assert.New(t)
 	scopes := []string{"first", "second"}
 	user := User{scope: scopes}
@@ -33,7 +33,7 @@ func Test_role_with_scopes(t *testing.T) {
 	ass.Contains(actual, scopes[1])
 }
 
-func Test_role_with_acces_geographique(t *testing.T) {
+func TestUser_roles_with_acces_geographique(t *testing.T) {
 	ass := assert.New(t)
 	accessGeographique := "any where"
 	user := User{accesGeographique: accessGeographique}
