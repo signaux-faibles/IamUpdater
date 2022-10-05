@@ -31,6 +31,9 @@ type Users map[Username]User
 
 func (user User) roles() Roles {
 	var roles Roles
+	if user.niveau == "" {
+		// TODO should return MisconfiguredUserError
+	}
 	if user.niveau == "a" {
 		roles = append(roles, "urssaf", "dgefp", "bdf")
 	}
