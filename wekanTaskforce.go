@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/libwekan"
 )
@@ -98,7 +99,7 @@ func RemoveCardMembership(wekan libwekan.Wekan, user User, board libwekan.Board,
 	}
 	for _, card := range cards {
 		if contains(card.LabelIDs, label.ID) {
-			wekan.RemoveCardMemberShip(context.Background(), card.ID, wekanUser.ID)
+			wekan.RemoveMemberFromCard(context.Background(), card.ID, wekanUser.ID)
 		}
 	}
 	return nil
@@ -115,7 +116,7 @@ func AddCardMemberShip(wekan libwekan.Wekan, user User, board libwekan.Board, la
 	}
 	for _, card := range cards {
 		if contains(card.LabelIDs, label.ID) {
-			wekan.AddCardMemberShip(context.Background(), card.ID, wekanUser.ID)
+			wekan.AddMemberToCard(context.Background(), card.ID, wekanUser.ID)
 		}
 	}
 	return nil
