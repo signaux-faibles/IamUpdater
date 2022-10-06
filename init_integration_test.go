@@ -49,13 +49,6 @@ func TestMain(m *testing.M) {
 		keycloak = startKeycloak(pool)
 	}
 	mongodb = startWekanDB(pool)
-
-	// excelUsers1, _, err := loadExcel("test/resources/wekanUpdate_states/1.xlsx")
-	if err != nil {
-		logger.Panicf("Could not read excel test cases")
-	}
-
-	//excelUsers2, _, err = loadExcel("test/resources/wekanUpdate_states/2.xlsx")
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
 	}
@@ -185,37 +178,10 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 		kill(mongodb)
 		panic("N'arrive pas à démarrer Mongo")
 	}
-	//err = restoreMongoDump(mongodb)
-	//if err != nil {
-	//	logger.ErrorE("Erreur lors de la restauration du dump : %s", fields, err)
-	//}
-	//globalWekan, err = libwekan.Init(context.Background(), mongoUrl, "wekan", "signaux.faibles")
-	//if err != nil {
-	//	logger.ErrorE("Erreur lors de la creation de l'objet libwekan.Wekan : %s", fields, err)
-	//}
+
 	logger.Info("Mongo est prêt", fields)
 	return mongodb
 }
-
-//func restoreMongoDump(mongodb *dockertest.Resource) error {
-//	fields := logger.DataForMethod("restoreMongoDump")
-//	var output bytes.Buffer
-//	outputWriter := bufio.NewWriter(&output)
-//
-//	dockerOptions := dockertest.ExecOptions{
-//		StdOut: outputWriter,
-//		StdErr: outputWriter,
-//	}
-//	command := "mongorestore  --uri mongodb://root:password@localhost/ /dump"
-//	fields.AddAny("command", command)
-//	logger.Info("Restaure le dump", fields)
-//	if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", command}, dockerOptions); err != nil {
-//		fields.AddAny("exitCode", exitCode)
-//		logger.ErrorE("Erreur lors de la restauration du dump", fields, err)
-//		return err
-//	}
-//	return outputWriter.Flush()
-//}
 
 func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *testing.T, slugDomainRegexp string) libwekan.Wekan {
 	databasename := t.Name() + suffix

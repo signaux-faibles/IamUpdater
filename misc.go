@@ -26,7 +26,7 @@ func selectMap[E any, I comparable](m map[I]E, filter func(I, E) bool) map[I]E {
 	return n
 }
 
-func selectSlice[Element comparable](slice []Element, test func(Element) bool) []Element {
+func selectSlice[Element any](slice []Element, test func(Element) bool) []Element {
 	var newSlice []Element
 	for _, element := range slice {
 		if test(element) {
@@ -74,13 +74,4 @@ func intersect[E comparable](elementsA []E, elementsB []E) (both []E, onlyA []E,
 		}
 	}
 	return both, onlyA, onlyB
-}
-
-func apply[Element any](elements []Element, fn func(Element) error) error {
-	for _, element := range elements {
-		if err := fn(element); err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -22,7 +22,7 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 
 	creations, enable, disable := wekanUsersfromConfig.ListWekanChanges(fromWekan)
 
-	err = wekan.CreateUsers(context.Background(), creations)
+	err = wekan.InsertUsers(context.Background(), creations)
 	if err != nil {
 		return err
 	}

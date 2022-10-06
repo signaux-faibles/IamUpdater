@@ -26,7 +26,7 @@ func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {
 	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan, StageManageUsers)
 	ass.Nil(err)
 	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
-	ass.IsType(libwekan.UnknownUserError{}, actualErr)
+	ass.IsType(libwekan.UserNotFoundError{}, actualErr)
 	ass.Empty(actualUser)
 }
 
