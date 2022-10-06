@@ -8,6 +8,7 @@ type Stock struct {
 	ClientsAndRealmFolder string
 	ClientForRoles        string
 	UsersAndRolesFilename string
+	BoardsConfigFilename  string
 }
 
 type Config struct {
@@ -43,3 +44,7 @@ type LoggerConfig struct {
 	TimestampFormat string
 	Rotation        bool
 }
+
+type WekanBoards []string
+type RegionBoards map[string]WekanBoards
+type BoardsConfig map[string]RegionBoards
