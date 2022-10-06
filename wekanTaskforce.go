@@ -10,8 +10,9 @@ import (
 // Calcule et insère les règles manquantes pour correspondre à la configuration Users
 // Ajuste la participation des utilisateurs aux cartes concernées par les labels en cas de changement
 func AddMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
+	wekanUsers := users.selectScopeWekan()
 	fields := logger.DataForMethod("AddMissingRulesAndCardMembership")
-	for _, user := range users {
+	for _, user := range wekanUsers {
 		fields.AddAny("username", user.email)
 		wekanUser, err := wekan.GetUserFromUsername(context.Background(), libwekan.Username(user.email))
 		if err != nil {
@@ -49,6 +50,7 @@ func AddMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 // Calcule et insert les règles manquantes pour correspondre à la configuration Users
 // Ajuste la participation des utilisateurs aux cartes concernées par les labels en cas de changement
 func RemoveExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error {
+	wekanUsers := users.selectScopeWekan()
 	fields := logger.DataForMethod("AddMissingRulesAndCardMembership")
 	domainBoards, err := wekan.SelectDomainBoards(context.Background())
 	if err != nil {
@@ -66,7 +68,7 @@ func RemoveExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error
 		for _, rule := range rules {
 			fields.AddAny("rule", rule)
 
-			user, found := users[Username(rule.Action.Username)]
+			user, found := wekanUsers[Username(rule.Action.Username)]
 			if !found {
 				err := wekan.RemoveRuleWithID(context.Background(), rule.ID)
 				if err != nil {

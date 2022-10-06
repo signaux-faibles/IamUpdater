@@ -27,7 +27,7 @@ func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastS
 	fields := logger.DataForMethod("StopAfter")
 	for _, stage := range pipeline {
 		fields.AddAny("stage", stage.id)
-		logger.Info("Application du pipeline", fields)
+		logger.Debug("Application du pipeline", fields)
 		err := stage.run(wekan, fromConfig)
 		if err != nil || stage.id == lastStage.id {
 			return err
@@ -72,7 +72,7 @@ func initWekan(url string, database string, admin string, slugDomainRegexp strin
 	if err := wekan.Ping(context.Background()); err != nil {
 		return libwekan.Wekan{}, err
 	}
-	err = wekan.AssertHasAdmin(context.Background())
+	err = wekan.AssertPrivileged(context.Background())
 	if err != nil {
 		return libwekan.Wekan{}, err
 	}

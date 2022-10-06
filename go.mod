@@ -2,7 +2,7 @@ module github.com/signaux-faibles/keycloakUpdater/v2
 
 go 1.18
 
- replace github.com/signaux-faibles/libwekan => ../libwekan
+replace github.com/signaux-faibles/libwekan => ../libwekan
 
 require (
 	github.com/BurntSushi/toml v1.2.0
@@ -19,7 +19,10 @@ require (
 	github.com/tealeg/xlsx/v3 v3.2.4
 )
 
-require github.com/rogpeppe/go-internal v1.9.0 // indirect
+require (
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+)
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
@@ -64,7 +67,7 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
-	go.mongodb.org/mongo-driver v1.10.2
+	go.mongodb.org/mongo-driver v1.10.3
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
 	golang.org/x/net v0.0.0-20221002022538-bcab6841153b // indirect
 	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0 // indirect
