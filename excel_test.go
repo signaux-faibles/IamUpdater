@@ -14,7 +14,7 @@ func Test_readExcel(t *testing.T) {
 	ass.Nil(err)
 
 	hashUsers := fmt.Sprintf("%x", structhash.Md5(users, 1))
-	ass.Equal("dc752fde23cf5ebfea42301c74cab527", hashUsers)
+	ass.Equal("ed87c55be7c75632fbf8dd5e9df3e94e", hashUsers)
 
 	hashRolesMap := fmt.Sprintf("%x", structhash.Md5(rolesMap, 1))
 	ass.Equal("0fc072173fd22e567dbe26c474ea2547", hashRolesMap)

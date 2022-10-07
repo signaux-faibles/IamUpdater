@@ -133,6 +133,8 @@ github.com/shabbyrobe/xmlwriter v0.0.0-20220218224045-defe0ad214f6/go.mod h1:tKY
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/signaux-faibles/libwekan v0.0.6 h1:pa+bkb8kZFQsgbDc2pGwsYKRXUC9TeBSei0e4IOCLo8=
 github.com/signaux-faibles/libwekan v0.0.6/go.mod h1:hnwwywxDW89SQ/nQ39NKdbSXBZzGeZEKBQ/mOp7kMcE=
+github.com/signaux-faibles/libwekan v0.1.0 h1:prWk2x+WgokuKORhonXWVX3ftj0lVeDE3YPTaqxbb8Q=
+github.com/signaux-faibles/libwekan v0.1.0/go.mod h1:hnwwywxDW89SQ/nQ39NKdbSXBZzGeZEKBQ/mOp7kMcE=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0=

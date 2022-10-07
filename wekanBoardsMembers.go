@@ -81,8 +81,11 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 
 	// globalWekan.AdminUser() est administrateur de toutes les boards, appliquons la règle
 	fields.AddAny("admin", wekan.AdminUsername())
-	logger.Debug("vérifie le statut de l'admin sur la board", fields)
-	err = wekan.EnsureUserIsBoardAdmin(context.Background(), board.ID, wekan.AdminID())
+	logger.Debug("vérifie la participation de l'admin", fields)
+	modified, err := wekan.EnsureUserIsBoardAdmin(context.Background(), board.ID, wekan.AdminID())
+	if modified {
+		logger.Info("donne les privilèges à l'admin", fields)
+	}
 	return err
 }
 

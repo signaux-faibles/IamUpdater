@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ory/dockertest/v3"
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/require"
 	"os"
 	"strconv"
@@ -39,7 +40,11 @@ func TestMain(m *testing.M) {
 	var err error
 	pool, err := dockertest.NewPool("")
 	pool.MaxWait = time.Minute * 2
-
+	logger.ConfigureWith(
+		structs.LoggerConfig{
+			Filename: "/dev/null",
+			Level:    "DEBUG",
+		})
 	if err != nil {
 		logger.Panicf("Could not connect to docker: %s", err)
 	}

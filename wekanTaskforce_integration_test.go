@@ -12,10 +12,6 @@ import (
 	"testing"
 )
 
-var initializer = Pipeline{
-	StageManageUsers,
-	StageManageBoardsMembers}
-
 func createBoard(t *testing.T, wekan libwekan.Wekan, suffix string) (libwekan.Board, libwekan.Swimlane, libwekan.List) {
 	board := libwekan.BuildBoard(t.Name()+"_Title"+suffix, t.Name()+"_Slug"+suffix, "board")
 	wekan.InsertBoard(ctx, board)
@@ -82,6 +78,7 @@ func TestWekanTaskforce_AddMissingRules_whenEverythingFine(t *testing.T) {
 
 	// WHEN
 	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	printErrChain(err, 0)
 	require.NoError(t, err)
 
 	// THEN
