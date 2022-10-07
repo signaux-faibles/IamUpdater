@@ -1,16 +1,21 @@
+//go:build integration
+// +build integration
+
+// nolint:errcheck
 package main
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"os"
+	"testing"
+
 	"github.com/Nerzal/gocloak/v11"
-	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/assert"
-	"log"
-	"os"
-	"testing"
 )
 
 func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t *testing.T) {
@@ -19,21 +24,24 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 	testUser := "ti_admin"
 	testFilename := "test/resources/userNotInExcel/userBase.xlsx"
 
+	users, compositeRoles, _ := loadExcel(testFilename)
+
 	// erreur in configuration : access.username should be in usersAndRolesFilename
-	err := UpdateAll(
+	err := UpdateKeycloak(
 		&kc,
 		"peuimporte",
 		nil,
 		nil,
-		testFilename,
-		testUser,
+		users,
+		compositeRoles,
+		Username(testUser),
 		10,
 	)
 
-	expectedError := errors.Errorf("configured user is not in stock file (%s) : %s", testFilename, testUser)
+	expectedError := fmt.Sprintf("configured user is not in stock file: %s", testUser)
 
 	ass.NotNil(err)
-	ass.EqualError(expectedError, err.Error())
+	ass.EqualError(err, expectedError)
 }
 
 func TestKeycloakInitialisation(t *testing.T) {
@@ -43,17 +51,20 @@ func TestKeycloakInitialisation(t *testing.T) {
 	if conf, err = config.InitConfig("test/resources/initialisation/test_config.toml"); err != nil {
 		panic(err)
 	}
+	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
+	ass.Nil(err)
 	//configure logger
 	logger.ConfigureWith(*conf.Logger)
 
 	// update all
-	if err = UpdateAll(
+	if err = UpdateKeycloak(
 		&kc,
 		conf.Stock.ClientForRoles,
 		conf.Realm,
 		conf.Clients,
-		conf.Stock.UsersAndRolesFilename,
-		conf.Access.Username,
+		users,
+		compositeRoles,
+		Username(conf.Access.Username),
 		10,
 	); err != nil {
 		t.Fatalf("erreur pendant l'update : %v", err)
@@ -111,7 +122,6 @@ func TestClientSignauxFaiblesExists(t *testing.T) {
 }
 
 func TestRolesExistences(t *testing.T) {
-
 	ass := assert.New(t)
 	rolesToTest := []string{"urssaf", "dgefp", "bdf", "score", "detection", "pge"}
 
@@ -170,6 +180,35 @@ func TestRolesAssignedToAll(t *testing.T) {
 	}
 }
 
+//func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
+//	ass := assert.New(t)
+//	var err error
+//	var conf structs.Config
+//
+//	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
+//		panic(err)
+//	}
+//	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
+//	ass.Nil(err)
+//	// configure logger
+//	logger.ConfigureWith(*conf.Logger)
+//
+//	stdin := readStdin("false")
+//	// update all
+//	actual := UpdateKeycloak(
+//		&kc,
+//		conf.Stock.ClientForRoles,
+//		conf.Realm,
+//		conf.Clients,
+//		users,
+//		compositeRoles,
+//		Username(conf.Access.Username),
+//		4,
+//	)
+//	os.Stdin = stdin
+//	ass.EqualError(actual, "Trop de modifications utilisateurs.")
+//}
+
 func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 	ass := assert.New(t)
 	var err error
@@ -181,18 +220,22 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
 
+	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
+	ass.Nil(err)
+
 	stdin := readStdin("false")
 	// update all
-	actual := UpdateAll(
+	os.Stdin = stdin
+	actual := UpdateKeycloak(
 		&kc,
 		conf.Stock.ClientForRoles,
 		conf.Realm,
 		conf.Clients,
-		conf.Stock.UsersAndRolesFilename,
-		conf.Access.Username,
+		users,
+		compositeRoles,
+		Username(conf.Access.Username),
 		4,
 	)
-	os.Stdin = stdin
 	ass.EqualError(actual, "Trop de modifications utilisateurs.")
 }
 
@@ -217,17 +260,22 @@ func TestKeycloakUpdate(t *testing.T) {
 	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
 		panic(err)
 	}
+
+	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
+	ass.Nil(err)
+
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
 
 	// update all
-	err = UpdateAll(
+	err = UpdateKeycloak(
 		&kc,
 		conf.Stock.ClientForRoles,
 		conf.Realm,
 		conf.Clients,
-		conf.Stock.UsersAndRolesFilename,
-		conf.Access.Username,
+		users,
+		compositeRoles,
+		Username(conf.Access.Username),
 		10,
 	)
 	if err != nil {
@@ -256,6 +304,21 @@ func readStdin(message string) *os.File {
 	w.WriteString(message)
 	return origStdin
 }
+
+//func readStdin(message string) *os.File {
+//	r, w, err := os.Pipe()
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	origStdin := os.Stdin
+//	os.Stdin = r
+//
+//	_, err = w.WriteString(message)
+//	if err != nil {
+//		panic("ne peut lire STDIN")
+//	}
+//	return origStdin
+//}
 
 func logUser(client gocloak.Client, user gocloak.User) error {
 	// try connecting a user

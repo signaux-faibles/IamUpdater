@@ -6,7 +6,7 @@ realm = "master"
 
 [logger]
 filename = "tests.log"
-level = "TRACE"
+level = "DEBUG"
 timestampFormat = "2006-01-02 15:04:05"
 #rotation = false
 

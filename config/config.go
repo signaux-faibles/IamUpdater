@@ -95,6 +95,8 @@ func merge(first structs.Config, second structs.Config) structs.Config {
 	r.Access = mergeAccess(first.Access, second.Access)
 	r.Realm = mergeRealm(first.Realm, second.Realm)
 	r.Clients = mergeClients(first.Clients, second.Clients)
+	r.Mongo = firstNonNil(first.Mongo, second.Mongo)
+	r.Wekan = firstNonNil(first.Wekan, second.Wekan)
 	return r
 }
 

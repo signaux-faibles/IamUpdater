@@ -1,11 +1,14 @@
 package structs
 
-import "github.com/Nerzal/gocloak/v11"
+import (
+	"github.com/Nerzal/gocloak/v11"
+)
 
 type Stock struct {
 	ClientsAndRealmFolder string
 	ClientForRoles        string
 	UsersAndRolesFilename string
+	BoardsConfigFilename  string
 }
 
 type Config struct {
@@ -14,6 +17,18 @@ type Config struct {
 	Logger  *LoggerConfig                `toml:"logger"`
 	Realm   *gocloak.RealmRepresentation `toml:"realm"`
 	Clients []*gocloak.Client            `toml:"clients"`
+	Mongo   *Mongo                       `toml:"mongo"`
+	Wekan   *Wekan                       `toml:"wekan"`
+}
+
+type Mongo struct {
+	Url      string `toml:"url"`
+	Database string `toml:"database"`
+}
+
+type Wekan struct {
+	AdminUsername    string `toml:"adminUserName"`
+	SlugDomainRegexp string `toml:"slugDomainRegexp"`
 }
 
 type Access struct {
@@ -29,3 +44,7 @@ type LoggerConfig struct {
 	TimestampFormat string
 	Rotation        bool
 }
+
+type WekanBoards []string
+type RegionBoards map[string]WekanBoards
+type BoardsConfig map[string]RegionBoards

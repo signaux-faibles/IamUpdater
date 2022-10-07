@@ -9,6 +9,7 @@ import (
 
 // Roles is role collection in []string with some handy functions attached
 type Roles []string
+type CompositeRoles map[string]Roles
 
 func (roles *Roles) add(role string) {
 	if roles != nil {
@@ -55,7 +56,7 @@ func rolesFromGocloakRoles(roles []*gocloak.Role) Roles {
 	return r
 }
 
-func neededRoles(compositeRoles map[string]Roles, users Users) Roles {
+func neededRoles(compositeRoles CompositeRoles, users Users) Roles {
 	var neededRoles Roles
 	for composite, roles := range compositeRoles {
 		neededRoles.add(composite)
@@ -94,7 +95,7 @@ func (roles Roles) GetKeycloakRoles(clientName string, kc KeycloakContext) []goc
 }
 
 // ComposeRoles writes roles composition to keycloak server
-func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles map[string]Roles) error {
+func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles CompositeRoles) error {
 	fields := logger.DataForMethod("kc.ComposeRoles")
 	fields.AddAny("clientId", clientID)
 	// Add known roles
@@ -150,4 +151,10 @@ func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles map[strin
 		}
 	}
 	return nil
+}
+
+func (compositeRoles CompositeRoles) addRole(key, role string) {
+	roles := compositeRoles[key]
+	roles.add(role)
+	compositeRoles[key] = roles
 }

@@ -4,40 +4,36 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
-	"os"
-	"strconv"
 )
 
-func UpdateAll(
+func UpdateKeycloak(
 	kc *KeycloakContext,
 	clientId string,
 	realm *gocloak.RealmRepresentation,
 	clients []*gocloak.Client,
-	filename string,
-	configuredUsername string,
+	users Users,
+	compositeRoles CompositeRoles,
+	configuredUsername Username,
 	acceptedChanges int,
 ) error {
 	fields := logger.DataForMethod("UpdateAll")
 
+	if _, exists := users[configuredUsername]; !exists {
+		return errors.Errorf("configured user is not in stock file: %s", configuredUsername)
+	}
+
 	if _, err := kc.GetUser(configuredUsername); err != nil {
-		return errors.Wrap(err, "configured user does not exist in keycloak : "+configuredUsername)
+		return errors.Wrap(err, string("configured user does not exist in keycloak : "+configuredUsername))
 	}
 
 	logger.Info("START", fields)
 	logger.Info("accepte "+strconv.Itoa(acceptedChanges)+"changements pour les users", fields)
-
-	// loading desired state for users, composites roles
-	logger.Info("loading excel stock file", fields)
-	users, compositeRoles, err := loadExcel(filename)
-	if err != nil {
-		return err
-	}
-	if _, exists := users[configuredUsername]; !exists {
-		return errors.Errorf("configured user is not in stock file (%s) : %s", filename, configuredUsername)
-	}
 
 	// checking users
 	logger.Info("checking users", fields)
@@ -60,7 +56,7 @@ func UpdateAll(
 	}
 
 	// clients conf
-	if err = kc.SaveClients(clients); err != nil {
+	if err := kc.SaveClients(clients); err != nil {
 		return errors.Wrap(err, "error when saving clients")
 	}
 

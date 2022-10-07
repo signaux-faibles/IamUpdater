@@ -132,14 +132,15 @@ func (kc KeycloakContext) GetQuietlyInternalIDFromClientID(clientID string) (str
 }
 
 // GetClientRoles returns realm roles in map[string][]string
-func (kc KeycloakContext) GetClientRoles() map[string]Roles {
-	clientRoles := make(map[string]Roles)
+func (kc KeycloakContext) GetClientRoles() CompositeRoles {
+	clientRoles := make(CompositeRoles)
 	for n, c := range kc.ClientRoles {
-		var roles []string
+		//var roles []string
 		for _, r := range c {
-			roles = append(roles, *r.Name)
+			//roles = append(roles, *r.Name)
+			clientRoles.addRole(n, *r.Name)
 		}
-		clientRoles[n] = roles
+		//clientRoles[n] = roles
 	}
 	return clientRoles
 }
@@ -432,16 +433,4 @@ func (kc KeycloakContext) getClients(clientIDs ...string) map[string]*gocloak.Cl
 		}
 	}
 	return clientsMap
-}
-
-func contains(array []string, item string) bool {
-	if array == nil {
-		return false
-	}
-	for _, s := range array {
-		if item == s {
-			return true
-		}
-	}
-	return false
 }

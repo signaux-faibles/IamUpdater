@@ -4,6 +4,7 @@
 Cet outil permet :
 - de maintenir à jour à la base des utilisateurs Keycloak ainsi que leurs droits à partir d'un fichier excel.
 - de configurer le realm et les clients Keycloak nécessaires au bon fonctionnement de la plateforme
+- de créer et habiliter les utilisateurs dans la base Wekan sur les tableaux
 
 - Cet outil est spécifique pour le projet Signaux-Faibles.
 

@@ -1,3 +1,7 @@
+//go:build integration
+// +build integration
+
+// nolint:errcheck
 package main
 
 import (
@@ -6,22 +10,28 @@ import (
 	"context"
 	"fmt"
 	"github.com/ory/dockertest/v3"
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
+	"github.com/stretchr/testify/require"
+	"os"
+	"strconv"
+	"testing"
+	"time"
+
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/libwekan"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"os"
-	"strconv"
-	"testing"
-	"time"
 )
 
 var kc KeycloakContext
-var wekan libwekan.Wekan
+
 var signauxfaibleClientID = "signauxfaibles"
 var cwd, _ = os.Getwd()
 var mongoUrl string
+var mongodb *dockertest.Resource
+
+var ctx = context.Background()
 
 const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
@@ -29,15 +39,31 @@ const keycloakPassword = "pwd"
 func TestMain(m *testing.M) {
 	var err error
 	pool, err := dockertest.NewPool("")
+	pool.MaxWait = time.Minute * 2
+	logger.ConfigureWith(
+		structs.LoggerConfig{
+			Filename: "/dev/null",
+			Level:    "DEBUG",
+		})
 	if err != nil {
 		logger.Panicf("Could not connect to docker: %s", err)
 	}
-	keycloak := startKeycloak(err, pool)
-	mongo := startWekanDB(err, pool)
+
+	var keycloak *dockertest.Resource
+	if !(os.Getenv("DISABLE_KEYCLOAK") == "yes") {
+		keycloak = startKeycloak(pool)
+	}
+	mongodb = startWekanDB(pool)
+	if err != nil {
+		logger.Panicf("Could not read excel test cases")
+	}
 
 	code := m.Run()
-	kill(keycloak)
-	kill(mongo)
+
+	if !(os.Getenv("DISABLE_KEYCLOAK") == "yes") {
+		kill(keycloak)
+	}
+	kill(mongodb)
 	// You can't defer this because os.Exit doesn't care for defer
 
 	os.Exit(code)
@@ -52,21 +78,25 @@ func kill(resource *dockertest.Resource) {
 	}
 }
 
-func startKeycloak(err error, pool *dockertest.Pool) *dockertest.Resource {
+func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
 	fields := logger.DataForMethod("startKeycloak")
 
 	// pulls an image, creates a container based on it and runs it
 	keycloakContainerName := "keycloakUpdater-ti-" + strconv.Itoa(time.Now().Nanosecond())
 	fields.AddAny("container", keycloakContainerName)
-	logger.Info("trying start keycloak", fields)
+	logger.Info("Démarre keycloak", fields)
 
 	keycloak, err := pool.RunWithOptions(
 		&dockertest.RunOptions{
 			Name:       keycloakContainerName,
 			Repository: "ghcr.io/signaux-faibles/conteneurs/keycloak",
 			Tag:        "v1.0.0",
-			Env:        []string{"KEYCLOAK_USER=" + keycloakAdmin, "KEYCLOAK_PASSWORD=" + keycloakPassword},
+			Env: []string{
+				"KEYCLOAK_USER=" + keycloakAdmin,
+				"KEYCLOAK_PASSWORD=" + keycloakPassword,
+				"DB_VENDOR=h2",
+			},
 		},
 		func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
@@ -80,12 +110,13 @@ func startKeycloak(err error, pool *dockertest.Pool) *dockertest.Resource {
 		kill(keycloak)
 		logger.ErrorE("Could not start keycloak", fields, err)
 	}
-	// container stops after 60 seconds
-	if err = keycloak.Expire(120); err != nil {
+	// container stops after 120 seconds
+	if err = keycloak.Expire(240); err != nil {
 		kill(keycloak)
 		logger.ErrorE("Could not set expiration on container keycloak", fields, err)
 	}
-	logger.Infof("keycloak started with username %v", keycloakAdmin)
+
+	logger.Infof("keycloak a démarré avec l'admin %v", keycloakAdmin)
 	keycloakPort := keycloak.GetPort("8080/tcp")
 	fields.AddAny("port", keycloakPort)
 	logger.Info("keycloak started", fields)
@@ -94,17 +125,19 @@ func startKeycloak(err error, pool *dockertest.Pool) *dockertest.Resource {
 		var err error
 		kc, err = Init("http://localhost:"+keycloakPort, "master", keycloakAdmin, keycloakPassword)
 		if err != nil {
-			logger.Info("keycloak is not ready", fields)
+			logger.Info("keycloak n'est pas prêt", fields)
 			return err
 		}
 		return nil
 	}); err != nil {
 		logger.Panicf("Could not connect to keycloak: %s", err)
 	}
+	logger.Info("keycloak est prêt", fields)
 	return keycloak
 }
 
-func startWekanDB(err error, pool *dockertest.Pool) *dockertest.Resource {
+func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
+	fields := logger.DataForMethod("startWekanDB")
 	mongodbContainerName := "mongodb-ti-" + strconv.Itoa(time.Now().Nanosecond())
 	mongodb, err := pool.RunWithOptions(
 		&dockertest.RunOptions{
@@ -116,7 +149,7 @@ func startWekanDB(err error, pool *dockertest.Pool) *dockertest.Resource {
 				"MONGO_INITDB_ROOT_USERNAME=root",
 				"MONGO_INITDB_ROOT_PASSWORD=password",
 			},
-			Mounts: []string{cwd + "/test/resources/dump_wekan:/dump/"},
+			Mounts: []string{cwd + "/test/resources/dump_wekan/:/dump/"},
 		},
 		func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
@@ -133,7 +166,7 @@ func startWekanDB(err error, pool *dockertest.Pool) *dockertest.Resource {
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	if err := pool.Retry(func() error {
-		fmt.Println("Mongo n'est pas encore prêt")
+		logger.Info("Mongo n'est pas encore prêt", fields)
 		var err error
 		mongoUrl = fmt.Sprintf("mongodb://root:password@localhost:%s", mongodb.GetPort("27017/tcp"))
 
@@ -147,33 +180,36 @@ func startWekanDB(err error, pool *dockertest.Pool) *dockertest.Resource {
 		}
 		return db.Ping(context.TODO(), nil)
 	}); err != nil {
-		fmt.Printf("N'arrive pas à démarrer/restaurer Mongo: %s", err)
+		kill(mongodb)
+		panic("N'arrive pas à démarrer Mongo")
 	}
-	fmt.Println("Mongo est prêt, on lance le restore dump")
-	err = restoreMongoDump(mongodb)
-	if err != nil {
-		panic("Foirage du dump restore : " + err.Error())
-	}
+
+	logger.Info("Mongo est prêt", fields)
 	return mongodb
 }
 
-func restoreMongoDump(mongodb *dockertest.Resource) error {
-	var b bytes.Buffer
-	output := bufio.NewWriter(&b)
+func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *testing.T, slugDomainRegexp string) libwekan.Wekan {
+	databasename := t.Name() + suffix
+	fields := logger.DataForMethod("restoreMongoDump")
+	fields.AddAny("database", databasename)
+	var output bytes.Buffer
+	outputWriter := bufio.NewWriter(&output)
 
-	options := dockertest.ExecOptions{
-		StdOut: output,
-		StdErr: output,
+	dockerOptions := dockertest.ExecOptions{
+		StdOut: outputWriter,
+		StdErr: outputWriter,
 	}
-
-	if _, err := mongodb.Exec([]string{"/bin/bash", "-c", "mongorestore  --uri mongodb://root:password@localhost/ /dump"}, options); err != nil {
-		return nil
+	command := fmt.Sprintf("mongorestore  --uri mongodb://root:password@localhost/ /dump --nsFrom \"wekan.*\" --nsTo \"%s.*\"", databasename)
+	fields.AddAny("command", command)
+	logger.Info("Restaure le dump", fields)
+	if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", command}, dockerOptions); err != nil {
+		fields.AddAny("exitCode", exitCode)
+		logger.ErrorE("Erreur lors de la restauration du dump", fields, err)
+		require.Nil(t, err)
 	}
-	// _, err = mongodb.Exec([]string{"/bin/bash", "-c", "mongo mongodb://root:password@localhost/wekan --authenticationDatabase admin --eval 'printjson(db.users.find({}).toArray())'"}, options)
-	if err := output.Flush(); err != nil {
-		return nil
-	}
-	// fmt.Println(b.String())
-
-	return nil
+	err := outputWriter.Flush()
+	require.Nil(t, err)
+	wekan, err := initWekan(mongoUrl, databasename, "signaux.faibles", slugDomainRegexp)
+	require.Nil(t, err)
+	return wekan
 }
