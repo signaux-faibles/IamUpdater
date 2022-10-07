@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/libwekan"
 	"strings"
 )
@@ -22,17 +23,76 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 
 	creations, enable, disable := wekanUsersfromConfig.ListWekanChanges(fromWekan)
 
-	err = wekan.InsertUsers(context.Background(), creations)
+	fields := logger.DataForMethod("InsertUsers")
+	fields.AddAny("population", len(creations))
+	logger.Info("inscription des nouveaux utilisateurs", fields)
+	err = InsertUsers(context.Background(), wekan, creations)
 	if err != nil {
 		return err
 	}
 
-	err = wekan.EnableUsers(context.Background(), enable)
+	fields = logger.DataForMethod("EnableUsers")
+	fields.AddAny("population", len(enable))
+	logger.Info("réactivation des utilisateurs inactifs", fields)
+	err = EnableUsers(context.Background(), wekan, enable)
 	if err != nil {
 		return err
 	}
 
-	return wekan.DisableUsers(context.Background(), disable)
+	fields = logger.DataForMethod("DisableUsers")
+	fields.AddAny("population", len(disable))
+	logger.Info("désactivation des utilisateurs supprimés", fields)
+	return DisableUsers(context.Background(), wekan, disable)
+}
+
+func InsertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
+	fields := logger.DataForMethod("InsertUser")
+	if err := wekan.AssertPrivileged(ctx); err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		fields.AddAny("username", user.Username)
+		logger.Debug("insertion de l'utilisateur", fields)
+		err := wekan.InsertUser(ctx, user)
+		if err != nil {
+			logger.Error(err.Error(), fields)
+			return err
+		}
+	}
+	return nil
+}
+
+func EnableUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
+	fields := logger.DataForMethod("EnableUser")
+	if err := wekan.AssertPrivileged(ctx); err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		fields.AddAny("username", user.Username)
+		logger.Debug("activation de l'utilisateur", fields)
+		err := wekan.EnableUser(ctx, user)
+		if err != nil {
+			logger.Error(err.Error(), fields)
+			return err
+		}
+	}
+	return nil
+}
+
+func DisableUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
+	fields := logger.DataForMethod("DisableUser")
+	for _, user := range users {
+		fields.AddAny("username", user.Username)
+		logger.Debug("désactivation de l'utilisateur", fields)
+		err := wekan.DisableUser(ctx, user)
+		if err != nil {
+			logger.Error(err.Error(), fields)
+			return err
+		}
+	}
+	return nil
 }
 
 func (users Users) BuildWekanUsers() libwekan.Users {

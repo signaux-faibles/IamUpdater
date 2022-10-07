@@ -17,7 +17,7 @@ type Config struct {
 	Logger  *LoggerConfig                `toml:"logger"`
 	Realm   *gocloak.RealmRepresentation `toml:"realm"`
 	Clients []*gocloak.Client            `toml:"clients"`
-	Mongo   *Mongo                       `toml:"mongodb"`
+	Mongo   *Mongo                       `toml:"mongo"`
 	Wekan   *Wekan                       `toml:"wekan"`
 }
 

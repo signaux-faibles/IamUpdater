@@ -1,20 +1,50 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/tealeg/xlsx/v3"
 )
 
+var HEADERS = []string{
+	"NIVEAU HABILITATION",
+	"ENTITES",
+	"ACCES GEOGRAPHIQUE",
+	"FONCTION",
+	"SEGMENT",
+	"PRENOM",
+	"NOM",
+	"ADRESSE MAIL",
+	"GOUP",
+	"SCOPE",
+	"BOARDS",
+	"TASKFORCE",
+}
+
+var NOM_PREMIERE_PAGE = "utilisateurs"
+
+func splitExcelValue(value string, sep string) []string {
+	splitValue := strings.Split(value, sep)
+	trimmedValue := mapSlice(splitValue, strings.TrimSpace)
+	return selectSlice(trimmedValue, func(s string) bool { return s != "" })
+}
+
 func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
+
 	xlFile, err := xlsx.OpenFile(excelFileName)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = checkExcelFormat(xlFile)
 	if err != nil {
 		return nil, nil, err
 	}
 	var table [][]string
 	var zones [][]string
 	for _, sheet := range xlFile.Sheets {
-		if sheet.Name == "utilisateurs" {
+
+		if sheet.Name == NOM_PREMIERE_PAGE {
 			table = loadSheet(*sheet)
 		}
 		if sheet.Name == "zones" {
@@ -49,13 +79,11 @@ func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 				employeur:         userRow[fields["ENTITES"]],
 				goup:              userRow[fields["GOUP"]],
 				accesGeographique: userRow[fields["ACCES GEOGRAPHIQUE"]],
-				boards:            strings.Split(strings.Trim(userRow[fields["BOARDS"]], ""), ","),
-				taskforce:         strings.Split(strings.Trim(userRow[fields["TASKFORCE"]], ""), ","),
+				scope:             splitExcelValue(userRow[fields["SCOPE"]], ","),
+				boards:            splitExcelValue(userRow[fields["BOARDS"]], ","),
+				taskforces:        splitExcelValue(userRow[fields["TASKFORCE"]], ","),
 			}
-			scope := strings.Split(userRow[fields["SCOPE"]], ",")
-			if len(scope) != 1 || scope[0] != "" {
-				user.scope = scope
-			}
+
 			users[email] = user
 		}
 	}
@@ -71,6 +99,32 @@ func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 		)
 	}
 	return users, compositeRoles, nil
+}
+
+func checkExcelFormat(file *xlsx.File) error {
+	return checkSheet1Format(file.Sheets[0])
+}
+
+func checkSheet1Format(sheet *xlsx.Sheet) error {
+	if sheet.Name != NOM_PREMIERE_PAGE {
+		return InvalidExcelFileError{msg: fmt.Sprintf("la première page n'a pas le bon nom (%s) : %s", NOM_PREMIERE_PAGE, sheet.Name)}
+	}
+
+	firstRow, err := sheet.Row(0)
+	if err != nil {
+		return InvalidExcelFileError{msg: "erreur lors de la récupération des headers", err: err}
+	}
+	for i := 0; i < len(HEADERS); i++ {
+		cell := firstRow.GetCell(i)
+		actual := cell.Value
+		expected := HEADERS[i]
+		if actual != expected {
+			return InvalidExcelFileError{
+				msg: fmt.Sprintf("l'entête %s en position %d ne correspond pas à la valeur attendue %s", actual, i, expected),
+			}
+		}
+	}
+	return nil
 }
 
 func loadSheet(sheet xlsx.Sheet) [][]string {

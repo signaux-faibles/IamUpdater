@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/libwekan"
 )
@@ -17,7 +18,10 @@ func (pipeline Pipeline) Run(wekan libwekan.Wekan, fromConfig Users) error {
 	for _, stage := range pipeline {
 		err := stage.run(wekan, fromConfig)
 		if err != nil {
-			return err
+			return PipelineRunError{
+				err:   err,
+				stage: stage,
+			}
 		}
 	}
 	return nil
@@ -36,12 +40,14 @@ func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastS
 	return nil
 }
 
+var StageCheckBoardSlugs = PipelineStage{CheckBoardSlugs, "CheckBoardSlugs"}
 var StageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
 var StageManageBoardsMembers = PipelineStage{ManageBoardsMembers, "ManageBoardsMembers"}
 var StageAddMissingRulesAndCardMembership = PipelineStage{AddMissingRulesAndCardMembership, "AddMissingRulesAndCardMembership"}
 var StageRemoveExtraRulesAndCardMembership = PipelineStage{RemoveExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
 
 var pipeline = Pipeline{
+	StageCheckBoardSlugs,
 	StageManageUsers,
 	StageManageBoardsMembers,
 	StageAddMissingRulesAndCardMembership,
@@ -104,4 +110,25 @@ func firstChar(s string) string {
 		return s[0:1]
 	}
 	return ""
+}
+
+func CheckBoardSlugs(wekan libwekan.Wekan, users Users) error {
+	domainBoards, err := wekan.SelectDomainBoards(context.Background())
+	if err != nil {
+		return err
+	}
+	boardToSlug := func(board libwekan.Board) libwekan.BoardSlug { return board.Slug }
+	domainSlugs := mapSlice(domainBoards, boardToSlug)
+
+	configBoardsMembers := users.inferBoardsMember()
+	var configSlugs []libwekan.BoardSlug
+	for slug := range configBoardsMembers {
+		configSlugs = append(configSlugs, slug)
+	}
+	_, _, onlyConfig := intersect(domainSlugs, configSlugs)
+
+	if len(onlyConfig) > 0 {
+		return InvalidExcelFileError{msg: fmt.Sprintf("le fichier contient des références de boards inexistantes : %s", onlyConfig)}
+	}
+	return nil
 }

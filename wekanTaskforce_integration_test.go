@@ -73,10 +73,10 @@ func TestWekanTaskforce_AddMissingRules_whenEverythingFine(t *testing.T) {
 
 	users := Users{
 		Username(userOnBoard.Username): User{
-			scope:     []string{"wekan"},
-			email:     Username(userOnBoard.Username),
-			boards:    []string{string(board.Slug)},
-			taskforce: []string{string(label.Name)},
+			scope:      []string{"wekan"},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{string(board.Slug)},
+			taskforces: []string{string(label.Name)},
 		},
 	}
 
@@ -107,10 +107,10 @@ func TestWekanTaskforce_AddMissingRules_whenScopeNotWekan(t *testing.T) {
 
 	users := Users{
 		Username(userOnBoard.Username): User{
-			scope:     []string{""},
-			email:     Username(userOnBoard.Username),
-			boards:    []string{string(board.Slug)},
-			taskforce: []string{string(label.Name)},
+			scope:      []string{""},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{string(board.Slug)},
+			taskforces: []string{string(label.Name)},
 		},
 	}
 
@@ -137,10 +137,10 @@ func TestWekanTaskforce_AddMissingRules_WhenInactiveMember(t *testing.T) {
 
 	users := Users{
 		Username(userOnBoard.Username): User{
-			scope:     []string{"wekan"},
-			email:     Username(userOnBoard.Username),
-			boards:    []string{},
-			taskforce: []string{string(label.Name)},
+			scope:      []string{"wekan"},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{},
+			taskforces: []string{string(label.Name)},
 		},
 	}
 
@@ -167,10 +167,10 @@ func TestWekanTaskforce_AddMissingRules_WhenNotMember(t *testing.T) {
 
 	users := Users{
 		Username(userOnBoard.Username): User{
-			scope:     []string{"wekan"},
-			email:     Username(userOnBoard.Username),
-			boards:    []string{},
-			taskforce: []string{string(label.Name)},
+			scope:      []string{"wekan"},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{},
+			taskforces: []string{string(label.Name)},
 		},
 	}
 
@@ -197,10 +197,10 @@ func TestWekanTaskforce_AddMissingRules_whenBoardHasNotLabel(t *testing.T) {
 
 	users := Users{
 		Username(userOnBoard.Username): User{
-			scope:     []string{"wekan"},
-			email:     Username(userOnBoard.Username),
-			boards:    []string{},
-			taskforce: []string{"fakeLabel"},
+			scope:      []string{"wekan"},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{},
+			taskforces: []string{"fakeLabel"},
 		},
 	}
 
