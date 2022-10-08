@@ -35,7 +35,7 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 
 	fields = logger.DataForMethod("EnableUsers")
 	fields.AddAny("population", len(enable))
-	logger.Info("réactivation des utilisateurs inactifs", fields)
+	logger.Info("désactivation des utilisateurs inactifs", fields)
 	err = EnsureUsersAreEnabled(context.Background(), wekan, enable)
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func InsertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 
 	for _, user := range users {
 		fields.AddAny("username", user.Username)
-		logger.Info("création de l'utilisateur", fields)
+		logger.Info("crée l'utilisateur", fields)
 		err := wekan.InsertUser(ctx, user)
 		if err != nil {
 			logger.Error(err.Error(), fields)
@@ -81,7 +81,7 @@ func EnsureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libw
 			logger.Error(err.Error(), fields)
 			return err
 		}
-		logger.Info("active de l'utilisateur", fields)
+		logger.Info("active l'utilisateur", fields)
 	}
 	return nil
 }
