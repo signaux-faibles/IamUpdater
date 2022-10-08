@@ -45,9 +45,10 @@ var StageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
 var StageManageBoardsMembers = PipelineStage{ManageBoardsMembers, "ManageBoardsMembers"}
 var StageAddMissingRulesAndCardMembership = PipelineStage{AddMissingRulesAndCardMembership, "AddMissingRulesAndCardMembership"}
 var StageRemoveExtraRulesAndCardMembership = PipelineStage{RemoveExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
-
+var StageCheckNativeUsers = PipelineStage{CheckNativeUsers, "CheckNativeUsers"}
 var pipeline = Pipeline{
 	StageCheckBoardSlugs,
+	StageCheckNativeUsers,
 	StageManageUsers,
 	StageManageBoardsMembers,
 	StageAddMissingRulesAndCardMembership,

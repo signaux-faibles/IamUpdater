@@ -67,7 +67,10 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 			logger.Info("inscrit le participant", fields)
 		}
 	}
-	for _, userID := range wantedInactiveBoardMember {
+
+	isOauth2UserID := func(userID libwekan.UserID) bool { return wantedUserMap[userID].AuthenticationMethod == "oauth2" }
+	oauth2OnlyWantedInactiveMember := selectSlice(wantedInactiveBoardMember, isOauth2UserID)
+	for _, userID := range oauth2OnlyWantedInactiveMember {
 		fields.AddAny("username", currentUserMap[userID].Username)
 		logger.Debug("vérifie la non-participation", fields)
 		modified, err := wekan.EnsureUserIsInactiveBoardMember(context.Background(), board.ID, userID)
