@@ -167,7 +167,7 @@ func isOauth2(exceptions []libwekan.Username) func(libwekan.User) bool {
 func CheckNativeUsers(wekan libwekan.Wekan, _ Users) error {
 	ctx := context.Background()
 	fields := logger.DataForMethod("CheckNativeUsers")
-	logger.Info("vérification des compte utilisateurs standards", fields)
+	logger.Info("inventaire des comptes standards", fields)
 	wekanUsers, err := wekan.GetUsers(ctx)
 	if err != nil {
 		return err

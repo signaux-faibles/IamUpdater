@@ -68,7 +68,9 @@ func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers
 		}
 	}
 
-	isOauth2UserID := func(userID libwekan.UserID) bool { return wantedUserMap[userID].AuthenticationMethod == "oauth2" }
+	isOauth2UserID := func(userID libwekan.UserID) bool {
+		return wantedUserMap[userID].AuthenticationMethod == "oauth2" || wantedUserMap[userID].Username == wekan.AdminUsername()
+	}
 	oauth2OnlyWantedInactiveMember := selectSlice(wantedInactiveBoardMember, isOauth2UserID)
 	for _, userID := range oauth2OnlyWantedInactiveMember {
 		fields.AddAny("username", currentUserMap[userID].Username)
