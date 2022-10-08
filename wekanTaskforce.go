@@ -78,17 +78,11 @@ func RemoveExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error
 			fields.AddAny("label", label.Name)
 			fields.AddAny("username", rule.Action.Username)
 
-			user, found := wekanUsers[Username(rule.Action.Username)]
-			if !found {
-				err := wekan.RemoveRuleWithID(context.Background(), rule.ID)
-				if err != nil {
-					return err
-				}
-				logger.Info("effacement de la règle", fields)
-			}
-			if !userHasTaskforceLabel(user)(label) {
+			user := wekanUsers[Username(rule.Action.Username)]
+			// l'utilisateur est absent de la configuration ou n'a pas le scope wekan
+			if !userHasTaskforceLabel(user)(label) || !contains(user.boards, string(board.Slug)) {
 				logger.Debug("examen des cartes étiquetées", fields)
-				modified, err := RemoveCardMembership(wekan, user, board, label)
+				modified, err := RemoveCardMembership(wekan, Username(rule.Action.Username), board, label)
 				if err != nil {
 					return err
 				}
@@ -110,8 +104,8 @@ func userHasTaskforceLabel(user User) func(label libwekan.BoardLabel) bool {
 	return func(label libwekan.BoardLabel) bool { return contains(user.taskforces, string(label.Name)) }
 }
 
-func RemoveCardMembership(wekan libwekan.Wekan, user User, board libwekan.Board, label libwekan.BoardLabel) (bool, error) {
-	wekanUser, err := wekan.GetUserFromUsername(context.Background(), libwekan.Username(user.email))
+func RemoveCardMembership(wekan libwekan.Wekan, username Username, board libwekan.Board, label libwekan.BoardLabel) (bool, error) {
+	wekanUser, err := wekan.GetUserFromUsername(context.Background(), libwekan.Username(username))
 	if err != nil {
 		return false, err
 	}

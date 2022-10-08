@@ -270,7 +270,7 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard(t *testing.T) {
 	logger.ConfigureWith(structs.LoggerConfig{
 		Level: "ERROR",
 	})
-	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard_Slugboard")
 	ass := assert.New(t)
 
 	board, swimlane, list := createBoard(t, wekan, "board")
