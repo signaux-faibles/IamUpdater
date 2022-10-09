@@ -17,7 +17,7 @@ func ManageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 
 	logger.Info("inscription des membres des tableaux", fields)
 	for boardSlug, boardMembers := range wekanBoardsMembers {
-		err := SetMembers(wekan, boardSlug, boardMembers)
+		err := SetBoardMembers(wekan, boardSlug, boardMembers)
 		if err != nil {
 			return err
 		}
@@ -25,8 +25,8 @@ func ManageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 	return nil
 }
 
-func SetMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
-	fields := logger.DataForMethod("SetMembers")
+func SetBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
+	fields := logger.DataForMethod("SetBoardMembers")
 	fields.AddAny("board", boardSlug)
 
 	board, err := wekan.GetBoardFromSlug(context.Background(), boardSlug)
