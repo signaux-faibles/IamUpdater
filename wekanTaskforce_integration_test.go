@@ -6,6 +6,8 @@
 package main
 
 import (
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/signaux-faibles/libwekan"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,7 +79,7 @@ func TestWekanTaskforce_AddMissingRules_whenEverythingFine(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	printErrChain(err, 0)
 	require.NoError(t, err)
 
@@ -86,7 +88,7 @@ func TestWekanTaskforce_AddMissingRules_whenEverythingFine(t *testing.T) {
 	ass.Contains(actualCard.Members, userOnBoard.ID)
 	rules, err := wekan.SelectRulesFromBoardID(ctx, board.ID)
 	ass.Nil(err)
-	require.Len(t, rules, 1)
+	require.Len(t, rules, 2)
 	actualRule := rules[0]
 	ass.Equal(string(userOnBoard.Username), string(actualRule.Action.Username))
 	ass.Equal(label.ID, actualRule.Trigger.LabelID)
@@ -112,7 +114,7 @@ func TestWekanTaskforce_AddMissingRules_whenScopeNotWekan(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	require.NoError(t, err)
 
 	// THEN
@@ -142,7 +144,7 @@ func TestWekanTaskforce_AddMissingRules_WhenInactiveMember(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	ass.NoError(err)
 
 	// THEN
@@ -172,7 +174,7 @@ func TestWekanTaskforce_AddMissingRules_WhenNotMember(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	ass.NoError(err)
 
 	// THEN
@@ -202,8 +204,161 @@ func TestWekanTaskforce_AddMissingRules_whenBoardHasNotLabel(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	ass.NoError(err)
+
+	// THEN
+	actualCard, _ := cardOnBoard.ID.GetDocument(ctx, &wekan)
+	ass.NotContains(actualCard.Members, userOnBoard.ID)
+	rules, err := wekan.SelectRulesFromBoardID(ctx, board.ID)
+	ass.Len(rules, 0)
+}
+
+func TestWekanTaskforce_RemoveExtraRules_whenUserLosesTaskforce(t *testing.T) {
+	// GIVEN
+	logger.ConfigureWith(structs.LoggerConfig{
+		Level: "ERROR",
+	})
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
+	ass := assert.New(t)
+
+	board, swimlane, list := createBoard(t, wekan, "board")
+	cardOnBoard := createCard(t, wekan, "card", board.ID, swimlane.ID, list.ID)
+	userOnBoard := createUser(t, wekan, "user", &board.ID, nil)
+	label := createLabel(t, wekan, "label", board.ID, &cardOnBoard.ID)
+
+	initialUsers := Users{
+		Username(userOnBoard.Username): User{
+			scope:      []string{"wekan"},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{string(board.Slug)},
+			taskforces: []string{string(label.Name)},
+		},
+	}
+
+	err := pipeline.StopAfter(wekan, initialUsers, stageAddMissingRulesAndCardMembership)
+	printErrChain(err, 0)
+	require.NoError(t, err)
+
+	users := Users{
+		Username(userOnBoard.Username): User{
+			scope:      []string{"wekan"},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{string(board.Slug)},
+			taskforces: []string{},
+		},
+	}
+
+	logger.ConfigureWith(structs.LoggerConfig{
+		Level: "DEBUG",
+	})
+
+	// WHEN
+	err = pipeline.StopAfter(wekan, users, stageRemoveExtraRulesAndCardMembership)
+	printErrChain(err, 0)
+	require.NoError(t, err)
+
+	// THEN
+	actualCard, _ := cardOnBoard.ID.GetDocument(ctx, &wekan)
+	ass.NotContains(actualCard.Members, userOnBoard.ID)
+	rules, err := wekan.SelectRulesFromBoardID(ctx, board.ID)
+	ass.Len(rules, 0)
+}
+
+func TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard(t *testing.T) {
+	// GIVEN
+	logger.ConfigureWith(structs.LoggerConfig{
+		Level: "ERROR",
+	})
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard_Slugboard")
+	ass := assert.New(t)
+
+	board, swimlane, list := createBoard(t, wekan, "board")
+	cardOnBoard := createCard(t, wekan, "card", board.ID, swimlane.ID, list.ID)
+	userOnBoard := createUser(t, wekan, "user", &board.ID, nil)
+	label := createLabel(t, wekan, "label", board.ID, &cardOnBoard.ID)
+
+	initialUsers := Users{
+		Username(userOnBoard.Username): User{
+			scope:      []string{"wekan"},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{string(board.Slug)},
+			taskforces: []string{string(label.Name)},
+		},
+	}
+
+	err := pipeline.StopAfter(wekan, initialUsers, stageAddMissingRulesAndCardMembership)
+	printErrChain(err, 0)
+	require.NoError(t, err)
+
+	users := Users{
+		Username(userOnBoard.Username): User{
+			scope:      []string{"wekan"},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{},
+			taskforces: []string{string(label.Name)},
+		},
+	}
+
+	logger.ConfigureWith(structs.LoggerConfig{
+		Level: "INFO",
+	})
+
+	// WHEN
+	err = pipeline.StopAfter(wekan, users, stageRemoveExtraRulesAndCardMembership)
+	printErrChain(err, 0)
+	require.NoError(t, err)
+
+	// THEN
+	actualCard, _ := cardOnBoard.ID.GetDocument(ctx, &wekan)
+	ass.NotContains(actualCard.Members, userOnBoard.ID)
+	rules, err := wekan.SelectRulesFromBoardID(ctx, board.ID)
+	ass.Len(rules, 0)
+}
+
+func TestWekanTaskforce_RemoveExtraRules_whenUserLosesWekanScope(t *testing.T) {
+	// GIVEN
+	logger.ConfigureWith(structs.LoggerConfig{
+		Level: "INFO",
+	})
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
+	ass := assert.New(t)
+
+	board, swimlane, list := createBoard(t, wekan, "board")
+	cardOnBoard := createCard(t, wekan, "card", board.ID, swimlane.ID, list.ID)
+	userOnBoard := createUser(t, wekan, "user", &board.ID, nil)
+	label := createLabel(t, wekan, "label", board.ID, &cardOnBoard.ID)
+
+	initialUsers := Users{
+		Username(userOnBoard.Username): User{
+			scope:      []string{"wekan"},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{string(board.Slug)},
+			taskforces: []string{string(label.Name)},
+		},
+	}
+
+	err := pipeline.StopAfter(wekan, initialUsers, stageAddMissingRulesAndCardMembership)
+	printErrChain(err, 0)
+	require.NoError(t, err)
+
+	users := Users{
+		Username(userOnBoard.Username): User{
+			scope:      []string{},
+			email:      Username(userOnBoard.Username),
+			boards:     []string{string(board.Slug)},
+			taskforces: []string{string(label.Name)},
+		},
+	}
+
+	logger.ConfigureWith(structs.LoggerConfig{
+		Level: "INFO",
+	})
+
+	// WHEN
+	err = pipeline.StopAfter(wekan, users, stageRemoveExtraRulesAndCardMembership)
+	printErrChain(err, 0)
+	require.NoError(t, err)
 
 	// THEN
 	actualCard, _ := cardOnBoard.ID.GetDocument(ctx, &wekan)

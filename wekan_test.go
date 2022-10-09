@@ -42,7 +42,7 @@ func TestWekan_AddBoards_whenNewBoard(t *testing.T) {
 	boards := []libwekan.Board{{Slug: addedBoardSlug}}
 
 	// THEN
-	addedBoardsMembers := boardsMembers.AddBoards(boards)
+	addedBoardsMembers := boardsMembers.addBoards(boards)
 	_, ok := addedBoardsMembers[addedBoardSlug]
 	ass.True(ok)
 	ass.Len(addedBoardsMembers, 2)
@@ -61,7 +61,7 @@ func TestWekan_AddBoards_whenExistingBoard(t *testing.T) {
 	}
 
 	// THEN
-	addedBoardsMembers := boardsMembers.AddBoards(boards)
+	addedBoardsMembers := boardsMembers.addBoards(boards)
 	_, ok := addedBoardsMembers[addedBoardSlug]
 	ass.True(ok)
 	ass.Equal(boardsMembers, addedBoardsMembers)
@@ -77,7 +77,7 @@ func TestWekan_AddBoards_whenEmptyBoardsMembers(t *testing.T) {
 	require.Len(t, boardsMembers, 0)
 
 	// THEN
-	addedBoardsMembers := boardsMembers.AddBoards(boards)
+	addedBoardsMembers := boardsMembers.addBoards(boards)
 	_, ok := addedBoardsMembers[addedBoardSlug]
 	assert.True(t, ok)
 }
@@ -90,7 +90,7 @@ func TestWekan_AddBoards_whenNilBoardsMembers(t *testing.T) {
 	require.Nil(t, boardsMembers)
 
 	// THEN
-	addedBoardsMembers := boardsMembers.AddBoards(boards)
+	addedBoardsMembers := boardsMembers.addBoards(boards)
 	_, ok := addedBoardsMembers[addedBoardSlug]
 	assert.True(t, ok)
 }
@@ -104,7 +104,7 @@ func TestWekan_AddBoards_whenEmptyBoards(t *testing.T) {
 	require.Empty(t, boards)
 
 	// THEN
-	addedBoardsMembers := boardsMembers.AddBoards(boards)
+	addedBoardsMembers := boardsMembers.addBoards(boards)
 	assert.Len(t, addedBoardsMembers, 1)
 }
 
@@ -117,6 +117,6 @@ func TestWekan_AddBoards_whenNilBoards(t *testing.T) {
 	require.Nil(t, boards)
 
 	// THEN
-	addedBoardsMembers := boardsMembers.AddBoards(boards)
+	addedBoardsMembers := boardsMembers.addBoards(boards)
 	assert.Len(t, addedBoardsMembers, 1)
 }

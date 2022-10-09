@@ -40,18 +40,20 @@ func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastS
 	return nil
 }
 
-var StageCheckBoardSlugs = PipelineStage{CheckBoardSlugs, "CheckBoardSlugs"}
-var StageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
-var StageManageBoardsMembers = PipelineStage{ManageBoardsMembers, "ManageBoardsMembers"}
-var StageAddMissingRulesAndCardMembership = PipelineStage{AddMissingRulesAndCardMembership, "AddMissingRulesAndCardMembership"}
-var StageRemoveExtraRulesAndCardMembership = PipelineStage{RemoveExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
+var stageCheckBoardSlugs = PipelineStage{CheckBoardSlugs, "CheckBoardSlugs"}
+var stageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
+var stageManageBoardsMembers = PipelineStage{manageBoardsMembers, "manageBoardsMembers"}
+var stageAddMissingRulesAndCardMembership = PipelineStage{addMissingRulesAndCardMembership, "addMissingRulesAndCardMembership"}
+var stageRemoveExtraRulesAndCardMembership = PipelineStage{removeExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
+var stageCheckNativeUsers = PipelineStage{checkNativeUsers, "checkNativeUsers"}
 
 var pipeline = Pipeline{
-	StageCheckBoardSlugs,
-	StageManageUsers,
-	StageManageBoardsMembers,
-	StageAddMissingRulesAndCardMembership,
-	StageRemoveExtraRulesAndCardMembership,
+	stageCheckBoardSlugs,
+	stageCheckNativeUsers,
+	stageManageUsers,
+	stageManageBoardsMembers,
+	stageAddMissingRulesAndCardMembership,
+	stageRemoveExtraRulesAndCardMembership,
 }
 
 func WekanUpdate(url, database, admin string, users Users, slugDomainRegexp string) error {
@@ -94,9 +96,9 @@ func (users Users) ListWekanChanges(wekanUsers libwekan.Users) (
 	configUsernames := users.Usernames()
 
 	both, onlyWekan, notInWekan := intersect(wekanUsernames, configUsernames)
-	creations = UsernamesSelect(users, notInWekan).BuildWekanUsers()
-	enable = WekanUsernamesSelect(wekanUsers, both)
-	disable = WekanUsernamesSelect(wekanUsers, onlyWekan)
+	creations = UsernamesSelect(users, notInWekan).buildWekanUsers()
+	enable = wekanUsernamesSelect(wekanUsers, both)
+	disable = wekanUsernamesSelect(wekanUsers, onlyWekan)
 
 	return creations, enable, disable
 }
@@ -117,15 +119,17 @@ func CheckBoardSlugs(wekan libwekan.Wekan, users Users) error {
 	if err != nil {
 		return err
 	}
+
+	domainActiveBoards := selectSlice(domainBoards, func(board libwekan.Board) bool { return !board.Archived })
 	boardToSlug := func(board libwekan.Board) libwekan.BoardSlug { return board.Slug }
-	domainSlugs := mapSlice(domainBoards, boardToSlug)
+	domainActiveSlugs := mapSlice(domainActiveBoards, boardToSlug)
 
 	configBoardsMembers := users.inferBoardsMember()
 	var configSlugs []libwekan.BoardSlug
 	for slug := range configBoardsMembers {
 		configSlugs = append(configSlugs, slug)
 	}
-	_, _, onlyConfig := intersect(domainSlugs, configSlugs)
+	_, _, onlyConfig := intersect(domainActiveSlugs, configSlugs)
 
 	if len(onlyConfig) > 0 {
 		return InvalidExcelFileError{msg: fmt.Sprintf("le fichier contient des références de boards inexistantes : %s", onlyConfig)}

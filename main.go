@@ -47,13 +47,15 @@ func main() {
 		}
 	}
 
-	err = WekanUpdate(
-		conf.Mongo.Url,
-		conf.Mongo.Database,
-		conf.Wekan.AdminUsername,
-		users,
-		conf.Wekan.SlugDomainRegexp,
-	)
+	if *conf.Mongo != (structs.Mongo{}) && *conf.Wekan != (structs.Wekan{}) {
+		err = WekanUpdate(
+			conf.Mongo.Url,
+			conf.Mongo.Database,
+			conf.Wekan.AdminUsername,
+			users,
+			conf.Wekan.SlugDomainRegexp,
+		)
+	}
 
 	if err != nil {
 		logger.ErrorE("le traitement s'est terminé de façon anormale", fields, err)
