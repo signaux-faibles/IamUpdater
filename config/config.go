@@ -22,9 +22,6 @@ func InitConfig(configFilename string) (structs.Config, error) {
 	for _, current := range allConfig {
 		conf = merge(conf, current)
 	}
-	if conf.Access == nil {
-		return structs.Config{}, errors.Errorf("[config] keycloak Access is not configured")
-	}
 	if conf.Stock == nil {
 		return structs.Config{}, errors.Errorf("[config] Stock is not configured")
 	}

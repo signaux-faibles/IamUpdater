@@ -26,8 +26,9 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 	creations, enable, disable := wekanUsersfromConfig.ListWekanChanges(withOauth2FromWekan)
 
 	fields := logger.DataForMethod("insertUsers")
+	logger.Info("> traite les inscriptions des utilisateurs", fields)
 	fields.AddAny("population", len(creations))
-	logger.Info("inscription des nouveaux utilisateurs", fields)
+	logger.Info(">> inscrit les nouveaux utilisateurs", fields)
 	err = insertUsers(context.Background(), wekan, creations)
 	if err != nil {
 		return err
@@ -35,7 +36,7 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 
 	fields = logger.DataForMethod("EnableUsers")
 	fields.AddAny("population", len(enable))
-	logger.Info("désactivation des utilisateurs inactifs", fields)
+	logger.Info(">> active des utilisateurs réinscrits", fields)
 	err = ensureUsersAreEnabled(context.Background(), wekan, enable)
 	if err != nil {
 		return err
@@ -43,7 +44,7 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 
 	fields = logger.DataForMethod("DisableUsers")
 	fields.AddAny("population", len(disable))
-	logger.Info("désactivation des utilisateurs supprimés", fields)
+	logger.Info(">> radie les utilisateurs absents", fields)
 	return ensureUsersAreDisables(context.Background(), wekan, disable)
 }
 
@@ -55,7 +56,7 @@ func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 
 	for _, user := range users {
 		fields.AddAny("username", user.Username)
-		logger.Info("crée l'utilisateur", fields)
+		logger.Info(">>> crée l'utilisateur", fields)
 		err := wekan.InsertUser(ctx, user)
 		if err != nil {
 			logger.Error(err.Error(), fields)
@@ -72,7 +73,7 @@ func ensureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libw
 	}
 	for _, user := range users {
 		fields.AddAny("username", user.Username)
-		logger.Debug("examine le statut de l'utilisateur", fields)
+		logger.Debug(">>> examine le statut de l'utilisateur", fields)
 		err := wekan.EnableUser(ctx, user)
 		if err == (libwekan.NothingDoneError{}) {
 			continue
@@ -81,7 +82,7 @@ func ensureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libw
 			logger.Error(err.Error(), fields)
 			return err
 		}
-		logger.Info("active l'utilisateur", fields)
+		logger.Info(">>> active l'utilisateur", fields)
 	}
 	return nil
 }
@@ -90,7 +91,7 @@ func ensureUsersAreDisables(ctx context.Context, wekan libwekan.Wekan, users lib
 	fields := logger.DataForMethod("DisableUser")
 	for _, user := range users {
 		fields.AddAny("username", user.Username)
-		logger.Debug("examine le statut de l'utilisateur", fields)
+		logger.Debug(">>> examine le statut de l'utilisateur", fields)
 		err := wekan.DisableUser(ctx, user)
 		if err == (libwekan.NothingDoneError{}) {
 			continue
@@ -99,7 +100,7 @@ func ensureUsersAreDisables(ctx context.Context, wekan libwekan.Wekan, users lib
 			logger.Error(err.Error(), fields)
 			return err
 		}
-		logger.Info("désactive l'utilisateur", fields)
+		logger.Info(">>> désactive l'utilisateur", fields)
 	}
 	return nil
 }

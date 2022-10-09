@@ -15,7 +15,7 @@ func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 	}
 	wekanBoardsMembers.addBoards(domainBoards)
 
-	logger.Info("inscription des membres des tableaux", fields)
+	logger.Info("> inscrit les utilisateurs dans les tableaux", fields)
 	for boardSlug, boardMembers := range wekanBoardsMembers {
 		err := setBoardMembers(wekan, boardSlug, boardMembers)
 		if err != nil {
@@ -56,41 +56,43 @@ func setBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMe
 	wantedMembersIDs := mapSlice(wantedMembers, func(user libwekan.User) libwekan.UserID { return user.ID })
 	alreadyBoardMember, wantedInactiveBoardMember, ongoingBoardMember := intersect(currentMembersIDs, wantedMembersIDs)
 
-	logger.Debug("examine les nouvelles inscriptions", fields)
+	logger.Debug(">> examine les nouvelles inscriptions", fields)
 	for _, userID := range append(alreadyBoardMember, ongoingBoardMember...) {
 		fields.AddAny("username", wantedUserMap[userID].Username)
-		logger.Debug("examine l'utilisateur", fields)
+		logger.Debug(">>> examine l'utilisateur", fields)
 		modified, err := wekan.EnsureUserIsActiveBoardMember(context.Background(), board.ID, userID)
 		if err != nil {
 			return err
 		}
 		if modified {
-			logger.Info("inscrit l'utilisateur", fields)
+			logger.Info(">>> inscrit l'utilisateur", fields)
 		}
 	}
 
-	logger.Debug("examine les radiations", fields)
+	logger.Debug(">> examine les radiations", fields)
 	isOauth2UserID := func(userID libwekan.UserID) bool {
 		return currentUserMap[userID].AuthenticationMethod == "oauth2" || currentUserMap[userID].Username == wekan.AdminUsername()
 	}
 	oauth2OnlyWantedInactiveBoardMember := selectSlice(wantedInactiveBoardMember, isOauth2UserID)
 	for _, userID := range oauth2OnlyWantedInactiveBoardMember {
 		fields.AddAny("username", currentUserMap[userID].Username)
-		logger.Debug("vérifie la non-participation", fields)
+		logger.Debug(">>> vérifie la non-participation", fields)
 		modified, err := wekan.EnsureUserIsInactiveBoardMember(context.Background(), board.ID, userID)
 		if err != nil {
 			return err
 		}
 		if modified {
-			logger.Info("désinscrit le participant", fields)
+			logger.Info(">>> désinscrit le participant", fields)
 		}
 	}
 
 	// globalWekan.AdminUser() est administrateur de toutes les boards, appliquons la règle
-	logger.Debug("vérifie la participation de l'admin", fields)
+	logger.Debug(">> vérifie la participation de l'admin", fields)
+
 	modified, err := wekan.EnsureUserIsBoardAdmin(context.Background(), board.ID, wekan.AdminID())
 	if modified {
-		logger.Info("donne les privilèges à l'admin", fields)
+		fields.AddAny("username", wekan.AdminUsername())
+		logger.Info(">>> donne les privilèges à l'admin", fields)
 	}
 	return err
 }

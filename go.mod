@@ -2,6 +2,8 @@ module github.com/signaux-faibles/keycloakUpdater/v2
 
 go 1.18
 
+replace github.com/signaux-faibles/libwekan => "../libwekan"
+
 require (
 	github.com/BurntSushi/toml v1.2.0
 	github.com/Nerzal/gocloak/v11 v11.2.0
