@@ -5,7 +5,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 )
 
 const AcceptedChanges int = 10
@@ -26,7 +25,7 @@ func main() {
 		logger.Panic(err)
 	}
 
-	if *conf.Access != (structs.Access{}) {
+	if conf.Access != nil {
 		clientId := conf.Stock.ClientForRoles
 		kc, err := NewKeycloakContext(conf.Access)
 		if err != nil {
@@ -47,7 +46,7 @@ func main() {
 		}
 	}
 
-	if *conf.Mongo != (structs.Mongo{}) && *conf.Wekan != (structs.Wekan{}) {
+	if conf.Mongo != nil && conf.Wekan != nil {
 		err = WekanUpdate(
 			conf.Mongo.Url,
 			conf.Mongo.Database,
