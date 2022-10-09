@@ -40,7 +40,7 @@ func addMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 				if modified, err := wekan.EnsureRuleAddTaskforceMemberExists(context.Background(), wekanUser, board, label); err != nil {
 					return err
 				} else if modified {
-					occurence += 1
+					occurence++
 					logger.Info(">>> crée de la règle d'ajout à la taskforce", fields)
 				}
 
@@ -48,7 +48,7 @@ func addMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 				if modified, err := wekan.EnsureRuleRemoveTaskforceMemberExists(context.Background(), wekanUser, board, label); err != nil {
 					return err
 				} else if modified {
-					occurence += 1
+					occurence++
 					logger.Info(">>> crée la règle de retrait de la taskforce", fields)
 				}
 			}
@@ -178,7 +178,7 @@ func addCardMemberShip(wekan libwekan.Wekan, username Username, board libwekan.B
 				return err
 			}
 			if modified {
-				occurences += 1
+				occurences++
 			}
 		}
 	}
