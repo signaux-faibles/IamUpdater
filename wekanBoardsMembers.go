@@ -6,18 +6,18 @@ import (
 	"github.com/signaux-faibles/libwekan"
 )
 
-func ManageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
-	fields := logger.DataForMethod("ManageBoardsMembers")
+func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
+	fields := logger.DataForMethod("manageBoardsMembers")
 	wekanBoardsMembers := fromConfig.selectScopeWekan().inferBoardsMember()
 	domainBoards, err := wekan.SelectDomainBoards(context.Background())
 	if err != nil {
 		return err
 	}
-	wekanBoardsMembers.AddBoards(domainBoards)
+	wekanBoardsMembers.addBoards(domainBoards)
 
 	logger.Info("inscription des membres des tableaux", fields)
 	for boardSlug, boardMembers := range wekanBoardsMembers {
-		err := SetBoardMembers(wekan, boardSlug, boardMembers)
+		err := setBoardMembers(wekan, boardSlug, boardMembers)
 		if err != nil {
 			return err
 		}
@@ -25,8 +25,8 @@ func ManageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 	return nil
 }
 
-func SetBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
-	fields := logger.DataForMethod("SetBoardMembers")
+func setBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
+	fields := logger.DataForMethod("setBoardMembers")
 	fields.AddAny("board", boardSlug)
 
 	board, err := wekan.GetBoardFromSlug(context.Background(), boardSlug)
@@ -115,7 +115,7 @@ func (users Users) inferBoardsMember() BoardsMembers {
 
 type BoardsMembers map[libwekan.BoardSlug]Users
 
-func (boardsMembers BoardsMembers) AddBoards(boards []libwekan.Board) BoardsMembers {
+func (boardsMembers BoardsMembers) addBoards(boards []libwekan.Board) BoardsMembers {
 	if boardsMembers == nil {
 		boardsMembers = make(BoardsMembers)
 	}

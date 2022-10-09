@@ -25,10 +25,10 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 	withOauth2FromWekan := selectSlice(fromWekan, withOauth2Func)
 	creations, enable, disable := wekanUsersfromConfig.ListWekanChanges(withOauth2FromWekan)
 
-	fields := logger.DataForMethod("InsertUsers")
+	fields := logger.DataForMethod("insertUsers")
 	fields.AddAny("population", len(creations))
 	logger.Info("inscription des nouveaux utilisateurs", fields)
-	err = InsertUsers(context.Background(), wekan, creations)
+	err = insertUsers(context.Background(), wekan, creations)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 	fields = logger.DataForMethod("EnableUsers")
 	fields.AddAny("population", len(enable))
 	logger.Info("désactivation des utilisateurs inactifs", fields)
-	err = EnsureUsersAreEnabled(context.Background(), wekan, enable)
+	err = ensureUsersAreEnabled(context.Background(), wekan, enable)
 	if err != nil {
 		return err
 	}
@@ -44,10 +44,10 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 	fields = logger.DataForMethod("DisableUsers")
 	fields.AddAny("population", len(disable))
 	logger.Info("désactivation des utilisateurs supprimés", fields)
-	return EnsureUsersAreDisables(context.Background(), wekan, disable)
+	return ensureUsersAreDisables(context.Background(), wekan, disable)
 }
 
-func InsertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
+func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
 	fields := logger.DataForMethod("InsertUser")
 	if err := wekan.AssertPrivileged(ctx); err != nil {
 		return err
@@ -65,7 +65,7 @@ func InsertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 	return nil
 }
 
-func EnsureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
+func ensureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
 	fields := logger.DataForMethod("EnableUser")
 	if err := wekan.AssertPrivileged(ctx); err != nil {
 		return err
@@ -86,7 +86,7 @@ func EnsureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libw
 	return nil
 }
 
-func EnsureUsersAreDisables(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
+func ensureUsersAreDisables(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
 	fields := logger.DataForMethod("DisableUser")
 	for _, user := range users {
 		fields.AddAny("username", user.Username)
@@ -104,7 +104,7 @@ func EnsureUsersAreDisables(ctx context.Context, wekan libwekan.Wekan, users lib
 	return nil
 }
 
-func (users Users) BuildWekanUsers() libwekan.Users {
+func (users Users) buildWekanUsers() libwekan.Users {
 	var wekanUsers libwekan.Users
 	for _, user := range users {
 		initials := firstChar(user.prenom) + firstChar(user.nom)
@@ -115,8 +115,8 @@ func (users Users) BuildWekanUsers() libwekan.Users {
 	return wekanUsers
 }
 
-func WekanUsernamesSelect(users libwekan.Users, usernames []Username) libwekan.Users {
-	wekanUsersMap := Map(users)
+func wekanUsernamesSelect(users libwekan.Users, usernames []Username) libwekan.Users {
+	wekanUsersMap := toMap(users)
 	var filteredUsers libwekan.Users
 	for _, username := range usernames {
 		filteredUsers = append(filteredUsers, wekanUsersMap[username])
@@ -124,7 +124,7 @@ func WekanUsernamesSelect(users libwekan.Users, usernames []Username) libwekan.U
 	return filteredUsers
 }
 
-func Map(users libwekan.Users) map[Username]libwekan.User {
+func toMap(users libwekan.Users) map[Username]libwekan.User {
 	wekanUsersMap := make(map[Username]libwekan.User)
 	for _, user := range users {
 		wekanUsersMap[Username(user.Username)] = user
@@ -163,10 +163,10 @@ func isOauth2(exceptions []libwekan.Username) func(libwekan.User) bool {
 	}
 }
 
-// CheckNativeUsers apporte des logs permettant de garder un œil sur les utilisateurs gérés manuellement
-func CheckNativeUsers(wekan libwekan.Wekan, _ Users) error {
+// checkNativeUsers apporte des logs permettant de garder un œil sur les utilisateurs gérés manuellement
+func checkNativeUsers(wekan libwekan.Wekan, _ Users) error {
 	ctx := context.Background()
-	fields := logger.DataForMethod("CheckNativeUsers")
+	fields := logger.DataForMethod("checkNativeUsers")
 	logger.Info("inventaire des comptes standards", fields)
 	wekanUsers, err := wekan.GetUsers(ctx)
 	if err != nil {

@@ -79,7 +79,7 @@ func TestWekanTaskforce_AddMissingRules_whenEverythingFine(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	printErrChain(err, 0)
 	require.NoError(t, err)
 
@@ -114,7 +114,7 @@ func TestWekanTaskforce_AddMissingRules_whenScopeNotWekan(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	require.NoError(t, err)
 
 	// THEN
@@ -144,7 +144,7 @@ func TestWekanTaskforce_AddMissingRules_WhenInactiveMember(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	ass.NoError(err)
 
 	// THEN
@@ -174,7 +174,7 @@ func TestWekanTaskforce_AddMissingRules_WhenNotMember(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	ass.NoError(err)
 
 	// THEN
@@ -204,7 +204,7 @@ func TestWekanTaskforce_AddMissingRules_whenBoardHasNotLabel(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
 	ass.NoError(err)
 
 	// THEN
@@ -236,7 +236,7 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesTaskforce(t *testing.T) {
 		},
 	}
 
-	err := pipeline.StopAfter(wekan, initialUsers, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, initialUsers, stageAddMissingRulesAndCardMembership)
 	printErrChain(err, 0)
 	require.NoError(t, err)
 
@@ -254,7 +254,7 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesTaskforce(t *testing.T) {
 	})
 
 	// WHEN
-	err = pipeline.StopAfter(wekan, users, StageRemoveExtraRulesAndCardMembership)
+	err = pipeline.StopAfter(wekan, users, stageRemoveExtraRulesAndCardMembership)
 	printErrChain(err, 0)
 	require.NoError(t, err)
 
@@ -287,7 +287,7 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard(t *testing.T) {
 		},
 	}
 
-	err := pipeline.StopAfter(wekan, initialUsers, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, initialUsers, stageAddMissingRulesAndCardMembership)
 	printErrChain(err, 0)
 	require.NoError(t, err)
 
@@ -305,7 +305,7 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard(t *testing.T) {
 	})
 
 	// WHEN
-	err = pipeline.StopAfter(wekan, users, StageRemoveExtraRulesAndCardMembership)
+	err = pipeline.StopAfter(wekan, users, stageRemoveExtraRulesAndCardMembership)
 	printErrChain(err, 0)
 	require.NoError(t, err)
 
@@ -338,7 +338,7 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesWekanScope(t *testing.T) {
 		},
 	}
 
-	err := pipeline.StopAfter(wekan, initialUsers, StageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, initialUsers, stageAddMissingRulesAndCardMembership)
 	printErrChain(err, 0)
 	require.NoError(t, err)
 
@@ -356,7 +356,7 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesWekanScope(t *testing.T) {
 	})
 
 	// WHEN
-	err = pipeline.StopAfter(wekan, users, StageRemoveExtraRulesAndCardMembership)
+	err = pipeline.StopAfter(wekan, users, stageRemoveExtraRulesAndCardMembership)
 	printErrChain(err, 0)
 	require.NoError(t, err)
 

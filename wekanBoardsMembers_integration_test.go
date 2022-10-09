@@ -26,7 +26,7 @@ func TestWekan_ManageBoardsMembers_withoutBoard(t *testing.T) {
 	}
 
 	// THEN
-	err := pipeline.StopAfter(wekan, usersWithoutBoards, StageManageBoardsMembers)
+	err := pipeline.StopAfter(wekan, usersWithoutBoards, stageManageBoardsMembers)
 	ass.Nil(err)
 	actualUser, _ := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	actualBFCBoard, _ := wekan.GetBoardFromSlug(ctx, libwekan.BoardSlug(boardDeTest))
@@ -48,7 +48,7 @@ func TestWekan_ManageBoardsMembers_withBoard(t *testing.T) {
 	}
 
 	// THEN
-	err := pipeline.StopAfter(wekan, usersWithBoards, StageManageBoardsMembers)
+	err := pipeline.StopAfter(wekan, usersWithBoards, stageManageBoardsMembers)
 	ass.Nil(err)
 	actualUser, _ := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	actualBFCBoard, _ := wekan.GetBoardFromSlug(ctx, libwekan.BoardSlug(boardDeTest))
@@ -67,7 +67,7 @@ func TestWekan_ManageBoardsMembers_removeFromBoard(t *testing.T) {
 			boards: []string{boardDeTest},
 		},
 	}
-	pipeline.StopAfter(wekan, usersWithBoards, StageManageBoardsMembers)
+	pipeline.StopAfter(wekan, usersWithBoards, stageManageBoardsMembers)
 	usersWithoutBoards := Users{
 		usernameDeTest: User{
 			scope:  []string{"wekan"},
@@ -77,7 +77,7 @@ func TestWekan_ManageBoardsMembers_removeFromBoard(t *testing.T) {
 	}
 
 	// THEN
-	err := pipeline.StopAfter(wekan, usersWithoutBoards, StageManageBoardsMembers)
+	err := pipeline.StopAfter(wekan, usersWithoutBoards, stageManageBoardsMembers)
 	ass.Nil(err)
 	actualUser, _ := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	actualBFCBoard, _ := wekan.GetBoardFromSlug(ctx, libwekan.BoardSlug(boardDeTest))

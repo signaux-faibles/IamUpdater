@@ -40,20 +40,20 @@ func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastS
 	return nil
 }
 
-var StageCheckBoardSlugs = PipelineStage{CheckBoardSlugs, "CheckBoardSlugs"}
-var StageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
-var StageManageBoardsMembers = PipelineStage{ManageBoardsMembers, "ManageBoardsMembers"}
-var StageAddMissingRulesAndCardMembership = PipelineStage{AddMissingRulesAndCardMembership, "AddMissingRulesAndCardMembership"}
-var StageRemoveExtraRulesAndCardMembership = PipelineStage{RemoveExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
-var StageCheckNativeUsers = PipelineStage{CheckNativeUsers, "CheckNativeUsers"}
+var stageCheckBoardSlugs = PipelineStage{CheckBoardSlugs, "CheckBoardSlugs"}
+var stageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
+var stageManageBoardsMembers = PipelineStage{manageBoardsMembers, "manageBoardsMembers"}
+var stageAddMissingRulesAndCardMembership = PipelineStage{addMissingRulesAndCardMembership, "addMissingRulesAndCardMembership"}
+var stageRemoveExtraRulesAndCardMembership = PipelineStage{removeExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
+var stageCheckNativeUsers = PipelineStage{checkNativeUsers, "checkNativeUsers"}
 
 var pipeline = Pipeline{
-	StageCheckBoardSlugs,
-	StageCheckNativeUsers,
-	StageManageUsers,
-	StageManageBoardsMembers,
-	StageAddMissingRulesAndCardMembership,
-	StageRemoveExtraRulesAndCardMembership,
+	stageCheckBoardSlugs,
+	stageCheckNativeUsers,
+	stageManageUsers,
+	stageManageBoardsMembers,
+	stageAddMissingRulesAndCardMembership,
+	stageRemoveExtraRulesAndCardMembership,
 }
 
 func WekanUpdate(url, database, admin string, users Users, slugDomainRegexp string) error {
@@ -96,9 +96,9 @@ func (users Users) ListWekanChanges(wekanUsers libwekan.Users) (
 	configUsernames := users.Usernames()
 
 	both, onlyWekan, notInWekan := intersect(wekanUsernames, configUsernames)
-	creations = UsernamesSelect(users, notInWekan).BuildWekanUsers()
-	enable = WekanUsernamesSelect(wekanUsers, both)
-	disable = WekanUsernamesSelect(wekanUsers, onlyWekan)
+	creations = UsernamesSelect(users, notInWekan).buildWekanUsers()
+	enable = wekanUsernamesSelect(wekanUsers, both)
+	disable = wekanUsernamesSelect(wekanUsers, onlyWekan)
 
 	return creations, enable, disable
 }

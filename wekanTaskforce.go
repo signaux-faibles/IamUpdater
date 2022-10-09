@@ -6,12 +6,12 @@ import (
 	"github.com/signaux-faibles/libwekan"
 )
 
-// AddMissingRulesAndCardMembership
+// addMissingRulesAndCardMembership
 // Calcule et insère les règles manquantes pour correspondre à la configuration Users
 // Ajuste la participation des utilisateurs aux cartes concernées par les labels en cas de changement
-func AddMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
+func addMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 	wekanUsers := users.selectScopeWekan()
-	fields := logger.DataForMethod("AddMissingRulesAndCardMembership")
+	fields := logger.DataForMethod("addMissingRulesAndCardMembership")
 	logger.Info("application des nouvelles règles", fields)
 	for _, user := range wekanUsers {
 		fields.AddAny("username", user.email)
@@ -30,7 +30,7 @@ func AddMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 
 			for _, label := range labels {
 				fields.AddAny("label", label.Name)
-				if err := AddCardMemberShip(wekan, user.email, board, label); err != nil {
+				if err := addCardMemberShip(wekan, user.email, board, label); err != nil {
 					return err
 				}
 
@@ -54,10 +54,10 @@ func AddMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 	return nil
 }
 
-// RemoveExtraRulesAndCardsMembership
+// removeExtraRulesAndCardsMembership
 // Calcule et insert les règles manquantes pour correspondre à la configuration Users
 // Ajuste la participation des utilisateurs aux cartes concernées par les labels en cas de changement
-func RemoveExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error {
+func removeExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error {
 	wekanUsers := users.selectScopeWekan()
 	fields := logger.DataForMethod("RemoveExtraRulesAndCardMembership")
 	logger.Info("examen des règles à supprimer", fields)
@@ -88,7 +88,7 @@ func RemoveExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error
 			user := wekanUsers[Username(rule.Action.Username)]
 			// l'utilisateur est absent de la config, du scope wekan ou de la board
 			if !userHasTaskforceLabel(user)(label) || !contains(user.boards, string(board.Slug)) {
-				err := RemoveCardMembership(wekan, Username(rule.Action.Username), board, label)
+				err := removeCardMembership(wekan, Username(rule.Action.Username), board, label)
 				if err != nil {
 					return err
 				}
@@ -113,8 +113,8 @@ func userHasTaskforceLabel(user User) func(label libwekan.BoardLabel) bool {
 	return func(label libwekan.BoardLabel) bool { return contains(user.taskforces, string(label.Name)) }
 }
 
-func RemoveCardMembership(wekan libwekan.Wekan, username Username, board libwekan.Board, label libwekan.BoardLabel) error {
-	fields := logger.DataForMethod("RemoveCardMembership")
+func removeCardMembership(wekan libwekan.Wekan, username Username, board libwekan.Board, label libwekan.BoardLabel) error {
+	fields := logger.DataForMethod("removeCardMembership")
 	fields.AddAny("username", username)
 	fields.AddAny("label", label.Name)
 	fields.AddAny("board", board.Slug)
@@ -147,7 +147,7 @@ func RemoveCardMembership(wekan libwekan.Wekan, username Username, board libweka
 	return nil
 }
 
-func AddCardMemberShip(wekan libwekan.Wekan, username Username, board libwekan.Board, label libwekan.BoardLabel) error {
+func addCardMemberShip(wekan libwekan.Wekan, username Username, board libwekan.Board, label libwekan.BoardLabel) error {
 	fields := logger.DataForMethod("AddCardMembership")
 	fields.AddAny("username", username)
 	fields.AddAny("label", label.Name)
