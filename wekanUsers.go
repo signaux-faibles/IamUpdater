@@ -21,7 +21,9 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 		return err
 	}
 
-	creations, enable, disable := wekanUsersfromConfig.ListWekanChanges(fromWekan)
+	withOauth2Func := isOauth2([]libwekan.Username{libwekan.Username(wekan.AdminUsername())})
+	withOauth2FromWekan := selectSlice(fromWekan, withOauth2Func)
+	creations, enable, disable := wekanUsersfromConfig.ListWekanChanges(withOauth2FromWekan)
 
 	fields := logger.DataForMethod("InsertUsers")
 	fields.AddAny("population", len(creations))
@@ -33,8 +35,8 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 
 	fields = logger.DataForMethod("EnableUsers")
 	fields.AddAny("population", len(enable))
-	logger.Info("réactivation des utilisateurs inactifs", fields)
-	err = EnableUsers(context.Background(), wekan, enable)
+	logger.Info("désactivation des utilisateurs inactifs", fields)
+	err = EnsureUsersAreEnabled(context.Background(), wekan, enable)
 	if err != nil {
 		return err
 	}
@@ -42,7 +44,7 @@ func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 	fields = logger.DataForMethod("DisableUsers")
 	fields.AddAny("population", len(disable))
 	logger.Info("désactivation des utilisateurs supprimés", fields)
-	return DisableUsers(context.Background(), wekan, disable)
+	return EnsureUsersAreDisables(context.Background(), wekan, disable)
 }
 
 func InsertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
@@ -53,7 +55,7 @@ func InsertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 
 	for _, user := range users {
 		fields.AddAny("username", user.Username)
-		logger.Debug("insertion de l'utilisateur", fields)
+		logger.Info("crée l'utilisateur", fields)
 		err := wekan.InsertUser(ctx, user)
 		if err != nil {
 			logger.Error(err.Error(), fields)
@@ -63,34 +65,41 @@ func InsertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 	return nil
 }
 
-func EnableUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
+func EnsureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
 	fields := logger.DataForMethod("EnableUser")
 	if err := wekan.AssertPrivileged(ctx); err != nil {
 		return err
 	}
-
 	for _, user := range users {
 		fields.AddAny("username", user.Username)
-		logger.Debug("activation de l'utilisateur", fields)
+		logger.Debug("examine le statut de l'utilisateur", fields)
 		err := wekan.EnableUser(ctx, user)
+		if err == (libwekan.NothingDoneError{}) {
+			continue
+		}
 		if err != nil {
 			logger.Error(err.Error(), fields)
 			return err
 		}
+		logger.Info("active l'utilisateur", fields)
 	}
 	return nil
 }
 
-func DisableUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
+func EnsureUsersAreDisables(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
 	fields := logger.DataForMethod("DisableUser")
 	for _, user := range users {
 		fields.AddAny("username", user.Username)
-		logger.Debug("désactivation de l'utilisateur", fields)
+		logger.Debug("examine le statut de l'utilisateur", fields)
 		err := wekan.DisableUser(ctx, user)
+		if err == (libwekan.NothingDoneError{}) {
+			continue
+		}
 		if err != nil {
 			logger.Error(err.Error(), fields)
 			return err
 		}
+		logger.Info("désactive l'utilisateur", fields)
 	}
 	return nil
 }
@@ -146,4 +155,37 @@ func (users Users) Usernames() []Username {
 		usernames = append(usernames, username)
 	}
 	return usernames
+}
+
+func isOauth2(exceptions []libwekan.Username) func(libwekan.User) bool {
+	return func(user libwekan.User) bool {
+		return user.AuthenticationMethod == "oauth2" || contains(exceptions, user.Username)
+	}
+}
+
+// CheckNativeUsers apporte des logs permettant de garder un œil sur les utilisateurs gérés manuellement
+func CheckNativeUsers(wekan libwekan.Wekan, _ Users) error {
+	ctx := context.Background()
+	fields := logger.DataForMethod("CheckNativeUsers")
+	logger.Info("inventaire des comptes standards", fields)
+	wekanUsers, err := wekan.GetUsers(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, user := range wekanUsers {
+		if !user.LoginDisabled && user.AuthenticationMethod != "oauth2" && user.Username != wekan.AdminUsername() {
+			fields.AddAny("username", user.Username)
+			boards, err := wekan.SelectBoardsFromMemberID(ctx, user.ID)
+			if err != nil {
+				return err
+			}
+
+			activeUserBoards := selectSlice(boards, func(board libwekan.Board) bool { return board.UserIsActiveMember(user) && board.Slug != "templates" })
+			activeUserBoardSlugs := mapSlice(activeUserBoards, func(board libwekan.Board) libwekan.BoardSlug { return board.Slug })
+			fields.AddAny("boards", activeUserBoardSlugs)
+			logger.Warn("utilisateur standard actif", fields)
+		}
+	}
+	return nil
 }

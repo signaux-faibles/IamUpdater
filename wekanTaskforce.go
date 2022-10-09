@@ -30,21 +30,22 @@ func AddMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 
 			for _, label := range labels {
 				fields.AddAny("label", label.Name)
-				logger.Debug("vérification des carte étiquetées", fields)
-				modified, err := AddCardMemberShip(wekan, user, board, label)
-				if err != nil {
+				if err := AddCardMemberShip(wekan, user.email, board, label); err != nil {
 					return err
 				}
-				if modified {
-					logger.Info("inscription sur les cartes étiquetées", fields)
-				}
-				logger.Debug("s'assure de la présence de la règle", fields)
-				modified, err = wekan.EnsureRuleExists(context.Background(), wekanUser, board, label)
-				if err != nil {
+
+				logger.Debug("s'assure de la règle d'ajout taskforce", fields)
+				if modified, err := wekan.EnsureRuleAddTaskforceMemberExists(context.Background(), wekanUser, board, label); err != nil {
 					return err
+				} else if modified {
+					logger.Info("création de la règle d'ajout taskforce", fields)
 				}
-				if modified {
-					logger.Info("création de la règle", fields)
+
+				logger.Debug("s'assure de la règle de retrait taskforce", fields)
+				if modified, err := wekan.EnsureRuleRemoveTaskforceMemberExists(context.Background(), wekanUser, board, label); err != nil {
+					return err
+				} else if modified {
+					logger.Info("création de la règle de retrait taskforce", fields)
 				}
 			}
 		}
@@ -59,49 +60,51 @@ func AddMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 func RemoveExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error {
 	wekanUsers := users.selectScopeWekan()
 	fields := logger.DataForMethod("RemoveExtraRulesAndCardMembership")
-	logger.Info("effacement des règles obsolètes", fields)
+	logger.Info("examen des règles à supprimer", fields)
 	domainBoards, err := wekan.SelectDomainBoards(context.Background())
 	if err != nil {
 		return err
 	}
 
+	deleted := 0
 	for _, board := range domainBoards {
+		fields.Remove("rule")
+		fields.AddAny("board", board.Slug)
+		logger.Debug("examen des règles du tableau", fields)
+
 		fields.AddAny("board", board.Slug)
 		rules, err := wekan.SelectRulesFromBoardID(context.Background(), board.ID)
-		taskforceRules := selectSlice(rules, IsTaskforceRule)
+
 		if err != nil {
 			return err
 		}
 
+		taskforceRules := append(rules.SelectAddMemberToTaskforceRule(), rules.SelectRemoveMemberFromTaskforceRule()...)
 		for _, rule := range taskforceRules {
-			label := board.GetLabelByID(rule.Trigger.LabelID)
-			fields.AddAny("label", label.Name)
-			fields.AddAny("username", rule.Action.Username)
+			fields.AddAny("rule", rule.Title)
+			logger.Debug("examen de la règle", fields)
 
-			user, found := wekanUsers[Username(rule.Action.Username)]
-			if !found {
-				err := wekan.RemoveRuleWithID(context.Background(), rule.ID)
+			label := board.GetLabelByID(rule.Trigger.LabelID)
+			user := wekanUsers[Username(rule.Action.Username)]
+			// l'utilisateur est absent de la config, du scope wekan ou de la board
+			if !userHasTaskforceLabel(user)(label) || !contains(user.boards, string(board.Slug)) {
+				err := RemoveCardMembership(wekan, Username(rule.Action.Username), board, label)
 				if err != nil {
 					return err
-				}
-				logger.Info("effacement de la règle", fields)
-			}
-			if !userHasTaskforceLabel(user)(label) {
-				logger.Debug("examen des cartes étiquetées", fields)
-				modified, err := RemoveCardMembership(wekan, user, board, label)
-				if err != nil {
-					return err
-				}
-				if modified {
-					logger.Info("retrait de l'utilisateur des cartes", fields)
 				}
 				logger.Info("suppression de la règle", fields)
 				err = wekan.RemoveRuleWithID(context.Background(), rule.ID)
 				if err != nil {
 					return err
 				}
+				deleted += 1
 			}
 		}
+	}
+	if deleted == 0 {
+		fields.Remove("board")
+		fields.Remove("rule")
+		logger.Info("aucune règle à supprimer", fields)
 	}
 	return nil
 }
@@ -110,57 +113,71 @@ func userHasTaskforceLabel(user User) func(label libwekan.BoardLabel) bool {
 	return func(label libwekan.BoardLabel) bool { return contains(user.taskforces, string(label.Name)) }
 }
 
-func RemoveCardMembership(wekan libwekan.Wekan, user User, board libwekan.Board, label libwekan.BoardLabel) (bool, error) {
-	wekanUser, err := wekan.GetUserFromUsername(context.Background(), libwekan.Username(user.email))
+func RemoveCardMembership(wekan libwekan.Wekan, username Username, board libwekan.Board, label libwekan.BoardLabel) error {
+	fields := logger.DataForMethod("RemoveCardMembership")
+	fields.AddAny("username", username)
+	fields.AddAny("label", label.Name)
+	fields.AddAny("board", board.Slug)
+	logger.Debug("examen des cartes", fields)
+	wekanUser, err := wekan.GetUserFromUsername(context.Background(), libwekan.Username(username))
 	if err != nil {
-		return false, err
+		return err
 	}
 	cards, err := wekan.SelectCardsFromMemberID(context.Background(), wekanUser.ID)
 	boardCards := selectSlice(cards, func(card libwekan.Card) bool { return card.BoardID == board.ID })
 	if err != nil {
-		return false, err
+		return err
 	}
-	var someModified bool
+	var occurences int
 	for _, card := range boardCards {
 		if contains(card.LabelIDs, label.ID) {
 			modified, err := wekan.EnsureMemberOutOfCard(context.Background(), card.ID, wekanUser.ID)
-			someModified = modified || someModified
 			if err != nil {
-				return false, err
+				return err
+			}
+			if modified {
+				occurences += 1
 			}
 		}
 	}
-	return someModified, nil
+	if occurences > 0 {
+		fields.AddAny("occurences", occurences)
+		logger.Info("désinscription des cartes", fields)
+	}
+	return nil
 }
 
-func AddCardMemberShip(wekan libwekan.Wekan, user User, board libwekan.Board, label libwekan.BoardLabel) (bool, error) {
-	wekanUser, err := wekan.GetUserFromUsername(context.Background(), libwekan.Username(user.email))
+func AddCardMemberShip(wekan libwekan.Wekan, username Username, board libwekan.Board, label libwekan.BoardLabel) error {
+	fields := logger.DataForMethod("AddCardMembership")
+	fields.AddAny("username", username)
+	fields.AddAny("label", label.Name)
+	fields.AddAny("board", board.Slug)
+	logger.Debug("examen des cartes", fields)
+	wekanUser, err := wekan.GetUserFromUsername(context.Background(), libwekan.Username(username))
 	if err != nil {
-		return false, err
+		return err
 	}
 	cards, err := wekan.SelectCardsFromBoardID(context.Background(), board.ID)
 	boardCards := selectSlice(cards, func(card libwekan.Card) bool { return card.BoardID == board.ID })
 
 	if err != nil {
-		return false, err
+		return err
 	}
-	var modifiedSome bool
+	var occurences int
 	for _, card := range boardCards {
 		if contains(card.LabelIDs, label.ID) {
 			modified, err := wekan.EnsureMemberInCard(context.Background(), card.ID, wekanUser.ID)
-			modifiedSome = modified || modifiedSome
 			if err != nil {
-				return false, err
+				return err
+			}
+			if modified {
+				occurences += 1
 			}
 		}
 	}
-	return modifiedSome, nil
-}
-
-func IsTaskforceRule(rule libwekan.Rule) bool {
-	return rule.Action.Username != "" &&
-		rule.Trigger.LabelID != "" &&
-		rule.Action.ActionType == "addMember" &&
-		rule.Trigger.ActivityType == "addedLabel" &&
-		rule.Trigger.UserID == "*"
+	if occurences > 0 {
+		fields.AddAny("occurences", occurences)
+		logger.Info("inscription sur les cartes", fields)
+	}
+	return nil
 }

@@ -45,9 +45,11 @@ var StageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
 var StageManageBoardsMembers = PipelineStage{ManageBoardsMembers, "ManageBoardsMembers"}
 var StageAddMissingRulesAndCardMembership = PipelineStage{AddMissingRulesAndCardMembership, "AddMissingRulesAndCardMembership"}
 var StageRemoveExtraRulesAndCardMembership = PipelineStage{RemoveExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
+var StageCheckNativeUsers = PipelineStage{CheckNativeUsers, "CheckNativeUsers"}
 
 var pipeline = Pipeline{
 	StageCheckBoardSlugs,
+	StageCheckNativeUsers,
 	StageManageUsers,
 	StageManageBoardsMembers,
 	StageAddMissingRulesAndCardMembership,
@@ -117,15 +119,17 @@ func CheckBoardSlugs(wekan libwekan.Wekan, users Users) error {
 	if err != nil {
 		return err
 	}
+
+	domainActiveBoards := selectSlice(domainBoards, func(board libwekan.Board) bool { return !board.Archived })
 	boardToSlug := func(board libwekan.Board) libwekan.BoardSlug { return board.Slug }
-	domainSlugs := mapSlice(domainBoards, boardToSlug)
+	domainActiveSlugs := mapSlice(domainActiveBoards, boardToSlug)
 
 	configBoardsMembers := users.inferBoardsMember()
 	var configSlugs []libwekan.BoardSlug
 	for slug := range configBoardsMembers {
 		configSlugs = append(configSlugs, slug)
 	}
-	_, _, onlyConfig := intersect(domainSlugs, configSlugs)
+	_, _, onlyConfig := intersect(domainActiveSlugs, configSlugs)
 
 	if len(onlyConfig) > 0 {
 		return InvalidExcelFileError{msg: fmt.Sprintf("le fichier contient des références de boards inexistantes : %s", onlyConfig)}
