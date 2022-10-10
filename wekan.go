@@ -40,8 +40,8 @@ func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastS
 	return nil
 }
 
-var stageCheckBoardSlugs = PipelineStage{CheckBoardSlugs, "CheckBoardSlugs"}
-var stageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
+var stageCheckBoardSlugs = PipelineStage{checkBoardSlugs, "checkBoardSlugs"}
+var stageManageUsers = PipelineStage{manageUsers, "manageUsers"}
 var stageManageBoardsMembers = PipelineStage{manageBoardsMembers, "manageBoardsMembers"}
 var stageAddMissingRulesAndCardMembership = PipelineStage{addMissingRulesAndCardMembership, "addMissingRulesAndCardMembership"}
 var stageRemoveExtraRulesAndCardMembership = PipelineStage{removeExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
@@ -114,7 +114,7 @@ func firstChar(s string) string {
 	return ""
 }
 
-func CheckBoardSlugs(wekan libwekan.Wekan, users Users) error {
+func checkBoardSlugs(wekan libwekan.Wekan, users Users) error {
 	domainBoards, err := wekan.SelectDomainBoards(context.Background())
 	if err != nil {
 		return err

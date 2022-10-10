@@ -89,7 +89,7 @@ func merge(first structs.Config, second structs.Config) structs.Config {
 	r := structs.Config{Clients: make([]*gocloak.Client, 0)}
 	r.Stock = firstNonNil(first.Stock, second.Stock)
 	r.Logger = firstNonNil(first.Logger, second.Logger)
-	r.Access = mergeAccess(first.Access, second.Access)
+	r.Keycloak = mergeAccess(first.Keycloak, second.Keycloak)
 	r.Realm = mergeRealm(first.Realm, second.Realm)
 	r.Clients = mergeClients(first.Clients, second.Clients)
 	r.Mongo = firstNonNil(first.Mongo, second.Mongo)
@@ -122,7 +122,7 @@ func firstNonNil[T any](first *T, second *T) *T {
 	return second
 }
 
-func mergeAccess(first *structs.Access, second *structs.Access) *structs.Access {
+func mergeAccess(first *structs.Keycloak, second *structs.Keycloak) *structs.Keycloak {
 	if first != nil {
 		return first
 	}

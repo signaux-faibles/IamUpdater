@@ -12,13 +12,13 @@ type Stock struct {
 }
 
 type Config struct {
-	Access  *Access                      `toml:"access"`
-	Stock   *Stock                       `toml:"stock"`
-	Logger  *LoggerConfig                `toml:"logger"`
-	Realm   *gocloak.RealmRepresentation `toml:"realm"`
-	Clients []*gocloak.Client            `toml:"clients"`
-	Mongo   *Mongo                       `toml:"mongo"`
-	Wekan   *Wekan                       `toml:"wekan"`
+	Keycloak *Keycloak                    `toml:"keycloak"`
+	Stock    *Stock                       `toml:"stock"`
+	Logger   *LoggerConfig                `toml:"logger"`
+	Realm    *gocloak.RealmRepresentation `toml:"realm"`
+	Clients  []*gocloak.Client            `toml:"clients"`
+	Mongo    *Mongo                       `toml:"mongo"`
+	Wekan    *Wekan                       `toml:"wekan"`
 }
 
 type Mongo struct {
@@ -31,7 +31,7 @@ type Wekan struct {
 	SlugDomainRegexp string `toml:"slugDomainRegexp"`
 }
 
-type Access struct {
+type Keycloak struct {
 	Address  string
 	Username string
 	Password string

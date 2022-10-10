@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-// ManageUsers
+// manageUsers
 // - objectif de traiter les utilisateurs Wekan
 // - création des utilisateurs inconnus dans Wekan
 // - désactivation des utilisateurs superflus
-func ManageUsers(wekan libwekan.Wekan, fromConfig Users) error {
+func manageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 	wekanUsersfromConfig := fromConfig.selectScopeWekan()
 	addAdmin(wekanUsersfromConfig, wekan)
 
