@@ -19,7 +19,7 @@ type KeycloakContext struct {
 	ClientRoles map[string][]*gocloak.Role
 }
 
-func NewKeycloakContext(access *structs.Access) (KeycloakContext, error) {
+func NewKeycloakContext(access *structs.Keycloak) (KeycloakContext, error) {
 	init, err := Init(access.Address, access.Realm, access.Username, access.Password)
 	return init, err
 }
