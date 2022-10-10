@@ -6,6 +6,8 @@ import (
 	"github.com/signaux-faibles/libwekan"
 )
 
+type BoardsMembers map[libwekan.BoardSlug]Users
+
 func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 	fields := logger.DataForMethod("manageBoardsMembers")
 	// périmètre du stage
@@ -48,40 +50,56 @@ func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boar
 
 	logger.Debug(">> examine les nouvelles inscriptions", fields)
 	for _, userID := range append(alreadyBoardMembers, newBoardMembers...) {
-		fields.AddAny("username", expectedUsersMap[userID].Username)
-		logger.Debug(">>> examine l'utilisateur", fields)
-		modified, err := wekan.EnsureUserIsActiveBoardMember(context.Background(), board.ID, userID)
-		if err != nil {
+		if err := ensureUserIsActiveBoardMember(wekan, expectedUsersMap[userID], board); err != nil {
 			return err
-		}
-		if modified {
-			logger.Info(">>> inscrit l'utilisateur", fields)
 		}
 	}
 
 	logger.Debug(">> examine les radiations", fields)
-
 	for _, userID := range expectedInactiveBoardMembers {
-		fields.AddAny("username", currentUsersMap[userID].Username)
-		logger.Debug(">>> vérifie la non-participation", fields)
-		modified, err := wekan.EnsureUserIsInactiveBoardMember(context.Background(), board.ID, userID)
-		if err != nil {
+		if err := ensureUserIsInactiveBoardMember(wekan, currentUsersMap[userID], board); err != nil {
 			return err
-		}
-		if modified {
-			logger.Info(">>> désinscrit le participant", fields)
 		}
 	}
 
 	// globalWekan.AdminUser() est administrateur de toutes les boards, appliquons la règle
 	logger.Debug(">> vérifie la participation de l'admin", fields)
-
 	modified, err := wekan.EnsureUserIsBoardAdmin(context.Background(), board.ID, wekan.AdminID())
 	if modified {
 		fields.AddAny("username", wekan.AdminUsername())
 		logger.Info(">>> donne les privilèges à l'admin", fields)
 	}
 	return err
+}
+
+func ensureUserIsActiveBoardMember(wekan libwekan.Wekan, user libwekan.User, board libwekan.Board) error {
+	fields := logger.DataForMethod("ensureUserIsActiveBoardMember")
+	fields.AddAny("username", user.Username)
+	fields.AddAny("board", board.Slug)
+	logger.Debug(">>> examine l'utilisateur", fields)
+	modified, err := wekan.EnsureUserIsActiveBoardMember(context.Background(), board.ID, user.ID)
+	if err != nil {
+		return err
+	}
+	if modified {
+		logger.Info(">>> inscrit l'utilisateur", fields)
+	}
+	return nil
+}
+
+func ensureUserIsInactiveBoardMember(wekan libwekan.Wekan, user libwekan.User, board libwekan.Board) error {
+	fields := logger.DataForMethod("ensureUserIsInactiveBoardMember")
+	fields.AddAny("username", user.Username)
+	fields.AddAny("board", board.Slug)
+	logger.Debug(">>> vérifie la non-participation", fields)
+	modified, err := wekan.EnsureUserIsInactiveBoardMember(context.Background(), board.ID, user.ID)
+	if err != nil {
+		return err
+	}
+	if modified {
+		logger.Info(">>> désinscrit l'utilisateur", fields)
+	}
+	return nil
 }
 
 func selectGenuineUser(wekanAdmin libwekan.Username) func(userID libwekan.UserID, user libwekan.User) bool {
@@ -137,8 +155,6 @@ func (users Users) inferBoardsMember() BoardsMembers {
 	}
 	return wekanBoardsUsers
 }
-
-type BoardsMembers map[libwekan.BoardSlug]Users
 
 func (boardsMembers BoardsMembers) addBoards(boards []libwekan.Board) BoardsMembers {
 	if boardsMembers == nil {

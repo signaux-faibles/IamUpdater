@@ -55,7 +55,7 @@ func addMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 	}
 	if occurence == 0 {
 		fields = logger.DataForMethod("addMissingRulesAndCardMembership")
-		logger.Info(">> aucune règle à ajouter", fields)
+		logger.Info("> aucune règle à ajouter", fields)
 	}
 	return nil
 }
