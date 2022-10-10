@@ -6,8 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
-	"io/fs"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -45,7 +43,7 @@ func getAllConfigFilenames(filename string) []string {
 		logger.Panicf("error reading clients config file : %s", err)
 	}
 	r = append(r, filename)
-	var files []fs.FileInfo
+	var files []os.DirEntry
 	config := extractConfig(filename)
 	folder := config.Stock.ClientsAndRealmFolder
 	if folder == "" {
@@ -54,14 +52,13 @@ func getAllConfigFilenames(filename string) []string {
 	}
 	stockFilename := config.Stock.UsersAndRolesFilename
 	if stockFilename != "" {
-		if _, err = ioutil.ReadFile(stockFilename); err != nil {
+		if _, err = os.ReadFile(stockFilename); err != nil {
 			logger.Panicf("error reading stock file '%s' : %s", stockFilename, err)
 		}
 	}
-	if files, err = ioutil.ReadDir(folder); err != nil {
+	if files, err = os.ReadDir(folder); err != nil {
 		logger.Panicf("error reading clients config folder : %s", err)
 	}
-
 	for _, f := range files {
 		filename := folder + "/" + f.Name()
 		if !strings.HasSuffix(filename, ".toml") {
