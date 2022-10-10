@@ -75,3 +75,11 @@ func intersect[E comparable](elementsA []E, elementsB []E) (both []E, onlyA []E,
 	}
 	return both, onlyA, onlyB
 }
+
+func keys[Key comparable, Element any](m map[Key]Element) []Key {
+	var ks []Key
+	for k := range m {
+		ks = append(ks, k)
+	}
+	return ks
+}

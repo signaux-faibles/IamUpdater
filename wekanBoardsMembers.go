@@ -18,7 +18,7 @@ func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 
 	logger.Info("> inscrit les utilisateurs dans les tableaux", fields)
 	for boardSlug, boardMembers := range wekanBoardsMembers {
-		err := setBoardMembers(wekan, boardSlug, boardMembers)
+		err := updateBoardMembers(wekan, boardSlug, boardMembers)
 		if err != nil {
 			return err
 		}
@@ -26,35 +26,54 @@ func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 	return nil
 }
 
-func setBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
-	fields := logger.DataForMethod("setBoardMembers")
-	fields.AddAny("board", boardSlug)
+// liste les usernames présents sur la board, actifs ou non et le place dans currentMembers
+func currentBoardMembers(wekan libwekan.Wekan, board libwekan.Board) (map[libwekan.UserID]libwekan.User, error) {
+	currentMembersIDs := mapSlice(board.Members, func(member libwekan.BoardMember) libwekan.UserID { return member.UserID })
+	currentMembers, err := wekan.GetUsersFromIDs(context.Background(), currentMembersIDs)
+	if err != nil {
+		return nil, err
+	}
+	currentUserMap := mapifySlice(currentMembers, libwekan.User.GetID)
+	return currentUserMap, nil
+}
 
+func configBoardMembers(wekan libwekan.Wekan, boardMembers Users) (map[libwekan.UserID]libwekan.User, error) {
+	// liste les usernames que l'on veut garder ou rendre actifs sur la board
+	wantedMembersUsernames := []libwekan.Username{}
+	// globalWekan.AdminUser() est membre de toutes les boards, ajoutons le ici pour ne pas risquer de l'oublier dans les utilisateurs
+	wantedMembersUsernames = append(wantedMembersUsernames, wekan.AdminUsername())
+	for username := range boardMembers {
+		wantedMembersUsernames = append(wantedMembersUsernames, libwekan.Username(username))
+	}
+	wantedMembers, err := wekan.GetUsersFromUsernames(context.Background(), wantedMembersUsernames)
+	if err != nil {
+		return nil, err
+	}
+	//wantedMembersIDs := mapSlice(wantedMembers, func(user libwekan.User) libwekan.UserID { return user.ID })
+	wantedUserMap := mapifySlice(wantedMembers, libwekan.User.GetID)
+	return wantedUserMap, err
+}
+
+func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
+	fields := logger.DataForMethod("updateBoardMembers")
+	fields.AddAny("board", boardSlug)
 	board, err := wekan.GetBoardFromSlug(context.Background(), boardSlug)
 	if err != nil {
 		return err
 	}
-	currentMembersIDs := mapSlice(board.Members, func(member libwekan.BoardMember) libwekan.UserID { return member.UserID })
 
-	// globalWekan.AdminUser() est membre de toutes les boards, ajoutons le ici pour ne pas risquer de l'oublier dans les utilisateurs
-	wantedMembersUsernames := []libwekan.Username{wekan.AdminUsername()}
-	for username := range boardMembers {
-		wantedMembersUsernames = append(wantedMembersUsernames, libwekan.Username(username))
-	}
-
-	currentMembers, err := wekan.GetUsersFromIDs(context.Background(), currentMembersIDs)
+	currentUserMap, err := currentBoardMembers(wekan, board)
 	if err != nil {
 		return err
 	}
-	wantedMembers, err := wekan.GetUsersFromUsernames(context.Background(), wantedMembersUsernames)
+	currentMembersIDs := keys(currentUserMap)
+
+	wantedUserMap, err := configBoardMembers(wekan, boardMembers)
 	if err != nil {
 		return err
 	}
+	wantedMembersIDs := keys(wantedUserMap)
 
-	currentUserMap := mapifySlice(currentMembers, libwekan.User.GetID)
-	wantedUserMap := mapifySlice(wantedMembers, libwekan.User.GetID)
-
-	wantedMembersIDs := mapSlice(wantedMembers, func(user libwekan.User) libwekan.UserID { return user.ID })
 	alreadyBoardMember, wantedInactiveBoardMember, ongoingBoardMember := intersect(currentMembersIDs, wantedMembersIDs)
 
 	logger.Debug(">> examine les nouvelles inscriptions", fields)
