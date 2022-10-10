@@ -190,3 +190,37 @@ func checkNativeUsers(wekan libwekan.Wekan, _ Users) error {
 	}
 	return nil
 }
+
+func firstChar(s string) string {
+	if len(s) > 0 {
+		return s[0:1]
+	}
+	return ""
+}
+
+func usernameFromWekanUser(user libwekan.User) Username {
+	return Username(user.Username)
+}
+
+func (users Users) ListWekanChanges(wekanUsers libwekan.Users) (
+	creations libwekan.Users,
+	enable libwekan.Users,
+	disable libwekan.Users,
+) {
+	wekanUsernames := mapSlice(wekanUsers, usernameFromWekanUser)
+	configUsernames := users.Usernames()
+
+	both, onlyWekan, notInWekan := intersect(wekanUsernames, configUsernames)
+	creations = UsernamesSelect(users, notInWekan).buildWekanUsers()
+	enable = wekanUsernamesSelect(wekanUsers, both)
+	disable = wekanUsernamesSelect(wekanUsers, onlyWekan)
+
+	return creations, enable, disable
+}
+
+func addAdmin(usersFromExcel Users, wekan libwekan.Wekan) {
+	usersFromExcel[Username(wekan.AdminUsername())] = User{
+		email: Username(wekan.AdminUsername()),
+		scope: []string{"wekan"},
+	}
+}
