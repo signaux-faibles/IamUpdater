@@ -52,8 +52,11 @@ func getAllConfigFilenames(filename string) []string {
 		logger.Warnf("no configuration folder is defined")
 		return r
 	}
-	if _, err = ioutil.ReadFile(config.Stock.UsersAndRolesFilename); err != nil {
-		logger.Panicf("error reading stock file : %s", err)
+	stockFilename := config.Stock.UsersAndRolesFilename
+	if stockFilename != "" {
+		if _, err = ioutil.ReadFile(stockFilename); err != nil {
+			logger.Panicf("error reading stock file '%s' : %s", stockFilename, err)
+		}
 	}
 	if files, err = ioutil.ReadDir(folder); err != nil {
 		logger.Panicf("error reading clients config folder : %s", err)

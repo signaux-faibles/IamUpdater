@@ -1,4 +1,4 @@
-[access]
+[keycloak]
 address = "http://localhost:8080"
 username = "ti_admin"
 password = "pwd"
@@ -12,4 +12,4 @@ timestampFormat = "2006-01-02 15:04:05"
 
 [stock]
 clientForRoles = "signauxfaibles"
-usersAndRolesFilename = "test/resources/update/userBase.xlsx"
+#usersAndRolesFilename = "test/resources/update/userBase.xlsx"

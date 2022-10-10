@@ -33,7 +33,7 @@ func UpdateKeycloak(
 	}
 
 	logger.Info("START", fields)
-	logger.Info("accepte "+strconv.Itoa(acceptedChanges)+"changements pour les users", fields)
+	logger.Info("accepte "+strconv.Itoa(acceptedChanges)+" changements pour les users", fields)
 
 	// checking users
 	logger.Info("checking users", fields)

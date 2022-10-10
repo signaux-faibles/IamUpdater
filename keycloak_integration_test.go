@@ -7,24 +7,23 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
-	"testing"
-
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/assert"
+	"log"
+	"os"
+	"testing"
 )
 
 func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t *testing.T) {
 	ass := assert.New(t)
 
 	testUser := "ti_admin"
-	testFilename := "test/resources/userNotInExcel/userBase.xlsx"
 
-	users, compositeRoles, _ := loadExcel(testFilename)
+	//users, _, _ := loadExcel(testFilename)
+	users := Users{keycloakAdmin + "estAbsent": User{}}
 
 	// erreur in configuration : access.username should be in usersAndRolesFilename
 	err := UpdateKeycloak(
@@ -33,7 +32,7 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 		nil,
 		nil,
 		users,
-		compositeRoles,
+		nil,
 		Username(testUser),
 		10,
 	)
@@ -51,8 +50,8 @@ func TestKeycloakInitialisation(t *testing.T) {
 	if conf, err = config.InitConfig("test/resources/initialisation/test_config.toml"); err != nil {
 		panic(err)
 	}
-	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-	ass.Nil(err)
+	users := TEST_USERS
+	compositeRoles := referentiel.toRoles()
 	//configure logger
 	logger.ConfigureWith(*conf.Logger)
 
@@ -123,11 +122,11 @@ func TestClientSignauxFaiblesExists(t *testing.T) {
 
 func TestRolesExistences(t *testing.T) {
 	ass := assert.New(t)
-	rolesToTest := []string{"urssaf", "dgefp", "bdf", "score", "detection", "pge"}
+	rolesToTest := []string{"dgefp", "bdf", "score", "detection", "urssaf", "pge"}
 
 	for _, role := range rolesToTest {
 
-		searchClientRolePGE := gocloak.GetRoleParams{
+		roleRequest := gocloak.GetRoleParams{
 			Search: &role,
 		}
 
@@ -137,7 +136,7 @@ func TestRolesExistences(t *testing.T) {
 			kc.JWT.AccessToken,
 			*kc.Realm.Realm,
 			*clientSG.ID,
-			searchClientRolePGE,
+			roleRequest,
 		)
 		if err != nil {
 			t.Fatalf("error getting client roles : %v", err)
@@ -180,35 +179,6 @@ func TestRolesAssignedToAll(t *testing.T) {
 	}
 }
 
-//func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
-//	ass := assert.New(t)
-//	var err error
-//	var conf structs.Config
-//
-//	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
-//		panic(err)
-//	}
-//	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-//	ass.Nil(err)
-//	// configure logger
-//	logger.ConfigureWith(*conf.Logger)
-//
-//	stdin := readStdin("false")
-//	// update all
-//	actual := UpdateKeycloak(
-//		&kc,
-//		conf.Stock.ClientForRoles,
-//		conf.Realm,
-//		conf.Clients,
-//		users,
-//		compositeRoles,
-//		Username(conf.Keycloak.Username),
-//		4,
-//	)
-//	os.Stdin = stdin
-//	ass.EqualError(actual, "Trop de modifications utilisateurs.")
-//}
-
 func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 	ass := assert.New(t)
 	var err error
@@ -220,8 +190,9 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
 
-	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-	ass.Nil(err)
+	//users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
+	users := ANOTHER_USERS
+	compositeRoles := referentiel.toRoles()
 
 	stdin := readStdin("false")
 	// update all
@@ -261,8 +232,15 @@ func TestKeycloakUpdate(t *testing.T) {
 		panic(err)
 	}
 
-	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-	ass.Nil(err)
+	//users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
+	users := ANOTHER_USERS
+	compositeRoles := referentiel.toRoles()
+	newCompositeRoles := make(CompositeRoles)
+	acceptedCompositesRoles := []string{"Bretagne"}
+	//// WILL REMOVE SOME MAP ENTRIES
+	for _, name := range acceptedCompositesRoles {
+		newCompositeRoles[name] = compositeRoles[name]
+	}
 
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
@@ -274,7 +252,7 @@ func TestKeycloakUpdate(t *testing.T) {
 		conf.Realm,
 		conf.Clients,
 		users,
-		compositeRoles,
+		newCompositeRoles,
 		Username(conf.Keycloak.Username),
 		10,
 	)
@@ -305,21 +283,6 @@ func readStdin(message string) *os.File {
 	return origStdin
 }
 
-//func readStdin(message string) *os.File {
-//	r, w, err := os.Pipe()
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	origStdin := os.Stdin
-//	os.Stdin = r
-//
-//	_, err = w.WriteString(message)
-//	if err != nil {
-//		panic("ne peut lire STDIN")
-//	}
-//	return origStdin
-//}
-
 func logUser(client gocloak.Client, user gocloak.User) error {
 	// try connecting a user
 
@@ -339,4 +302,20 @@ func logUser(client gocloak.Client, user gocloak.User) error {
 		return err
 	}
 	return nil
+}
+
+var TEST_USERS = Users{
+	"john.doe@zone51.gov.fr":    User{"A", "john.doe@zone51.gov.fr", "John", "Doe", "LISTENS THE WIND", "Recouvrement et accompagnement des entreprises", "PENTAGON", "", nil, "Alsace", nil, nil},
+	"raphael.squelbut@shodo.io": User{"A", "raphael.squelbut@shodo.io", "Raphaël", "SQUELBUT", "sf", "Développeur", "SIGNAUX FAIBLES", "", []string{"wekan"}, "France entière", nil, nil},
+	"quelqun@pasdelurssaf.fr":   User{"B", "quelqun@pasdelurssaf.fr", "quelqun", "pasdelurssaf", "", "Un mec pas de l’URSSAF", "", "", nil, "77", nil, nil},
+	keycloakAdmin:               ADMIN,
+}
+
+var ADMIN = User{"0", keycloakAdmin, "", "admin_name", "", "", "", "", nil, "", nil, nil}
+
+var ANOTHER_USERS = Users{
+	"raphael.squelbut@shodo.fr": User{"A", "raphael.squelbut@shodo.fr", "Raphaël", "SQUELBUT", "sf", "Développeur", "SIGNAUX FAIBLES", "", []string{"wekan"}, "France entière", nil, nil},
+	"john.doux@beat.gouv.fr":    User{"A", "john.doux@beat.gouv.fr", "John", "Doux", "LISTENS THE WIND", "Recouvrement et accompagnement des entreprises", "PENTAGON", "", nil, "Lorraine", nil, nil},
+	"random@beat.gouv.fr":       User{"B", "random@beat.gouv.fr", "John", "Random", "LISTENS THE WIND", "Recouvrement et accompagnement des entreprises", "PENTAGON", "", nil, "Guadeloupe", nil, nil},
+	keycloakAdmin:               ADMIN,
 }
