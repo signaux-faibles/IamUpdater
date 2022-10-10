@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 
 	"github.com/Nerzal/gocloak/v11"
@@ -91,6 +92,7 @@ func UpdateKeycloak(
 
 	// delete old roles
 	if len(oldRoles) > 0 {
+		sort.Strings(oldRoles)
 		fields.AddArray("toDelete", oldRoles)
 		logger.Info("removing unused roles", fields)
 		fields.Remove("toDelete")
@@ -104,7 +106,10 @@ func UpdateKeycloak(
 				panic(err)
 			}
 		}
-		_ = kc.refreshClientRoles()
+		err = kc.refreshClientRoles()
+		if err != nil {
+			panic(err)
+		}
 	}
 	logger.Info("DONE", fields)
 	return nil

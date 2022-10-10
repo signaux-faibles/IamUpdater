@@ -19,9 +19,10 @@ La configuration de keycloakUpdater se fait à l'aide du fichier `config.toml`.
 
 Voir [l'exemple](/test/sample) pour plus de précisions. 
 On voit qu'il y a 3 sections à remplir
-- [access] contenant les informations d'accès à keycloak
+- [keycloak] contenant les informations d'accès à keycloak
 - [logger] contenant la configuration du fichier de log
 - [stock] contenant le chemin vers le répertoire où seront posés les fichiers de configuration des clients et du realm ainsi que le fichier stock des users
+- [wekan] contenant les informations de connexion à Wekan
 
 
 

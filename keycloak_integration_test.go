@@ -39,7 +39,7 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 
 	expectedError := fmt.Sprintf("configured user is not in stock file: %s", testUser)
 
-	ass.NotNil(err)
+	ass.Error(err)
 	ass.EqualError(err, expectedError)
 }
 
@@ -47,7 +47,7 @@ func TestKeycloakInitialisation(t *testing.T) {
 	ass := assert.New(t)
 	var conf structs.Config
 	var err error
-	if conf, err = config.InitConfig("test/resources/initialisation/test_config.toml"); err != nil {
+	if conf, err = config.InitConfig("test/sample/test_config.toml"); err != nil {
 		panic(err)
 	}
 	users := TEST_USERS
@@ -92,13 +92,13 @@ func TestKeycloakInitialisation(t *testing.T) {
 	ass.Len(kc.ClientRoles["another"], 1) // il y a au minimum 1 rôle pour 1 client
 
 	user, err := kc.GetUser("raphael.squelbut@shodo.io")
-	ass.Nil(err)
+	ass.NoError(err)
 	ass.NotNil(user)
 
 	emptyUser := gocloak.User{}
 	if user != emptyUser {
 		err = logUser(*clientSF, user)
-		ass.Nil(err)
+		ass.NoError(err)
 	}
 }
 
@@ -184,14 +184,17 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 	var err error
 	var conf structs.Config
 
-	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
+	if conf, err = config.InitConfig("test/sample/test_config.toml"); err != nil {
 		panic(err)
 	}
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
 
 	//users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-	users := ANOTHER_USERS
+	users := Users{
+		ADMIN.email: ADMIN,
+		"bidon":     User{email: "bidon@essence.sa"},
+		"pichet":    User{email: "pichet@essence.sa"}}
 	compositeRoles := referentiel.toRoles()
 
 	stdin := readStdin("false")
@@ -214,33 +217,28 @@ func TestKeycloakUpdate(t *testing.T) {
 	ass := assert.New(t)
 	var conf structs.Config
 
-	// voir le fichier
-	// le user raphael.squelbut@shodo.io a été créé au test précédent
-	disabledUser, err := kc.GetUser("raphael.squelbut@shodo.io")
-	ass.Nil(err)
-	ass.NotNil(disabledUser)
+	userWhichShouldBeDisabled, err := kc.GetUser("john.doe@zone51.gov.fr")
+	ass.NoError(err)
+	ass.NotNil(userWhichShouldBeDisabled)
 
 	clientSF, found := kc.getClient(signauxfaibleClientID)
 	ass.True(found)
 
 	// le user doit encore pouvoir se loguer
 	// avant l'exécution de l'update
-	err = logUser(*clientSF, disabledUser)
-	ass.Nil(err)
+	err = logUser(*clientSF, userWhichShouldBeDisabled)
+	ass.NoError(err)
 
-	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
+	if conf, err = config.InitConfig("test/sample/test_config.toml"); err != nil {
 		panic(err)
 	}
 
-	//users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-	users := ANOTHER_USERS
-	compositeRoles := referentiel.toRoles()
-	newCompositeRoles := make(CompositeRoles)
-	acceptedCompositesRoles := []string{"Bretagne"}
-	//// WILL REMOVE SOME MAP ENTRIES
-	for _, name := range acceptedCompositesRoles {
-		newCompositeRoles[name] = compositeRoles[name]
-	}
+	users := Users{ADMIN.email: ADMIN}
+
+	compositeRoles := CompositeRoles{
+		"numerique":    Roles{"0", "1", "2"},
+		"alphabetique": Roles{"A", "B", "C"},
+	} // => 2 rôles composites + 6 rôles
 
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
@@ -252,7 +250,7 @@ func TestKeycloakUpdate(t *testing.T) {
 		conf.Realm,
 		conf.Clients,
 		users,
-		newCompositeRoles,
+		compositeRoles,
 		Username(conf.Keycloak.Username),
 		10,
 	)
@@ -261,11 +259,11 @@ func TestKeycloakUpdate(t *testing.T) {
 	}
 
 	// des rôles ont été supprimés dans le fichier de rôles
-	ass.Len(kc.ClientRoles[signauxfaibleClientID], 26)
+	ass.Len(kc.ClientRoles[signauxfaibleClientID], 8)
 
 	// on vérifie
-	err = logUser(*clientSF, disabledUser)
-	ass.NotNil(err)
+	err = logUser(*clientSF, userWhichShouldBeDisabled)
+	ass.Error(err)
 	apiError, ok := err.(*gocloak.APIError)
 	ass.True(ok)
 	ass.Equal(400, apiError.Code)
@@ -284,8 +282,10 @@ func readStdin(message string) *os.File {
 }
 
 func logUser(client gocloak.Client, user gocloak.User) error {
+	fields := logger.DataForMethod("logUser")
+	fields.AddUser(user)
+	fields.AddClient(client)
 	// try connecting a user
-
 	// 1. need client secret
 	clientSecret, err := kc.API.RegenerateClientSecret(context.Background(), kc.JWT.AccessToken, *kc.Realm.Realm, *client.ID)
 	if err != nil {
@@ -297,6 +297,7 @@ func logUser(client gocloak.Client, user gocloak.User) error {
 		return err
 	}
 	// 3. log user
+	logger.Info("log user", fields)
 	_, err = kc.API.Login(context.Background(), *client.ClientID, *clientSecret.Value, *kc.Realm.Realm, *user.Username, "abcd")
 	if err != nil {
 		return err
@@ -304,18 +305,11 @@ func logUser(client gocloak.Client, user gocloak.User) error {
 	return nil
 }
 
+var ADMIN = User{"0", keycloakAdmin, "", "admin_name", "", "", "", "", nil, "", nil, nil}
+
 var TEST_USERS = Users{
 	"john.doe@zone51.gov.fr":    User{"A", "john.doe@zone51.gov.fr", "John", "Doe", "LISTENS THE WIND", "Recouvrement et accompagnement des entreprises", "PENTAGON", "", nil, "Alsace", nil, nil},
 	"raphael.squelbut@shodo.io": User{"A", "raphael.squelbut@shodo.io", "Raphaël", "SQUELBUT", "sf", "Développeur", "SIGNAUX FAIBLES", "", []string{"wekan"}, "France entière", nil, nil},
 	"quelqun@pasdelurssaf.fr":   User{"B", "quelqun@pasdelurssaf.fr", "quelqun", "pasdelurssaf", "", "Un mec pas de l’URSSAF", "", "", nil, "77", nil, nil},
-	keycloakAdmin:               ADMIN,
-}
-
-var ADMIN = User{"0", keycloakAdmin, "", "admin_name", "", "", "", "", nil, "", nil, nil}
-
-var ANOTHER_USERS = Users{
-	"raphael.squelbut@shodo.fr": User{"A", "raphael.squelbut@shodo.fr", "Raphaël", "SQUELBUT", "sf", "Développeur", "SIGNAUX FAIBLES", "", []string{"wekan"}, "France entière", nil, nil},
-	"john.doux@beat.gouv.fr":    User{"A", "john.doux@beat.gouv.fr", "John", "Doux", "LISTENS THE WIND", "Recouvrement et accompagnement des entreprises", "PENTAGON", "", nil, "Lorraine", nil, nil},
-	"random@beat.gouv.fr":       User{"B", "random@beat.gouv.fr", "John", "Random", "LISTENS THE WIND", "Recouvrement et accompagnement des entreprises", "PENTAGON", "", nil, "Guadeloupe", nil, nil},
 	keycloakAdmin:               ADMIN,
 }

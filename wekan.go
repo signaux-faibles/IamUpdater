@@ -31,7 +31,7 @@ func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastS
 	fields := logger.DataForMethod("StopAfter")
 	for _, stage := range pipeline {
 		fields.AddAny("stage", stage.id)
-		logger.Debug("Application du pipeline", fields)
+		logger.Debug("applique le pipeline", fields)
 		err := stage.run(wekan, fromConfig)
 		if err != nil || stage.id == lastStage.id {
 			return err

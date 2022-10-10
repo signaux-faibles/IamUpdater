@@ -11,7 +11,7 @@ import (
 func Test_readExcel(t *testing.T) {
 	ass := assert.New(t)
 	users, rolesMap, err := loadExcel("./userBase.xlsx")
-	ass.Nil(err)
+	ass.NoError(err)
 
 	hashUsers := fmt.Sprintf("%x", structhash.Md5(users, 1))
 	ass.Equal("ed87c55be7c75632fbf8dd5e9df3e94e", hashUsers)

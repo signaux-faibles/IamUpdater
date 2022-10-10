@@ -5,11 +5,16 @@ password = "pwd"
 realm = "master"
 
 [logger]
-filename = "test_update.log"
+filename = "test-initialisation.log"
 level = "DEBUG"
 timestampFormat = "2006-01-02 15:04:05"
 #rotation = false
 
 [stock]
+clientsAndRealmFolder = "test/sample/test_config.d"
 clientForRoles = "signauxfaibles"
-#usersAndRolesFilename = "test/resources/update/userBase.xlsx"
+
+#[wekan]
+#username="wekan.ti"
+#password="pwd"
+

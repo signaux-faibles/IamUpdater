@@ -87,7 +87,7 @@ func TestWekanTaskforce_AddMissingRules_whenEverythingFine(t *testing.T) {
 	actualCard, _ := cardOnBoard.ID.GetDocument(ctx, &wekan)
 	ass.Contains(actualCard.Members, userOnBoard.ID)
 	rules, err := wekan.SelectRulesFromBoardID(ctx, board.ID)
-	ass.Nil(err)
+	ass.NoError(err)
 	require.Len(t, rules, 2)
 	actualRule := rules[0]
 	ass.Equal(string(userOnBoard.Username), string(actualRule.Action.Username))

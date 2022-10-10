@@ -15,9 +15,9 @@ func Test_getAllConfigFilenames(t *testing.T) {
 	currentConfigFile := "test_config.toml"
 	expected := []string{
 		currentConfigFile,
-		"../test/resources/test_config.d/another.toml",
-		"../test/resources/test_config.d/realm_master.toml",
-		"../test/resources/test_config.d/client_signauxfaibles.toml",
+		"../test/sample/test_config.d/another.toml",
+		"../test/sample/test_config.d/realm_master.toml",
+		"../test/sample/test_config.d/client_signauxfaibles.toml",
 	}
 
 	// using the function
@@ -72,7 +72,7 @@ func Test_merge(t *testing.T) {
 	}
 }
 
-func Test_mergeAccess(t *testing.T) {
+func Test_mergeKeycloak(t *testing.T) {
 	anAccess := structs.Keycloak{}
 	anotherAccess := structs.Keycloak{}
 	type args struct {
