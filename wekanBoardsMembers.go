@@ -26,34 +26,6 @@ func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 	return nil
 }
 
-// liste les usernames présents sur la board, actifs ou non et le place dans currentMembers
-func currentBoardMembers(wekan libwekan.Wekan, board libwekan.Board) (map[libwekan.UserID]libwekan.User, error) {
-	currentMembersIDs := mapSlice(board.Members, func(member libwekan.BoardMember) libwekan.UserID { return member.UserID })
-	currentMembers, err := wekan.GetUsersFromIDs(context.Background(), currentMembersIDs)
-	if err != nil {
-		return nil, err
-	}
-	currentUserMap := mapifySlice(currentMembers, libwekan.User.GetID)
-	return currentUserMap, nil
-}
-
-func configBoardMembers(wekan libwekan.Wekan, boardMembers Users) (map[libwekan.UserID]libwekan.User, error) {
-	// liste les usernames que l'on veut garder ou rendre actifs sur la board
-	wantedMembersUsernames := []libwekan.Username{}
-	// globalWekan.AdminUser() est membre de toutes les boards, ajoutons le ici pour ne pas risquer de l'oublier dans les utilisateurs
-	wantedMembersUsernames = append(wantedMembersUsernames, wekan.AdminUsername())
-	for username := range boardMembers {
-		wantedMembersUsernames = append(wantedMembersUsernames, libwekan.Username(username))
-	}
-	wantedMembers, err := wekan.GetUsersFromUsernames(context.Background(), wantedMembersUsernames)
-	if err != nil {
-		return nil, err
-	}
-	//wantedMembersIDs := mapSlice(wantedMembers, func(user libwekan.User) libwekan.UserID { return user.ID })
-	wantedUserMap := mapifySlice(wantedMembers, libwekan.User.GetID)
-	return wantedUserMap, err
-}
-
 func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
 	fields := logger.DataForMethod("updateBoardMembers")
 	fields.AddAny("board", boardSlug)
@@ -62,23 +34,21 @@ func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boar
 		return err
 	}
 
-	currentUserMap, err := currentBoardMembers(wekan, board)
+	currentUsersMap, currentUsersIDs, err := fetchCurrentWekanBoardMembers(wekan, board)
 	if err != nil {
 		return err
 	}
-	currentMembersIDs := keys(currentUserMap)
 
-	wantedUserMap, err := configBoardMembers(wekan, boardMembers)
+	expectedUsersMap, expectedUsersIDs, err := fetchExpectedWekanBoardMembers(wekan, boardMembers)
 	if err != nil {
 		return err
 	}
-	wantedMembersIDs := keys(wantedUserMap)
 
-	alreadyBoardMember, wantedInactiveBoardMember, ongoingBoardMember := intersect(currentMembersIDs, wantedMembersIDs)
+	alreadyBoardMembers, expectedInactiveBoardMembers, newBoardMembers := intersect(currentUsersIDs, expectedUsersIDs)
 
 	logger.Debug(">> examine les nouvelles inscriptions", fields)
-	for _, userID := range append(alreadyBoardMember, ongoingBoardMember...) {
-		fields.AddAny("username", wantedUserMap[userID].Username)
+	for _, userID := range append(alreadyBoardMembers, newBoardMembers...) {
+		fields.AddAny("username", expectedUsersMap[userID].Username)
 		logger.Debug(">>> examine l'utilisateur", fields)
 		modified, err := wekan.EnsureUserIsActiveBoardMember(context.Background(), board.ID, userID)
 		if err != nil {
@@ -90,12 +60,9 @@ func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boar
 	}
 
 	logger.Debug(">> examine les radiations", fields)
-	isOauth2UserID := func(userID libwekan.UserID) bool {
-		return currentUserMap[userID].AuthenticationMethod == "oauth2" || currentUserMap[userID].Username == wekan.AdminUsername()
-	}
-	oauth2OnlyWantedInactiveBoardMember := selectSlice(wantedInactiveBoardMember, isOauth2UserID)
-	for _, userID := range oauth2OnlyWantedInactiveBoardMember {
-		fields.AddAny("username", currentUserMap[userID].Username)
+
+	for _, userID := range expectedInactiveBoardMembers {
+		fields.AddAny("username", currentUsersMap[userID].Username)
 		logger.Debug(">>> vérifie la non-participation", fields)
 		modified, err := wekan.EnsureUserIsInactiveBoardMember(context.Background(), board.ID, userID)
 		if err != nil {
@@ -115,6 +82,42 @@ func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boar
 		logger.Info(">>> donne les privilèges à l'admin", fields)
 	}
 	return err
+}
+
+func selectGenuineUser(wekanAdmin libwekan.Username) func(userID libwekan.UserID, user libwekan.User) bool {
+	return func(userID libwekan.UserID, user libwekan.User) bool {
+		return user.AuthenticationMethod == "oauth2" || user.Username == wekanAdmin
+	}
+}
+
+// liste les usernames présents sur la board, actifs ou non et le place dans currentMembers
+func fetchCurrentWekanBoardMembers(wekan libwekan.Wekan, board libwekan.Board) (map[libwekan.UserID]libwekan.User, []libwekan.UserID, error) {
+	currentMembersIDs := mapSlice(board.Members, func(member libwekan.BoardMember) libwekan.UserID { return member.UserID })
+	currentMembers, err := wekan.GetUsersFromIDs(context.Background(), currentMembersIDs)
+	if err != nil {
+		return nil, nil, err
+	}
+	currentUserMap := mapifySlice(currentMembers, libwekan.User.GetID)
+	currentGenuineUserMap := selectMap(currentUserMap, selectGenuineUser(wekan.AdminUsername()))
+	currentGenuineUserIDs := keys(currentUserMap)
+	return currentGenuineUserMap, currentGenuineUserIDs, nil
+}
+
+func fetchExpectedWekanBoardMembers(wekan libwekan.Wekan, boardMembers Users) (map[libwekan.UserID]libwekan.User, []libwekan.UserID, error) {
+	// liste les usernames que l'on veut garder ou rendre actifs sur la board
+	wantedMembersUsernames := []libwekan.Username{}
+	// globalWekan.AdminUser() est membre de toutes les boards, ajoutons le ici pour ne pas risquer de l'oublier dans les utilisateurs
+	wantedMembersUsernames = append(wantedMembersUsernames, wekan.AdminUsername())
+	for username := range boardMembers {
+		wantedMembersUsernames = append(wantedMembersUsernames, libwekan.Username(username))
+	}
+	wantedMembers, err := wekan.GetUsersFromUsernames(context.Background(), wantedMembersUsernames)
+	if err != nil {
+		return nil, nil, err
+	}
+	//wantedMembersIDs := mapSlice(wantedMembers, func(user libwekan.User) libwekan.UserID { return user.ID })
+	wantedUserMap := mapifySlice(wantedMembers, libwekan.User.GetID)
+	return wantedUserMap, keys(wantedUserMap), err
 }
 
 func (users Users) inferBoardsMember() BoardsMembers {

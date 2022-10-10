@@ -83,3 +83,11 @@ func keys[Key comparable, Element any](m map[Key]Element) []Key {
 	}
 	return ks
 }
+
+func values[Key comparable, Element any](m map[Key]Element) []Element {
+	var es []Element
+	for _, e := range m {
+		es = append(es, e)
+	}
+	return es
+}
