@@ -64,7 +64,7 @@ func TestKeycloakInitialisation(t *testing.T) {
 		conf.Clients,
 		users,
 		compositeRoles,
-		Username(conf.Access.Username),
+		Username(conf.Keycloak.Username),
 		10,
 	); err != nil {
 		t.Fatalf("erreur pendant l'update : %v", err)
@@ -202,7 +202,7 @@ func TestRolesAssignedToAll(t *testing.T) {
 //		conf.Clients,
 //		users,
 //		compositeRoles,
-//		Username(conf.Access.Username),
+//		Username(conf.Keycloak.Username),
 //		4,
 //	)
 //	os.Stdin = stdin
@@ -233,7 +233,7 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 		conf.Clients,
 		users,
 		compositeRoles,
-		Username(conf.Access.Username),
+		Username(conf.Keycloak.Username),
 		4,
 	)
 	ass.EqualError(actual, "Trop de modifications utilisateurs.")
@@ -275,7 +275,7 @@ func TestKeycloakUpdate(t *testing.T) {
 		conf.Clients,
 		users,
 		compositeRoles,
-		Username(conf.Access.Username),
+		Username(conf.Keycloak.Username),
 		10,
 	)
 	if err != nil {
