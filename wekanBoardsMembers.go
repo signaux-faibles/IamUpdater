@@ -102,12 +102,6 @@ func ensureUserIsInactiveBoardMember(wekan libwekan.Wekan, user libwekan.User, b
 	return nil
 }
 
-func selectGenuineUser(wekanAdmin libwekan.Username) func(userID libwekan.UserID, user libwekan.User) bool {
-	return func(userID libwekan.UserID, user libwekan.User) bool {
-		return user.AuthenticationMethod == "oauth2" || user.Username == wekanAdmin
-	}
-}
-
 // liste les usernames présents sur la board, actifs ou non et le place dans currentMembers
 func fetchCurrentWekanBoardMembers(wekan libwekan.Wekan, board libwekan.Board) (map[libwekan.UserID]libwekan.User, []libwekan.UserID, error) {
 	currentMembersIDs := mapSlice(board.Members, func(member libwekan.BoardMember) libwekan.UserID { return member.UserID })
@@ -116,7 +110,7 @@ func fetchCurrentWekanBoardMembers(wekan libwekan.Wekan, board libwekan.Board) (
 		return nil, nil, err
 	}
 	currentUserMap := mapifySlice(currentMembers, libwekan.User.GetID)
-	currentGenuineUserMap := selectMap(currentUserMap, selectGenuineUser(wekan.AdminUsername()))
+	currentGenuineUserMap := selectMapWithValue(currentUserMap, selectGenuineUserFunc(wekan))
 	currentGenuineUserIDs := keys(currentUserMap)
 	return currentGenuineUserMap, currentGenuineUserIDs, nil
 }

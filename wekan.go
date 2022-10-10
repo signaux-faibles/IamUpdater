@@ -58,6 +58,7 @@ var pipeline = Pipeline{
 
 func WekanUpdate(url, database, admin string, users Users, slugDomainRegexp string) error {
 	wekan, err := initWekan(url, database, admin, slugDomainRegexp)
+
 	if err != nil {
 		return err
 	}

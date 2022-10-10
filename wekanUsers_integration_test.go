@@ -31,8 +31,9 @@ func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {
 }
 
 func TestWekan_ManageUsers_withScopeWekan(t *testing.T) {
-	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
+	// GIVEN
 	usernameDeTest := Username("wekan_user")
 	usersWithScopeWekan := Users{
 		usernameDeTest: User{
@@ -41,7 +42,10 @@ func TestWekan_ManageUsers_withScopeWekan(t *testing.T) {
 		},
 	}
 
+	// WHEN
 	err := pipeline.StopAfter(wekan, usersWithScopeWekan, stageManageUsers)
+
+	// THEN
 	ass.Nil(err)
 	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	ass.Nil(actualErr)
