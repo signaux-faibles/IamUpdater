@@ -23,7 +23,7 @@ func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {
 		},
 	}
 
-	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan, stageManageUsers)
+	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan.selectScopeWekan(), stageManageUsers)
 	ass.Nil(err)
 	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	ass.IsType(libwekan.UserNotFoundError{}, actualErr)
@@ -69,7 +69,7 @@ func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 		},
 	}
 	// WHEN
-	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan, stageManageUsers)
+	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan.selectScopeWekan(), stageManageUsers)
 	ass.Nil(err)
 
 	// THEN

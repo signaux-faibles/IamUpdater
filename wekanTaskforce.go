@@ -10,11 +10,10 @@ import (
 // Calcule et insère les règles manquantes pour correspondre à la configuration Users
 // Ajuste la participation des utilisateurs aux cartes concernées par les labels en cas de changement
 func addMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
-	wekanUsers := users.selectScopeWekan()
 	fields := logger.DataForMethod("addMissingRulesAndCardMembership")
 	logger.Info("> ajoute les nouvelles règles", fields)
 	occurence := 0
-	for _, user := range wekanUsers {
+	for _, user := range users {
 		fields.AddAny("username", user.email)
 		logger.Debug(">> examine l'utilisateur", fields)
 		wekanUser, err := wekan.GetUserFromUsername(context.Background(), libwekan.Username(user.email))
@@ -65,7 +64,6 @@ func addMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 // Calcule et insert les règles manquantes pour correspondre à la configuration Users
 // Ajuste la participation des utilisateurs aux cartes concernées par les labels en cas de changement
 func removeExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error {
-	wekanUsers := users.selectScopeWekan()
 	fields := logger.DataForMethod("RemoveExtraRulesAndCardMembership")
 	logger.Info("> supprime les règles obsolètes", fields)
 	domainBoards, err := wekan.SelectDomainBoards(context.Background())
@@ -92,7 +90,7 @@ func removeExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error
 			logger.Debug(">>> examine la règle", fields)
 
 			label := board.GetLabelByID(rule.Trigger.LabelID)
-			user := wekanUsers[Username(rule.Action.Username)]
+			user := users[Username(rule.Action.Username)]
 			// l'utilisateur est absent de la config, du scope wekan ou de la board
 			if !userHasTaskforceLabel(user)(label) || !contains(user.boards, string(board.Slug)) {
 				err := removeCardMembership(wekan, Username(rule.Action.Username), board, label)

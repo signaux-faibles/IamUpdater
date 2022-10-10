@@ -8,7 +8,8 @@ import (
 
 func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 	fields := logger.DataForMethod("manageBoardsMembers")
-	wekanBoardsMembers := fromConfig.selectScopeWekan().inferBoardsMember()
+	// périmètre du stage
+	wekanBoardsMembers := fromConfig.inferBoardsMember()
 	domainBoards, err := wekan.SelectDomainBoards(context.Background())
 	if err != nil {
 		return err

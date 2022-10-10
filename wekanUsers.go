@@ -13,8 +13,7 @@ import (
 // - création des utilisateurs inconnus dans Wekan
 // - désactivation des utilisateurs superflus
 func manageUsers(wekan libwekan.Wekan, fromConfig Users) error {
-	wekanUsersfromConfig := fromConfig.selectScopeWekan()
-	addAdmin(wekanUsersfromConfig, wekan)
+	addAdmin(fromConfig, wekan)
 
 	fromWekan, err := wekan.GetUsers(context.TODO())
 	if err != nil {
@@ -23,7 +22,7 @@ func manageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 
 	withOauth2Func := isOauth2([]libwekan.Username{libwekan.Username(wekan.AdminUsername())})
 	withOauth2FromWekan := selectSlice(fromWekan, withOauth2Func)
-	creations, enable, disable := wekanUsersfromConfig.ListWekanChanges(withOauth2FromWekan)
+	creations, enable, disable := fromConfig.ListWekanChanges(withOauth2FromWekan)
 
 	fields := logger.DataForMethod("insertUsers")
 	logger.Info("> traite les inscriptions des utilisateurs", fields)

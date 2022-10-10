@@ -61,7 +61,7 @@ func WekanUpdate(url, database, admin string, users Users, slugDomainRegexp stri
 	if err != nil {
 		return err
 	}
-	return pipeline.Run(wekan, users)
+	return pipeline.Run(wekan, users.selectScopeWekan())
 }
 
 func initWekan(url string, database string, admin string, slugDomainRegexp string) (libwekan.Wekan, error) {

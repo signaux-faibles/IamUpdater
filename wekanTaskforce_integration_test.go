@@ -114,7 +114,7 @@ func TestWekanTaskforce_AddMissingRules_whenScopeNotWekan(t *testing.T) {
 	}
 
 	// WHEN
-	err := pipeline.StopAfter(wekan, users, stageAddMissingRulesAndCardMembership)
+	err := pipeline.StopAfter(wekan, users.selectScopeWekan(), stageAddMissingRulesAndCardMembership)
 	require.NoError(t, err)
 
 	// THEN
@@ -356,7 +356,7 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesWekanScope(t *testing.T) {
 	})
 
 	// WHEN
-	err = pipeline.StopAfter(wekan, users, stageRemoveExtraRulesAndCardMembership)
+	err = pipeline.StopAfter(wekan, users.selectScopeWekan(), stageRemoveExtraRulesAndCardMembership)
 	printErrChain(err, 0)
 	require.NoError(t, err)
 
