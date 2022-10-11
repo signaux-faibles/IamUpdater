@@ -53,17 +53,17 @@ func manageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 		return err
 	}
 
-	creations, enable, disable := fromConfig.ListWekanChanges(fromWekan)
+	toCreate, toEnable, toDisable := fromConfig.ListWekanChanges(fromWekan)
 
-	if err := insertUsers(context.Background(), wekan, creations); err != nil {
+	if err := insertUsers(context.Background(), wekan, toCreate); err != nil {
 		return err
 	}
 
-	if err := ensureUsersAreEnabled(context.Background(), wekan, enable); err != nil {
+	if err := ensureUsersAreEnabled(context.Background(), wekan, toEnable); err != nil {
 		return err
 	}
 
-	return ensureUsersAreDisabled(context.Background(), wekan, disable)
+	return ensureUsersAreDisabled(context.Background(), wekan, toDisable)
 }
 
 func selectWekanUsers(wekan libwekan.Wekan) (libwekan.Users, error) {
@@ -137,24 +137,24 @@ func ensureUsersAreDisabled(ctx context.Context, wekan libwekan.Wekan, users lib
 }
 
 func (users Users) ListWekanChanges(wekanUsers libwekan.Users) (
-	creations libwekan.Users,
-	enable libwekan.Users,
-	disable libwekan.Users,
+	toCreate libwekan.Users,
+	toEnable libwekan.Users,
+	toDisable libwekan.Users,
 ) {
 	configUsers := users.buildWekanUsers()
 	wekanUsernames := mapSlice(wekanUsers, libwekan.User.GetUsername)
 	configUsernames := mapSlice(keys(users), Username.toWekanUsername)
 
-	both, onlyWekan, notInWekan := intersect(wekanUsernames, configUsernames)
+	both, onlyWekan, onlyConfig := intersect(wekanUsernames, configUsernames)
 
-	creations = selectSlice(configUsers, selectWekanUserWithUsernamesFunc(notInWekan))
-	enable = selectSlice(wekanUsers, selectWekanUserWithUsernamesFunc(both))
-	disable = selectSlice(wekanUsers, selectWekanUserWithUsernamesFunc(onlyWekan))
+	toCreate = selectSlice(configUsers, acceptUserWithUsernameIn(onlyConfig))
+	toEnable = selectSlice(wekanUsers, acceptUserWithUsernameIn(both))
+	toDisable = selectSlice(wekanUsers, acceptUserWithUsernameIn(onlyWekan))
 
-	return creations, enable, disable
+	return toCreate, toEnable, toDisable
 }
 
-func selectWekanUserWithUsernamesFunc(usernames []libwekan.Username) func(libwekan.User) bool {
+func acceptUserWithUsernameIn(usernames []libwekan.Username) func(libwekan.User) bool {
 	return func(user libwekan.User) bool {
 		return contains(usernames, user.Username)
 	}
@@ -176,7 +176,7 @@ func (username Username) toWekanUsername() libwekan.Username {
 
 func (users Users) selectScopeWekan() Users {
 	hasScope := func(user User) bool { return contains(user.scope, "wekan") }
-	return selectMapWithValue(users, hasScope)
+	return selectMapByValue(users, hasScope)
 }
 
 // addAdmin modifie l'objet Users en place car c'est une map !

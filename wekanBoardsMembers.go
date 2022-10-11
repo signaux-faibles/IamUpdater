@@ -110,7 +110,7 @@ func fetchCurrentWekanBoardMembers(wekan libwekan.Wekan, board libwekan.Board) (
 		return nil, nil, err
 	}
 	currentUserMap := mapifySlice(currentMembers, libwekan.User.GetID)
-	currentGenuineUserMap := selectMapWithValue(currentUserMap, selectGenuineUserFunc(wekan))
+	currentGenuineUserMap := selectMapByValue(currentUserMap, selectGenuineUserFunc(wekan))
 	currentGenuineUserIDs := keys(currentUserMap)
 	return currentGenuineUserMap, currentGenuineUserIDs, nil
 }
