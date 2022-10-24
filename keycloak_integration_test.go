@@ -7,24 +7,23 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
-	"testing"
-
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/assert"
+	"log"
+	"os"
+	"testing"
 )
 
 func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t *testing.T) {
 	ass := assert.New(t)
 
 	testUser := "ti_admin"
-	testFilename := "test/resources/userNotInExcel/userBase.xlsx"
 
-	users, compositeRoles, _ := loadExcel(testFilename)
+	//users, _, _ := loadExcel(testFilename)
+	users := Users{keycloakAdmin + "estAbsent": User{}}
 
 	// erreur in configuration : access.username should be in usersAndRolesFilename
 	err := UpdateKeycloak(
@@ -33,14 +32,14 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 		nil,
 		nil,
 		users,
-		compositeRoles,
+		nil,
 		Username(testUser),
 		10,
 	)
 
 	expectedError := fmt.Sprintf("configured user is not in stock file: %s", testUser)
 
-	ass.NotNil(err)
+	ass.Error(err)
 	ass.EqualError(err, expectedError)
 }
 
@@ -48,11 +47,11 @@ func TestKeycloakInitialisation(t *testing.T) {
 	ass := assert.New(t)
 	var conf structs.Config
 	var err error
-	if conf, err = config.InitConfig("test/resources/initialisation/test_config.toml"); err != nil {
+	if conf, err = config.InitConfig("test/sample/test_config.toml"); err != nil {
 		panic(err)
 	}
-	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-	ass.Nil(err)
+	users := TEST_USERS
+	compositeRoles := referentiel.toRoles()
 	//configure logger
 	logger.ConfigureWith(*conf.Logger)
 
@@ -64,7 +63,7 @@ func TestKeycloakInitialisation(t *testing.T) {
 		conf.Clients,
 		users,
 		compositeRoles,
-		Username(conf.Access.Username),
+		Username(conf.Keycloak.Username),
 		10,
 	); err != nil {
 		t.Fatalf("erreur pendant l'update : %v", err)
@@ -93,13 +92,13 @@ func TestKeycloakInitialisation(t *testing.T) {
 	ass.Len(kc.ClientRoles["another"], 1) // il y a au minimum 1 rôle pour 1 client
 
 	user, err := kc.GetUser("raphael.squelbut@shodo.io")
-	ass.Nil(err)
+	ass.NoError(err)
 	ass.NotNil(user)
 
 	emptyUser := gocloak.User{}
 	if user != emptyUser {
 		err = logUser(*clientSF, user)
-		ass.Nil(err)
+		ass.NoError(err)
 	}
 }
 
@@ -123,11 +122,11 @@ func TestClientSignauxFaiblesExists(t *testing.T) {
 
 func TestRolesExistences(t *testing.T) {
 	ass := assert.New(t)
-	rolesToTest := []string{"urssaf", "dgefp", "bdf", "score", "detection", "pge"}
+	rolesToTest := []string{"dgefp", "bdf", "score", "detection", "urssaf", "pge"}
 
 	for _, role := range rolesToTest {
 
-		searchClientRolePGE := gocloak.GetRoleParams{
+		roleRequest := gocloak.GetRoleParams{
 			Search: &role,
 		}
 
@@ -137,7 +136,7 @@ func TestRolesExistences(t *testing.T) {
 			kc.JWT.AccessToken,
 			*kc.Realm.Realm,
 			*clientSG.ID,
-			searchClientRolePGE,
+			roleRequest,
 		)
 		if err != nil {
 			t.Fatalf("error getting client roles : %v", err)
@@ -180,48 +179,23 @@ func TestRolesAssignedToAll(t *testing.T) {
 	}
 }
 
-//func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
-//	ass := assert.New(t)
-//	var err error
-//	var conf structs.Config
-//
-//	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
-//		panic(err)
-//	}
-//	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-//	ass.Nil(err)
-//	// configure logger
-//	logger.ConfigureWith(*conf.Logger)
-//
-//	stdin := readStdin("false")
-//	// update all
-//	actual := UpdateKeycloak(
-//		&kc,
-//		conf.Stock.ClientForRoles,
-//		conf.Realm,
-//		conf.Clients,
-//		users,
-//		compositeRoles,
-//		Username(conf.Access.Username),
-//		4,
-//	)
-//	os.Stdin = stdin
-//	ass.EqualError(actual, "Trop de modifications utilisateurs.")
-//}
-
 func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 	ass := assert.New(t)
 	var err error
 	var conf structs.Config
 
-	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
+	if conf, err = config.InitConfig("test/sample/test_config.toml"); err != nil {
 		panic(err)
 	}
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
 
-	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-	ass.Nil(err)
+	//users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
+	users := Users{
+		ADMIN.email: ADMIN,
+		"bidon":     User{email: "bidon@essence.sa"},
+		"pichet":    User{email: "pichet@essence.sa"}}
+	compositeRoles := referentiel.toRoles()
 
 	stdin := readStdin("false")
 	// update all
@@ -233,7 +207,7 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 		conf.Clients,
 		users,
 		compositeRoles,
-		Username(conf.Access.Username),
+		Username(conf.Keycloak.Username),
 		4,
 	)
 	ass.EqualError(actual, "Trop de modifications utilisateurs.")
@@ -243,26 +217,28 @@ func TestKeycloakUpdate(t *testing.T) {
 	ass := assert.New(t)
 	var conf structs.Config
 
-	// voir le fichier
-	// le user raphael.squelbut@shodo.io a été créé au test précédent
-	disabledUser, err := kc.GetUser("raphael.squelbut@shodo.io")
-	ass.Nil(err)
-	ass.NotNil(disabledUser)
+	userWhichShouldBeDisabled, err := kc.GetUser("john.doe@zone51.gov.fr")
+	ass.NoError(err)
+	ass.NotNil(userWhichShouldBeDisabled)
 
 	clientSF, found := kc.getClient(signauxfaibleClientID)
 	ass.True(found)
 
 	// le user doit encore pouvoir se loguer
 	// avant l'exécution de l'update
-	err = logUser(*clientSF, disabledUser)
-	ass.Nil(err)
+	err = logUser(*clientSF, userWhichShouldBeDisabled)
+	ass.NoError(err)
 
-	if conf, err = config.InitConfig("test/resources/update/test_config.toml"); err != nil {
+	if conf, err = config.InitConfig("test/sample/test_config.toml"); err != nil {
 		panic(err)
 	}
 
-	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
-	ass.Nil(err)
+	users := Users{ADMIN.email: ADMIN}
+
+	compositeRoles := CompositeRoles{
+		"numerique":    Roles{"0", "1", "2"},
+		"alphabetique": Roles{"A", "B", "C"},
+	} // => 2 rôles composites + 6 rôles
 
 	// configure logger
 	logger.ConfigureWith(*conf.Logger)
@@ -275,7 +251,7 @@ func TestKeycloakUpdate(t *testing.T) {
 		conf.Clients,
 		users,
 		compositeRoles,
-		Username(conf.Access.Username),
+		Username(conf.Keycloak.Username),
 		10,
 	)
 	if err != nil {
@@ -283,11 +259,11 @@ func TestKeycloakUpdate(t *testing.T) {
 	}
 
 	// des rôles ont été supprimés dans le fichier de rôles
-	ass.Len(kc.ClientRoles[signauxfaibleClientID], 26)
+	ass.Len(kc.ClientRoles[signauxfaibleClientID], 8)
 
 	// on vérifie
-	err = logUser(*clientSF, disabledUser)
-	ass.NotNil(err)
+	err = logUser(*clientSF, userWhichShouldBeDisabled)
+	ass.Error(err)
 	apiError, ok := err.(*gocloak.APIError)
 	ass.True(ok)
 	ass.Equal(400, apiError.Code)
@@ -305,24 +281,11 @@ func readStdin(message string) *os.File {
 	return origStdin
 }
 
-//func readStdin(message string) *os.File {
-//	r, w, err := os.Pipe()
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	origStdin := os.Stdin
-//	os.Stdin = r
-//
-//	_, err = w.WriteString(message)
-//	if err != nil {
-//		panic("ne peut lire STDIN")
-//	}
-//	return origStdin
-//}
-
 func logUser(client gocloak.Client, user gocloak.User) error {
+	fields := logger.DataForMethod("logUser")
+	fields.AddUser(user)
+	fields.AddClient(client)
 	// try connecting a user
-
 	// 1. need client secret
 	clientSecret, err := kc.API.RegenerateClientSecret(context.Background(), kc.JWT.AccessToken, *kc.Realm.Realm, *client.ID)
 	if err != nil {
@@ -334,9 +297,19 @@ func logUser(client gocloak.Client, user gocloak.User) error {
 		return err
 	}
 	// 3. log user
+	logger.Info("log user", fields)
 	_, err = kc.API.Login(context.Background(), *client.ClientID, *clientSecret.Value, *kc.Realm.Realm, *user.Username, "abcd")
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+var ADMIN = User{"0", keycloakAdmin, "", "admin_name", "", "", "", "", nil, "", nil, nil}
+
+var TEST_USERS = Users{
+	"john.doe@zone51.gov.fr":    User{"A", "john.doe@zone51.gov.fr", "John", "Doe", "LISTENS THE WIND", "Recouvrement et accompagnement des entreprises", "PENTAGON", "", nil, "Alsace", nil, nil},
+	"raphael.squelbut@shodo.io": User{"A", "raphael.squelbut@shodo.io", "Raphaël", "SQUELBUT", "sf", "Développeur", "SIGNAUX FAIBLES", "", []string{"wekan"}, "France entière", nil, nil},
+	"quelqun@pasdelurssaf.fr":   User{"B", "quelqun@pasdelurssaf.fr", "quelqun", "pasdelurssaf", "", "Un mec pas de l’URSSAF", "", "", nil, "77", nil, nil},
+	keycloakAdmin:               ADMIN,
 }

@@ -25,9 +25,9 @@ func main() {
 		logger.Panic(err)
 	}
 
-	if conf.Access != nil {
+	if conf.Keycloak != nil {
 		clientId := conf.Stock.ClientForRoles
-		kc, err := NewKeycloakContext(conf.Access)
+		kc, err := NewKeycloakContext(conf.Keycloak)
 		if err != nil {
 			logger.Panic(err)
 		}
@@ -39,7 +39,7 @@ func main() {
 			conf.Clients,
 			users,
 			compositeRoles,
-			Username(conf.Access.Username),
+			Username(conf.Keycloak.Username),
 			AcceptedChanges,
 		); err != nil {
 			logger.Panic(err)

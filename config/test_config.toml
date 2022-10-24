@@ -1,4 +1,4 @@
-[access]
+[keycloak]
 address = "http://localhost:8080"
 username = "tuadmin"
 password = "tupwd"
@@ -11,10 +11,9 @@ timestampFormat = "2006-01-02 15:04:05"
 #rotation = false
 
 [stock]
-clientsAndRealmFolder = "../test/resources/test_config.d"
+clientsAndRealmFolder = "../test/sample/test_config.d"
 clientForRoles = "signauxfaibles"
-usersAndRolesFilename = "../test/resources/update/userBase.xlsx"
 
-[wekan]
-username="wekan.ti"
-password="pwd"
+#[wekan]
+#username="wekan.ti"
+#password="pwd"

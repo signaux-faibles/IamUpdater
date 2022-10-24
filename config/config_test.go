@@ -15,9 +15,9 @@ func Test_getAllConfigFilenames(t *testing.T) {
 	currentConfigFile := "test_config.toml"
 	expected := []string{
 		currentConfigFile,
-		"../test/resources/test_config.d/another.toml",
-		"../test/resources/test_config.d/realm_master.toml",
-		"../test/resources/test_config.d/client_signauxfaibles.toml",
+		"../test/sample/test_config.d/another.toml",
+		"../test/sample/test_config.d/realm_master.toml",
+		"../test/sample/test_config.d/client_signauxfaibles.toml",
 	}
 
 	// using the function
@@ -33,21 +33,21 @@ func Test_getAllConfigFilenames(t *testing.T) {
 
 func Test_merge(t *testing.T) {
 	assertions := assert.New(t)
-	wantedAccess := &structs.Access{}
+	wantedAccess := &structs.Keycloak{}
 	wantedRealm := &gocloak.RealmRepresentation{}
 	clientA := gocloak.Client{}
 	clientB := gocloak.Client{}
 	clientC := gocloak.Client{}
 	wantedClients := []*gocloak.Client{&clientA, &clientB, &clientC}
 	configA := structs.Config{
-		Access:  wantedAccess,
-		Realm:   nil,
-		Clients: []*gocloak.Client{&clientA},
+		Keycloak: wantedAccess,
+		Realm:    nil,
+		Clients:  []*gocloak.Client{&clientA},
 	}
 	configB := structs.Config{
-		Access:  nil,
-		Realm:   wantedRealm,
-		Clients: []*gocloak.Client{&clientB, &clientC},
+		Keycloak: nil,
+		Realm:    wantedRealm,
+		Clients:  []*gocloak.Client{&clientB, &clientC},
 	}
 	type args struct {
 		first  structs.Config
@@ -59,9 +59,9 @@ func Test_merge(t *testing.T) {
 		want structs.Config
 	}{
 		{name: "merge Configs", args: args{first: configA, second: configB}, want: structs.Config{
-			Access:  wantedAccess,
-			Realm:   wantedRealm,
-			Clients: wantedClients,
+			Keycloak: wantedAccess,
+			Realm:    wantedRealm,
+			Clients:  wantedClients,
 		}},
 	}
 	for _, tt := range tests {
@@ -72,17 +72,17 @@ func Test_merge(t *testing.T) {
 	}
 }
 
-func Test_mergeAccess(t *testing.T) {
-	anAccess := structs.Access{}
-	anotherAccess := structs.Access{}
+func Test_mergeKeycloak(t *testing.T) {
+	anAccess := structs.Keycloak{}
+	anotherAccess := structs.Keycloak{}
 	type args struct {
-		first  *structs.Access
-		second *structs.Access
+		first  *structs.Keycloak
+		second *structs.Keycloak
 	}
 	tests := []struct {
 		name string
 		args args
-		want *structs.Access
+		want *structs.Keycloak
 	}{
 		{name: "first is chosen", args: args{first: &anAccess, second: nil}, want: &anAccess},
 		{name: "second is chosen", args: args{first: nil, second: &anAccess}, want: &anAccess},

@@ -34,10 +34,10 @@ func (user User) roles() Roles {
 	if user.niveau == "" {
 		// TODO should return MisconfiguredUserError
 	}
-	if user.niveau == "a" {
+	if strings.EqualFold("a", user.niveau) {
 		roles = append(roles, "urssaf", "dgefp", "bdf")
 	}
-	if user.niveau == "b" {
+	if strings.EqualFold("b", user.niveau) {
 		roles = append(roles, "dgefp")
 	}
 	if user.niveau != "0" {

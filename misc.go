@@ -26,6 +26,12 @@ func selectMap[E any, I comparable](m map[I]E, filter func(I, E) bool) map[I]E {
 	return n
 }
 
+func selectMapByValue[Key comparable, Value any](m map[Key]Value, selector func(Value) bool) map[Key]Value {
+	return selectMap(m, func(_ Key, value Value) bool {
+		return selector(value)
+	})
+}
+
 func selectSlice[Element any](slice []Element, test func(Element) bool) []Element {
 	var newSlice []Element
 	for _, element := range slice {
@@ -47,6 +53,12 @@ func contains[E comparable](array []E, item E) bool {
 	}
 	return false
 }
+
+//func containsFunc[E comparable](array []E) func(item E) bool {
+//	return func(item E) bool {
+//		return contains(array, item)
+//	}
+//}
 
 func intersect[E comparable](elementsA []E, elementsB []E) (both []E, onlyA []E, onlyB []E) {
 	for _, elementA := range elementsA {
@@ -74,4 +86,20 @@ func intersect[E comparable](elementsA []E, elementsB []E) (both []E, onlyA []E,
 		}
 	}
 	return both, onlyA, onlyB
+}
+
+func keys[Key comparable, Element any](m map[Key]Element) []Key {
+	var ks []Key
+	for k := range m {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+func values[Key comparable, Element any](m map[Key]Element) []Element {
+	var es []Element
+	for _, e := range m {
+		es = append(es, e)
+	}
+	return es
 }

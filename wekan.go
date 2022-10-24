@@ -31,7 +31,7 @@ func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastS
 	fields := logger.DataForMethod("StopAfter")
 	for _, stage := range pipeline {
 		fields.AddAny("stage", stage.id)
-		logger.Debug("Application du pipeline", fields)
+		logger.Debug("applique le pipeline", fields)
 		err := stage.run(wekan, fromConfig)
 		if err != nil || stage.id == lastStage.id {
 			return err
@@ -40,8 +40,8 @@ func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastS
 	return nil
 }
 
-var stageCheckBoardSlugs = PipelineStage{CheckBoardSlugs, "CheckBoardSlugs"}
-var stageManageUsers = PipelineStage{ManageUsers, "ManageUsers"}
+var stageCheckBoardSlugs = PipelineStage{checkBoardSlugs, "checkBoardSlugs"}
+var stageManageUsers = PipelineStage{manageUsers, "manageUsers"}
 var stageManageBoardsMembers = PipelineStage{manageBoardsMembers, "manageBoardsMembers"}
 var stageAddMissingRulesAndCardMembership = PipelineStage{addMissingRulesAndCardMembership, "addMissingRulesAndCardMembership"}
 var stageRemoveExtraRulesAndCardMembership = PipelineStage{removeExtraRulesAndCardsMembership, "RemoveExtraRulesAndCardMembership"}
@@ -58,17 +58,11 @@ var pipeline = Pipeline{
 
 func WekanUpdate(url, database, admin string, users Users, slugDomainRegexp string) error {
 	wekan, err := initWekan(url, database, admin, slugDomainRegexp)
+
 	if err != nil {
 		return err
 	}
-	return pipeline.Run(wekan, users)
-}
-
-func addAdmin(usersFromExcel Users, wekan libwekan.Wekan) {
-	usersFromExcel[Username(wekan.AdminUsername())] = User{
-		email: Username(wekan.AdminUsername()),
-		scope: []string{"wekan"},
-	}
+	return pipeline.Run(wekan, users.selectScopeWekan())
 }
 
 func initWekan(url string, database string, admin string, slugDomainRegexp string) (libwekan.Wekan, error) {
@@ -87,34 +81,7 @@ func initWekan(url string, database string, admin string, slugDomainRegexp strin
 	return wekan, nil
 }
 
-func (users Users) ListWekanChanges(wekanUsers libwekan.Users) (
-	creations libwekan.Users,
-	enable libwekan.Users,
-	disable libwekan.Users,
-) {
-	wekanUsernames := mapSlice(wekanUsers, usernameFromWekanUser)
-	configUsernames := users.Usernames()
-
-	both, onlyWekan, notInWekan := intersect(wekanUsernames, configUsernames)
-	creations = UsernamesSelect(users, notInWekan).buildWekanUsers()
-	enable = wekanUsernamesSelect(wekanUsers, both)
-	disable = wekanUsernamesSelect(wekanUsers, onlyWekan)
-
-	return creations, enable, disable
-}
-
-func usernameFromWekanUser(user libwekan.User) Username {
-	return Username(user.Username)
-}
-
-func firstChar(s string) string {
-	if len(s) > 0 {
-		return s[0:1]
-	}
-	return ""
-}
-
-func CheckBoardSlugs(wekan libwekan.Wekan, users Users) error {
+func checkBoardSlugs(wekan libwekan.Wekan, users Users) error {
 	domainBoards, err := wekan.SelectDomainBoards(context.Background())
 	if err != nil {
 		return err

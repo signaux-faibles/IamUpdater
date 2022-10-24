@@ -27,7 +27,7 @@ func TestWekan_ManageBoardsMembers_withoutBoard(t *testing.T) {
 
 	// THEN
 	err := pipeline.StopAfter(wekan, usersWithoutBoards, stageManageBoardsMembers)
-	ass.Nil(err)
+	ass.NoError(err)
 	actualUser, _ := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	actualBFCBoard, _ := wekan.GetBoardFromSlug(ctx, libwekan.BoardSlug(boardDeTest))
 	ass.False(actualBFCBoard.UserIsMember(actualUser))
@@ -49,7 +49,7 @@ func TestWekan_ManageBoardsMembers_withBoard(t *testing.T) {
 
 	// THEN
 	err := pipeline.StopAfter(wekan, usersWithBoards, stageManageBoardsMembers)
-	ass.Nil(err)
+	ass.NoError(err)
 	actualUser, _ := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	actualBFCBoard, _ := wekan.GetBoardFromSlug(ctx, libwekan.BoardSlug(boardDeTest))
 	ass.True(actualBFCBoard.UserIsActiveMember(actualUser))
@@ -78,7 +78,7 @@ func TestWekan_ManageBoardsMembers_removeFromBoard(t *testing.T) {
 
 	// THEN
 	err := pipeline.StopAfter(wekan, usersWithoutBoards, stageManageBoardsMembers)
-	ass.Nil(err)
+	ass.NoError(err)
 	actualUser, _ := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	actualBFCBoard, _ := wekan.GetBoardFromSlug(ctx, libwekan.BoardSlug(boardDeTest))
 	ass.True(actualBFCBoard.UserIsMember(actualUser))

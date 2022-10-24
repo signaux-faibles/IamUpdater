@@ -8,7 +8,6 @@ import (
 func TestReferentielGeographique_toRoles(t *testing.T) {
 	ass := assert.New(t)
 
-	//_, expected, _ := loadExcel("./userBase.xlsx")
 	actual := referentiel.toRoles()
 
 	ass.Contains(actual, franceEntiere)

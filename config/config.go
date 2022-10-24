@@ -6,8 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
-	"io/fs"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -45,20 +43,22 @@ func getAllConfigFilenames(filename string) []string {
 		logger.Panicf("error reading clients config file : %s", err)
 	}
 	r = append(r, filename)
-	var files []fs.FileInfo
+	var files []os.DirEntry
 	config := extractConfig(filename)
 	folder := config.Stock.ClientsAndRealmFolder
 	if folder == "" {
 		logger.Warnf("no configuration folder is defined")
 		return r
 	}
-	if _, err = ioutil.ReadFile(config.Stock.UsersAndRolesFilename); err != nil {
-		logger.Panicf("error reading stock file : %s", err)
+	stockFilename := config.Stock.UsersAndRolesFilename
+	if stockFilename != "" {
+		if _, err = os.ReadFile(stockFilename); err != nil {
+			logger.Panicf("error reading stock file '%s' : %s", stockFilename, err)
+		}
 	}
-	if files, err = ioutil.ReadDir(folder); err != nil {
+	if files, err = os.ReadDir(folder); err != nil {
 		logger.Panicf("error reading clients config folder : %s", err)
 	}
-
 	for _, f := range files {
 		filename := folder + "/" + f.Name()
 		if !strings.HasSuffix(filename, ".toml") {
@@ -89,7 +89,7 @@ func merge(first structs.Config, second structs.Config) structs.Config {
 	r := structs.Config{Clients: make([]*gocloak.Client, 0)}
 	r.Stock = firstNonNil(first.Stock, second.Stock)
 	r.Logger = firstNonNil(first.Logger, second.Logger)
-	r.Access = mergeAccess(first.Access, second.Access)
+	r.Keycloak = mergeAccess(first.Keycloak, second.Keycloak)
 	r.Realm = mergeRealm(first.Realm, second.Realm)
 	r.Clients = mergeClients(first.Clients, second.Clients)
 	r.Mongo = firstNonNil(first.Mongo, second.Mongo)
@@ -122,7 +122,7 @@ func firstNonNil[T any](first *T, second *T) *T {
 	return second
 }
 
-func mergeAccess(first *structs.Access, second *structs.Access) *structs.Access {
+func mergeAccess(first *structs.Keycloak, second *structs.Keycloak) *structs.Keycloak {
 	if first != nil {
 		return first
 	}

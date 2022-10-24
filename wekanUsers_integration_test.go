@@ -23,16 +23,17 @@ func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {
 		},
 	}
 
-	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan, stageManageUsers)
-	ass.Nil(err)
+	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan.selectScopeWekan(), stageManageUsers)
+	ass.NoError(err)
 	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	ass.IsType(libwekan.UserNotFoundError{}, actualErr)
 	ass.Empty(actualUser)
 }
 
 func TestWekan_ManageUsers_withScopeWekan(t *testing.T) {
-	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
+	// GIVEN
 	usernameDeTest := Username("wekan_user")
 	usersWithScopeWekan := Users{
 		usernameDeTest: User{
@@ -41,8 +42,11 @@ func TestWekan_ManageUsers_withScopeWekan(t *testing.T) {
 		},
 	}
 
+	// WHEN
 	err := pipeline.StopAfter(wekan, usersWithScopeWekan, stageManageUsers)
-	ass.Nil(err)
+
+	// THEN
+	ass.NoError(err)
 	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
 	ass.Nil(actualErr)
 	ass.NotEmpty(actualUser)
@@ -69,8 +73,8 @@ func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 		},
 	}
 	// WHEN
-	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan, stageManageUsers)
-	ass.Nil(err)
+	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan.selectScopeWekan(), stageManageUsers)
+	ass.NoError(err)
 
 	// THEN
 	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(usernameDeTest))
