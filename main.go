@@ -7,7 +7,7 @@ import (
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
-const AcceptedChanges int = 10
+const AcceptedChanges int = 50
 
 func main() {
 	conf, err := config.InitConfig("./config.toml")
