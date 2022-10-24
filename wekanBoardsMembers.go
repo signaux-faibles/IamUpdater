@@ -57,8 +57,10 @@ func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boar
 
 	logger.Debug(">> examine les radiations", fields)
 	for _, userID := range expectedInactiveBoardMembers {
-		if err := ensureUserIsInactiveBoardMember(wekan, currentUsersMap[userID], board); err != nil {
-			return err
+		if _, ok := currentUsersMap[userID]; ok {
+			if err := ensureUserIsInactiveBoardMember(wekan, currentUsersMap[userID], board); err != nil {
+				return err
+			}
 		}
 	}
 
