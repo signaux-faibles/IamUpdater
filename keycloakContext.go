@@ -66,7 +66,7 @@ func Init(hostname, realm, username, password string) (KeycloakContext, error) {
 	return kc, nil
 }
 
-// GetRoles returns realm getRoles in []string
+// GetRoles returns realm roles in []string
 func (kc KeycloakContext) GetRoles() Roles {
 	var roles Roles
 	for _, r := range kc.Roles {

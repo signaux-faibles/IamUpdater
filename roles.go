@@ -11,9 +11,9 @@ import (
 type Roles []string
 type CompositeRoles map[string]Roles
 
-func (roles *Roles) add(role ...string) {
-	if roles != nil && len(role) > 0 {
-		for _, current := range role {
+func (roles *Roles) add(toAdd ...string) {
+	if roles != nil && len(toAdd) > 0 {
+		for _, current := range toAdd {
 			if !contains(*roles, current) {
 				*roles = append(*roles, current)
 			}
