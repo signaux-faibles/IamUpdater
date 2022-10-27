@@ -6,7 +6,7 @@ realm = "master"
 
 [logger]
 filename = "test-initialisation.log"
-level = "DEBUG"
+level = "ERROR"
 timestampFormat = "2006-01-02 15:04:05"
 #rotation = false
 

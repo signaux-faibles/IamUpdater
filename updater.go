@@ -100,7 +100,7 @@ func UpdateKeycloak(
 		if err != nil {
 			panic(err)
 		}
-		for _, role := range oldRoles.GetKeycloakRoles(clientId, *kc) {
+		for _, role := range kc.FindKeycloakRoles(clientId, oldRoles) {
 			err = kc.API.DeleteClientRole(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalID, *role.Name)
 			if err != nil {
 				panic(err)

@@ -11,15 +11,14 @@ import (
 type Roles []string
 type CompositeRoles map[string]Roles
 
-func (roles *Roles) add(role string) {
-	if roles != nil {
-		for _, r := range *roles {
-			if role == r {
-				return
+func (roles *Roles) add(toAdd ...string) {
+	if roles != nil && len(toAdd) > 0 {
+		for _, current := range toAdd {
+			if !contains(*roles, current) {
+				*roles = append(*roles, current)
 			}
 		}
 	}
-	*roles = append(*roles, role)
 }
 
 func (roles Roles) contains(role string) bool {
@@ -65,7 +64,7 @@ func neededRoles(compositeRoles CompositeRoles, users Users) Roles {
 		}
 	}
 	for _, user := range users {
-		for _, role := range user.roles() {
+		for _, role := range user.getRoles() {
 			neededRoles.add(role)
 		}
 	}
@@ -82,8 +81,8 @@ func (kc KeycloakContext) GetRoleFromRoleName(clientID string, role string) *goc
 	return nil
 }
 
-// GetKeycloakRoles retrieves existing gocloak roles from Roles array
-func (roles Roles) GetKeycloakRoles(clientName string, kc KeycloakContext) []gocloak.Role {
+// FindKeycloakRoles retrieves existing gocloak roles from Roles array
+func (kc KeycloakContext) FindKeycloakRoles(clientName string, roles Roles) []gocloak.Role {
 	var gocloakRoles []gocloak.Role
 	for _, r := range roles {
 		role := kc.GetRoleFromRoleName(clientName, r)
@@ -106,7 +105,8 @@ func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles Composite
 			logger.Warn("role doesn't exists", fields)
 			continue
 		}
-		gocloakRoles := roles.GetKeycloakRoles(clientID, kc)
+
+		gocloakRoles := kc.FindKeycloakRoles(clientID, roles)
 		fields.AddRoles(gocloakRoles)
 		if len(gocloakRoles) != len(roles) {
 			message := fmt.Sprintf("only %d on %d roles exist, some roles may not be used in user base", len(gocloakRoles), len(roles))
