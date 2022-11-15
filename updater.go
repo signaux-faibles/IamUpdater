@@ -21,7 +21,7 @@ func UpdateKeycloak(
 	users Users,
 	compositeRoles CompositeRoles,
 	configuredUsername Username,
-	acceptedChanges int,
+	maxChangesToAccept int,
 ) error {
 	fields := logger.DataForMethod("UpdateAll")
 
@@ -34,14 +34,14 @@ func UpdateKeycloak(
 	}
 
 	logger.Info("START", fields)
-	logger.Info("accepte "+strconv.Itoa(acceptedChanges)+" changements pour les users", fields)
+	logger.Info("accepte "+strconv.Itoa(maxChangesToAccept)+" changements pour les users", fields)
 
 	// checking users
 	logger.Info("checking users", fields)
 	missing, obsolete, update, current := users.Compare(*kc)
 	changes := len(missing) + len(obsolete) + len(update)
 	keeps := len(current)
-	if sure := areYouSureTooApplyChanges(changes, keeps, acceptedChanges); !sure {
+	if sure := areYouSureTooApplyChanges(changes, keeps, maxChangesToAccept); !sure {
 		return errors.New("Trop de modifications utilisateurs.")
 	}
 
@@ -119,13 +119,13 @@ func areYouSureTooApplyChanges(changes, keeps, acceptedChanges int) bool {
 	fields := logger.DataForMethod("areYouSureTooApplyChanges")
 	logger.Info("nombre d'utilisateurs à rajouter/supprimer/activer : "+strconv.Itoa(changes), fields)
 	logger.Info("nombre d'utilisateurs à conserver : "+strconv.Itoa(keeps), fields)
-	condition1 := changes > acceptedChanges
+	condition1 := acceptedChanges > 0 && changes > acceptedChanges
 	if condition1 {
 		fmt.Println("Nombre d'utilisateurs à rajouter/supprimer/activer : " + strconv.Itoa(changes))
 	}
 	condition2 := keeps < 1
 	if condition2 {
-		fmt.Println("Nombre d'utilisateurs à conserver : " + strconv.Itoa(keeps))
+		fmt.Println("Suppression de tous les utilisateurs")
 	}
 	if condition1 || condition2 {
 		fmt.Println("Voulez vous continuez ? (t/F) :")
