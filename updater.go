@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os"
 	"sort"
 	"strconv"
 
@@ -119,23 +117,16 @@ func areYouSureTooApplyChanges(changes, keeps, acceptedChanges int) bool {
 	fields := logger.DataForMethod("areYouSureTooApplyChanges")
 	logger.Info("nombre d'utilisateurs à rajouter/supprimer/activer : "+strconv.Itoa(changes), fields)
 	logger.Info("nombre d'utilisateurs à conserver : "+strconv.Itoa(keeps), fields)
-	condition1 := acceptedChanges > 0 && changes > acceptedChanges
-	if condition1 {
-		fmt.Println("Nombre d'utilisateurs à rajouter/supprimer/activer : " + strconv.Itoa(changes))
+	if keeps < 1 {
+		fmt.Println("Aucun utilisateur à conserver -> Refus de prendre en compte les changements.")
+		return false
 	}
-	condition2 := keeps < 1
-	if condition2 {
-		fmt.Println("Suppression de tous les utilisateurs")
+	if acceptedChanges <= 0 {
+		fmt.Println("Tous les changements sont acceptés (acceptedChanges: " + strconv.Itoa(changes) + ")")
+		return true
 	}
-	if condition1 || condition2 {
-		fmt.Println("Voulez vous continuez ? (t/F) :")
-		var reader = bufio.NewReader(os.Stdin)
-		input, _ := reader.ReadString('\n')
-		logger.Info("application des modifications : "+input, fields)
-		if sure, err := strconv.ParseBool(input); err == nil {
-			return sure
-		}
-		// par defaut
+	if changes > acceptedChanges {
+		fmt.Println("Trop de changements à prendre en compte. (Max : " + strconv.Itoa(acceptedChanges) + ")")
 		return false
 	}
 	// pas trop de modif

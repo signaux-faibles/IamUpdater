@@ -17,6 +17,10 @@ func Test_areYouSureTooApplyChanges(t *testing.T) {
 		want bool
 	}{
 		{
+			name: "refuse de supprimer tous les utilisateurs",
+			args: args{1234, 0, 0},
+			want: false,
+		}, {
 			name: "accepte moins de changement(s) que le maximum autorisé",
 			args: args{1, 1, 2},
 			want: true,
@@ -32,10 +36,6 @@ func Test_areYouSureTooApplyChanges(t *testing.T) {
 			name: "accepte tous les changements si le nombre max de changements autorisé est égal à zéro",
 			args: args{1234, 1, 0},
 			want: true,
-		}, {
-			name: "refuse de supprimer tous les utilisateurs",
-			args: args{1234, 0, 0},
-			want: false,
 		},
 	}
 	for _, tt := range tests {
