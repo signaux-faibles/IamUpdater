@@ -7,8 +7,6 @@ import (
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
-const AcceptedChanges int = 50
-
 func main() {
 	conf, err := config.InitConfig("./config.toml")
 	if err != nil {
@@ -40,7 +38,7 @@ func main() {
 			users,
 			compositeRoles,
 			Username(conf.Keycloak.Username),
-			AcceptedChanges,
+			conf.Stock.MaxChangesToAccept,
 		); err != nil {
 			logger.Panic(err)
 		}

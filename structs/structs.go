@@ -9,6 +9,7 @@ type Stock struct {
 	ClientForRoles        string
 	UsersAndRolesFilename string
 	BoardsConfigFilename  string
+	MaxChangesToAccept    int // if <=0 then accept all changes
 }
 
 type Config struct {
