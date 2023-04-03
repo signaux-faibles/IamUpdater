@@ -1,8 +1,7 @@
 
 [[clients]]
 clientId = "signauxfaibles"
-bearerOnly = false
-directAccessGrantsEnabled = true
+name = "signauxfaibles"
 publicClient = true
 redirectUris = [
     "https://signaux-faibles.beta.gouv.fr/*",

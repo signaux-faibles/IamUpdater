@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/Nerzal/gocloak/v11"
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
@@ -10,7 +10,7 @@ import (
 
 // KeycloakContext carry keycloak state
 type KeycloakContext struct {
-	API         gocloak.GoCloak
+	API         *gocloak.GoCloak
 	JWT         *gocloak.JWT
 	Realm       *gocloak.RealmRepresentation
 	Clients     []*gocloak.Client
@@ -27,37 +27,47 @@ func NewKeycloakContext(access *structs.Keycloak) (KeycloakContext, error) {
 // Init provides a connected keycloak context object
 func Init(hostname, realm, username, password string) (KeycloakContext, error) {
 	fields := logger.DataForMethod("Init")
-	kc := KeycloakContext{}
+	fields.AddAny("path", hostname)
+	fields.AddAny("realm", realm)
+	fields.AddAny("user", username)
 
+	logger.Info("initialize KeycloakContext [START]", fields)
+	kc := KeycloakContext{}
 	kc.API = gocloak.NewClient(hostname)
 	var err error
-	kc.JWT, err = kc.API.LoginAdmin(context.Background(), username, password, realm)
+	ctx := context.Background()
+	logger.Debug("récupère le token d'admin", fields)
+	kc.JWT, err = kc.API.LoginAdmin(ctx, username, password, realm)
 	if err != nil {
 		return KeycloakContext{}, err
 	}
-	logger.Info("initialize KeycloakContext [START]", fields)
 
 	// fetch Realm
-	kc.Realm, err = kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, realm)
+	logger.Debug("récupère le realm", fields)
+	kc.Realm, err = kc.API.GetRealm(ctx, kc.JWT.AccessToken, realm)
 	if err != nil {
 		return KeycloakContext{}, err
 	}
 
+	logger.Debug("synchronise les clients", fields)
 	err = kc.refreshClients()
 	if err != nil {
 		return KeycloakContext{}, err
 	}
 
+	logger.Debug("synchronise les utilisateurs", fields)
 	err = kc.refreshUsers()
 	if err != nil {
 		return KeycloakContext{}, err
 	}
 
-	kc.Roles, err = kc.API.GetRealmRoles(context.Background(), kc.JWT.AccessToken, realm, gocloak.GetRoleParams{})
+	logger.Debug("synchronise les rôles du Realm", fields)
+	kc.Roles, err = kc.API.GetRealmRoles(ctx, kc.JWT.AccessToken, realm, gocloak.GetRoleParams{})
 	if err != nil {
 		return KeycloakContext{}, err
 	}
 
+	logger.Debug("synchronise les rôles clients", fields)
 	err = kc.refreshClientRoles()
 	if err != nil {
 		return KeycloakContext{}, err
@@ -193,7 +203,7 @@ func (kc *KeycloakContext) CreateUsers(users []gocloak.User, userMap Users, clie
 		fields.AddRoles(roles)
 		if roles != nil {
 			logger.Info("adding roles to user", fields)
-			if err = kc.AddClientRoleToUser(internalID, u, roles); err != nil {
+			if err = kc.AddClientRolesToUser(internalID, u, roles); err != nil {
 				logger.ErrorE("error adding client roles", fields, err)
 				return err
 			}
@@ -206,8 +216,8 @@ func (kc *KeycloakContext) CreateUsers(users []gocloak.User, userMap Users, clie
 	return err
 }
 
-func (kc *KeycloakContext) AddClientRoleToUser(internalClientId, userID string, roles []gocloak.Role) error {
-	return kc.API.AddClientRoleToUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalClientId, userID, roles)
+func (kc *KeycloakContext) AddClientRolesToUser(internalClientId, userID string, roles []gocloak.Role) error {
+	return kc.API.AddClientRolesToUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalClientId, userID, roles)
 }
 
 // DisableUsers disables users and deletes every roles of users
@@ -246,7 +256,7 @@ func (kc *KeycloakContext) disableUser(u gocloak.User, internalClientID string) 
 	}
 	fields.AddArray("roles", rolesFromGocloakRoles(roles))
 	logger.Info("remove roles from user", fields)
-	err = kc.API.DeleteClientRoleFromUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalClientID, *u.ID, ro)
+	err = kc.API.DeleteClientRolesFromUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalClientID, *u.ID, ro)
 	if err != nil {
 		logger.WarnE("failed to remove roles", fields, err)
 		return err
@@ -319,7 +329,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 		if len(old) > 0 {
 			fields.AddArray("oldRoles", old)
 			logger.Info("deleting unused roles", fields)
-			err = kc.API.DeleteClientRoleFromUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalID, *user.ID, kc.FindKeycloakRoles(clientName, old))
+			err = kc.API.DeleteClientRolesFromUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalID, *user.ID, kc.FindKeycloakRoles(clientName, old))
 			if err != nil {
 				logger.WarnE("failed to delete roles", fields, err)
 			}
@@ -330,7 +340,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 			fields.AddArray("novelRoles", novel)
 			logger.Info("adding missing roles", fields)
 			keycloakRoles := kc.FindKeycloakRoles(clientName, novel)
-			err = kc.AddClientRoleToUser(internalID, *user.ID, keycloakRoles)
+			err = kc.AddClientRolesToUser(internalID, *user.ID, keycloakRoles)
 			if err != nil {
 				logger.WarnE("failed to add roles", fields, err)
 			}
@@ -340,7 +350,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 		if len(accountRoles) > 0 {
 			fields.AddArray("accountRoles", accountRoles)
 			logger.Info("disabling account management", fields)
-			err = kc.API.DeleteClientRoleFromUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), accountInternalID, *user.ID, kc.FindKeycloakRoles("account", accountRoles))
+			err = kc.API.DeleteClientRolesFromUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), accountInternalID, *user.ID, kc.FindKeycloakRoles("account", accountRoles))
 			if err != nil {
 				logger.WarnE("failed to disable management", fields, err)
 			}

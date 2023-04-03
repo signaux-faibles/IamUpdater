@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 // nolint:errcheck
 package main
@@ -7,7 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/Nerzal/gocloak/v11"
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
@@ -37,7 +36,10 @@ func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t
 		10,
 	)
 
-	expectedError := fmt.Sprintf("configured user is not in stock file: %s", testUser)
+	expectedError := fmt.Sprintf(
+		"l'utilisateur passé dans la configuration n'est pas présent dans le fichier d'habilitations: %s",
+		testUser,
+	)
 
 	ass.Error(err)
 	ass.EqualError(err, expectedError)
@@ -66,7 +68,7 @@ func TestKeycloakInitialisation(t *testing.T) {
 		Username(conf.Keycloak.Username),
 		10,
 	); err != nil {
-		t.Fatalf("erreur pendant l'update : %v", err)
+		t.Errorf("erreur pendant l'update : %v", err)
 	}
 
 	// assertions about realm
@@ -111,13 +113,16 @@ func TestClientSignauxFaiblesExists(t *testing.T) {
 	}
 	clientSG, err := kc.API.GetClients(context.Background(), kc.JWT.AccessToken, *kc.Realm.Realm, searchClientRequest)
 	if err != nil {
-		t.Fatalf("error getting keycloak users by role pge : %v", err)
+		t.Errorf("error getting keycloak users by role pge : %v", err)
 	}
 	//clientSG := searchClientByName(t, "signauxfaibles")
 	actual, found := kc.getClient(signauxfaibleClientID)
 	ass.True(found)
 	ass.Len(clientSG, 1)
-	ass.Contains(clientSG, actual)
+	ass.True(containsOnConditions(clientSG, actual, func(first, second *gocloak.Client) bool {
+		return *first.ID == *second.ID
+	}))
+
 }
 
 func TestRolesExistences(t *testing.T) {
@@ -139,7 +144,7 @@ func TestRolesExistences(t *testing.T) {
 			roleRequest,
 		)
 		if err != nil {
-			t.Fatalf("error getting client roles : %v", err)
+			t.Errorf("error getting client roles : %v", err)
 		}
 		ass.Lenf(rolesFromAPI, 1, "erreur pour le rôle %v", role)
 		expected := rolesFromAPI[0]
@@ -170,7 +175,7 @@ func TestRolesAssignedToAll(t *testing.T) {
 			gocloak.GetUsersByRoleParams{},
 		)
 		if err != nil {
-			t.Fatalf("erreur lors de la récupération des users payant le rôle %v : %v", role, err)
+			t.Errorf("erreur lors de la récupération des users payant le rôle %v : %v", role, err)
 		}
 
 		// il y a actuellement 3 users dans le fichier de provisionning excel
@@ -272,12 +277,15 @@ func TestKeycloakUpdate(t *testing.T) {
 func readStdin(message string) *os.File {
 	r, w, err := os.Pipe()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("erreur survenue pendant la connexion entre 2 fichiers : %s", err)
 	}
 	origStdin := os.Stdin
 	os.Stdin = r
 
-	w.WriteString(message)
+	_, err = w.WriteString(message)
+	if err != nil {
+		log.Fatalf("erreur survenue pendant l'écriture : %s", err)
+	}
 	return origStdin
 }
 
