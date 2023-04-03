@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/Nerzal/gocloak/v11"
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/assert"
 	"os"

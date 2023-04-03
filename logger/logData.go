@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/Nerzal/gocloak/v11"
+	"github.com/Nerzal/gocloak/v13"
 	"strings"
 )
 

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/Nerzal/gocloak/v11"
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
@@ -24,11 +24,20 @@ func UpdateKeycloak(
 	fields := logger.DataForMethod("UpdateAll")
 
 	if _, exists := users[configuredUsername]; !exists {
-		return errors.Errorf("configured user is not in stock file: %s", configuredUsername)
+		return errors.Errorf(
+			"l'utilisateur passé dans la configuration n'est pas présent dans le fichier d'habilitations: %s",
+			configuredUsername,
+		)
 	}
 
 	if _, err := kc.GetUser(configuredUsername); err != nil {
-		return errors.Wrap(err, string("configured user does not exist in keycloak : "+configuredUsername))
+		return errors.Wrap(
+			err,
+			fmt.Sprintf(
+				"l'utilisateur passé dans la configuration n'existe pas dans Keycloak : %s",
+				configuredUsername,
+			),
+		)
 	}
 
 	logger.Info("START", fields)
