@@ -17,11 +17,11 @@ func init() {
 	)
 	flag.StringVar(&overridingConfigFilename, "config", emptyOverridingFilename, usage)
 	flag.StringVar(&overridingConfigFilename, "c", emptyOverridingFilename, usage+" (shorthand)")
-	flag.Parse()
+
 }
 
 func main() {
-
+	flag.Parse()
 	conf, err := config.InitConfig("./config.toml")
 	config.OverrideConfig(conf, overridingConfigFilename)
 	if err != nil {
