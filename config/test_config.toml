@@ -13,6 +13,7 @@ timestampFormat = "2006-01-02 15:04:05"
 [stock]
 clientsAndRealmFolder = "../test/sample/test_config.d"
 clientForRoles = "signauxfaibles"
+usersAndRolesFilename = "../test/sample/userBase.xlsx"
 
 #[wekan]
 #username="wekan.ti"

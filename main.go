@@ -1,14 +1,29 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
+var overridingConfigFilename string
+
+func init() {
+	const (
+		emptyOverridingFilename = ""
+		usage                   = "chemin vers le fichier de configuration"
+	)
+	flag.StringVar(&overridingConfigFilename, "config", emptyOverridingFilename, usage)
+	flag.StringVar(&overridingConfigFilename, "c", emptyOverridingFilename, usage+" (shorthand)")
+	flag.Parse()
+}
+
 func main() {
+
 	conf, err := config.InitConfig("./config.toml")
+	config.OverrideConfig(conf, overridingConfigFilename)
 	if err != nil {
 		panic(err)
 	}

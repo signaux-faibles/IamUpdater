@@ -1,0 +1,5 @@
+[keycloak]
+address = "http://anotherkeycloak:8080"
+
+[stock]
+usersAndRolesFilename = "empty_test_file.txt"
