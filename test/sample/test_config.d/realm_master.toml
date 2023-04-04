@@ -12,7 +12,7 @@ rememberMe = true
 resetPasswordAllowed = true
 
 [realm.smtpServer]
-from = "Authentification Signaux Faibles"
-fromDisplayName = "noreply@localhost"
+from = "noreply@localhost"
+fromDisplayName = "Authentification Signaux Faibles"
 host = "localhost"
 port = "25"

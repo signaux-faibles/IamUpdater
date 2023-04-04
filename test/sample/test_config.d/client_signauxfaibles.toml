@@ -1,6 +1,7 @@
 
 [[clients]]
 clientId = "signauxfaibles"
+name = "signauxfaibles"
 bearerOnly = false
 directAccessGrantsEnabled = true
 publicClient = true
