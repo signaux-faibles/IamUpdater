@@ -3,14 +3,6 @@ name: CI
 on:
   push:
     branches:
-      - 'master'
-    tags:
-      - 'v*'
-  release:
-    types: [published, edited]
-  pull_request:
-    branches:
-      - 'master'
 
 env:
   GOFLAGS: -mod=readonly
