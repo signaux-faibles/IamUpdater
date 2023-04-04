@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/ory/dockertest/v3"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/require"
@@ -214,4 +215,32 @@ func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *
 	wekan, err := initWekan(mongoUrl, databasename, "signaux.faibles", slugDomainRegexp)
 	require.Nil(t, err)
 	return wekan
+}
+
+func (kc KeycloakContext) getClient(clientID string) (*gocloak.Client, bool) {
+	client, ok := kc.getClients(clientID)[clientID]
+	return client, ok
+}
+
+func (kc KeycloakContext) getClients(clientIDs ...string) map[string]*gocloak.Client {
+	clientsMap := make(map[string]*gocloak.Client, len(kc.Clients))
+	for _, client := range kc.Clients {
+		if contains(clientIDs, *client.ClientID) {
+			clientsMap[*client.ClientID] = client
+		}
+	}
+	return clientsMap
+}
+
+func containsOnConditions[T interface{}](values []T, searched T, conditions ...func(t1 T, t2 T) bool) bool {
+	for _, current := range values {
+		accept := true
+		for _, condition := range conditions {
+			accept = accept && condition(current, searched)
+		}
+		if accept {
+			return true
+		}
+	}
+	return false
 }
