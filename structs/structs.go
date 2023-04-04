@@ -1,7 +1,7 @@
 package structs
 
 import (
-	"github.com/Nerzal/gocloak/v11"
+	"github.com/Nerzal/gocloak/v13"
 )
 
 type Stock struct {

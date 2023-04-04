@@ -54,11 +54,18 @@ func contains[E comparable](array []E, item E) bool {
 	return false
 }
 
-//func containsFunc[E comparable](array []E) func(item E) bool {
-//	return func(item E) bool {
-//		return contains(array, item)
-//	}
-//}
+func containsOnConditions[T interface{}](values []T, searched T, conditions ...func(t1 T, t2 T) bool) bool {
+	for _, current := range values {
+		accept := true
+		for _, condition := range conditions {
+			accept = accept && condition(current, searched)
+		}
+		if accept {
+			return true
+		}
+	}
+	return false
+}
 
 func intersect[E comparable](elementsA []E, elementsB []E) (both []E, onlyA []E, onlyB []E) {
 	for _, elementA := range elementsA {

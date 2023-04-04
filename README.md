@@ -17,6 +17,10 @@ go build
 ## Configuration
 La configuration de keycloakUpdater se fait à l'aide du fichier `config.toml`.
 
+On peut surcharger la configuration en ajoutant l'option `--config` ou `-c` suivi du
+chemin vers un nouveau fichier de configuration.
+Les clients `Keycloak` des différents fichiers de configuration seront par contre ajoutés.
+
 Voir [l'exemple](/test/sample) pour plus de précisions. 
 On voit qu'il y a 3 sections à remplir
 - [keycloak] contenant les informations d'accès à keycloak
@@ -42,7 +46,7 @@ Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le 
   ```bash
   go test ./...
   ```
-- Lancer le test d'intégration
+- Lancer les tests d'intégration
   ```bash
   go test -tags=integration
   ```
@@ -56,13 +60,18 @@ Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le 
 ### Tester localement
 ```bash
 # 1. Lancer le conteneur keycloak
-docker run -p 8080:8080 --name keycloak --env KEYCLOAK_USER=kcadmin --env KEYCLOAK_PASSWORD=kcpwd ghcr.io/signaux-faibles/conteneurs/keycloak:v1.0.0
+docker run -p 8080:8080 --name keycloak --env KEYCLOAK_ADMIN=kcadmin --env KEYCLOAK_ADMIN_PASSWORD=kcpwd ghcr.io/signaux-faibles/conteneurs/keycloak:latest "start-dev --http-relative-path=/auth"
 # 2. Créer le conteneur (avec le tag `ku`)
 docker build  --tag ku .
-# 3. Lancer le conteneur avec la configuration qui va bien
-docker run --rm --name ku --volume /path/to/keycloakUpdater/test/sample:/workspace --link keycloak:keycloak ku
+# 3. Lancer le conteneur avec la configuration qui va bien 
+#    NB: le nom du link doit être identique à celui configuré dans la propriété `keycloak.address`
+docker run --rm --name ku --volume /path/to/keycloakUpdater/config:/workspace --link keycloak:keycloak ku
+# 4. Si la configuration du fichier de configuration par défaut ne convient pas
+#    On peut préciser le nom d'un fichier de surcharge de configuration en rajoutant l'option `--config` 
+docker run --rm --name ku --volume /path/to/keycloakUpdater/config:/workspace --link keycloak:keycloak ku --config ./config-with-docker.toml
 ```
 Il faut monter un volume avec les fichiers de configuration dans le répertoire `workspace` du conteneur.
+
 
 
 ## Erreurs

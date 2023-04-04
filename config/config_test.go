@@ -2,13 +2,88 @@ package config
 
 import (
 	"fmt"
-	"github.com/Nerzal/gocloak/v11"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 	"github.com/stretchr/testify/assert"
 	"os"
-	"reflect"
 	"testing"
 )
+
+func Test_InitConfig(t *testing.T) {
+	ass := assert.New(t)
+	currentConfigFile := "test_config.toml"
+	config, err := InitConfig(currentConfigFile)
+	ass.NoError(err)
+	ass.NotNil(config)
+
+	expectedKeycloak := structs.Keycloak{
+		Address:  "http://localhost:8080",
+		Username: "tuadmin",
+		Password: "tupwd",
+		Realm:    "master",
+	}
+	ass.Equal(expectedKeycloak, *config.Keycloak)
+
+	expectedStock := structs.Stock{
+		ClientsAndRealmFolder: "../test/sample/test_config.d",
+		ClientForRoles:        "signauxfaibles",
+		UsersAndRolesFilename: "../test/sample/userBase.xlsx",
+		BoardsConfigFilename:  "",
+		MaxChangesToAccept:    0,
+	}
+	ass.Equal(expectedStock, *config.Stock)
+
+	expectedLogger := structs.LoggerConfig{
+		Filename:        "roles-test.log",
+		Level:           "TRACE",
+		TimestampFormat: "2006-01-02 15:04:05",
+		Rotation:        false,
+	}
+	ass.Equal(expectedLogger, *config.Logger)
+
+	ass.Equal("Signaux Faibles", *config.Realm.DisplayName)
+	ass.Equal("<div class=\"kc-logo-text\"><span>Signaux Faibles</span></div>", *config.Realm.DisplayNameHTML)
+	ass.Equal("signaux-faibles", *config.Realm.EmailTheme)
+	smtp := *config.Realm.SMTPServer
+	ass.NotNil(smtp)
+	ass.Equal("noreply@localhost", smtp["from"])
+	ass.Equal("Authentification Signaux Faibles", smtp["fromDisplayName"])
+
+	ass.Len(config.Clients, 2)
+	// ouais c'est la honte
+	// la prochaine fois ça sera mieux ;)
+	clientSF := *config.Clients[1]
+	ass.Equal("signauxfaibles", *clientSF.ClientID)
+	ass.Equal("signauxfaibles", *clientSF.Name)
+	ass.Contains(*clientSF.RedirectURIs, "https://signaux-faibles.beta.gouv.fr/*")
+	ass.Contains(*clientSF.RedirectURIs, "https://localhost:8080/*")
+}
+
+func Test_OverrideConfig(t *testing.T) {
+	ass := assert.New(t)
+	currentConfigFile := "test_config.toml"
+	original, err := InitConfig(currentConfigFile)
+	ass.NoError(err)
+	ass.NotNil(original)
+	overrided := OverrideConfig(original, "test_overriding_config.toml")
+
+	expectedKeycloak := structs.Keycloak{
+		Address:  "http://anotherkeycloak:8080",
+		Username: "tuadmin",
+		Password: "tupwd",
+		Realm:    "master",
+	}
+	ass.Equal(expectedKeycloak, *overrided.Keycloak)
+
+	expectedStock := structs.Stock{
+		ClientsAndRealmFolder: "../test/sample/test_config.d",
+		ClientForRoles:        "signauxfaibles",
+		UsersAndRolesFilename: "empty_test_file.txt",
+		BoardsConfigFilename:  "",
+		MaxChangesToAccept:    0,
+	}
+	ass.Equal(expectedStock, *overrided.Stock)
+
+}
 
 func Test_getAllConfigFilenames(t *testing.T) {
 	assertions := assert.New(t)
@@ -29,122 +104,4 @@ func Test_getAllConfigFilenames(t *testing.T) {
 
 	actual := getAllConfigFilenames(currentConfigFile)
 	assertions.ElementsMatch(expected, actual)
-}
-
-func Test_merge(t *testing.T) {
-	assertions := assert.New(t)
-	wantedAccess := &structs.Keycloak{}
-	wantedRealm := &gocloak.RealmRepresentation{}
-	clientA := gocloak.Client{}
-	clientB := gocloak.Client{}
-	clientC := gocloak.Client{}
-	wantedClients := []*gocloak.Client{&clientA, &clientB, &clientC}
-	configA := structs.Config{
-		Keycloak: wantedAccess,
-		Realm:    nil,
-		Clients:  []*gocloak.Client{&clientA},
-	}
-	configB := structs.Config{
-		Keycloak: nil,
-		Realm:    wantedRealm,
-		Clients:  []*gocloak.Client{&clientB, &clientC},
-	}
-	type args struct {
-		first  structs.Config
-		second structs.Config
-	}
-	tests := []struct {
-		name string
-		args args
-		want structs.Config
-	}{
-		{name: "merge Configs", args: args{first: configA, second: configB}, want: structs.Config{
-			Keycloak: wantedAccess,
-			Realm:    wantedRealm,
-			Clients:  wantedClients,
-		}},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := merge(tt.args.first, tt.args.second)
-			assertions.EqualValues(tt.want, got)
-		})
-	}
-}
-
-func Test_mergeKeycloak(t *testing.T) {
-	anAccess := structs.Keycloak{}
-	anotherAccess := structs.Keycloak{}
-	type args struct {
-		first  *structs.Keycloak
-		second *structs.Keycloak
-	}
-	tests := []struct {
-		name string
-		args args
-		want *structs.Keycloak
-	}{
-		{name: "first is chosen", args: args{first: &anAccess, second: nil}, want: &anAccess},
-		{name: "second is chosen", args: args{first: nil, second: &anAccess}, want: &anAccess},
-		{name: "first is chosen", args: args{first: &anAccess, second: &anotherAccess}, want: &anAccess},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := mergeAccess(tt.args.first, tt.args.second); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("mergeAccess() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_mergeRealm(t *testing.T) {
-	aRealm := gocloak.RealmRepresentation{}
-	anotherRealm := gocloak.RealmRepresentation{}
-	type args struct {
-		first  *gocloak.RealmRepresentation
-		second *gocloak.RealmRepresentation
-	}
-	tests := []struct {
-		name string
-		args args
-		want *gocloak.RealmRepresentation
-	}{
-		{name: "first is chosen", args: args{first: &aRealm, second: nil}, want: &aRealm},
-		{name: "second is chosen", args: args{first: nil, second: &aRealm}, want: &aRealm},
-		{name: "first is chosen", args: args{first: &aRealm, second: &anotherRealm}, want: &aRealm},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := mergeRealm(tt.args.first, tt.args.second); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("mergeRealm() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_mergeClients(t *testing.T) {
-	assertions := assert.New(t)
-	clientA := gocloak.Client{}
-	clientB := gocloak.Client{}
-	clientC := gocloak.Client{}
-	type args struct {
-		first  []*gocloak.Client
-		second []*gocloak.Client
-	}
-	tests := []struct {
-		name string
-		args args
-		want []*gocloak.Client
-	}{
-		{name: "only first", args: args{first: []*gocloak.Client{&clientA, &clientB}, second: nil}, want: []*gocloak.Client{&clientA, &clientB}},
-		{name: "only second", args: args{first: nil, second: []*gocloak.Client{&clientC}}, want: []*gocloak.Client{&clientC}},
-		{name: "both", args: args{first: []*gocloak.Client{&clientA, &clientB}, second: []*gocloak.Client{&clientC}}, want: []*gocloak.Client{&clientA, &clientB, &clientC}},
-		{name: "empty but not nil", args: args{first: nil, second: nil}, want: []*gocloak.Client{}},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := mergeClients(tt.args.first, tt.args.second)
-			assertions.ElementsMatch(tt.want, r)
-		})
-	}
 }

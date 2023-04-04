@@ -1,7 +1,7 @@
 ############################
 # STEP 1 build executable binary
 ############################
-FROM golang:1.18-alpine AS builder
+FROM golang:1.20-alpine AS builder
 
 # Install git.
 # Git is required for fetching the dependencies.
@@ -22,4 +22,4 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o keycloakUpdater .
 FROM scratch
 COPY --from=builder /build/keycloakUpdater /app/
 WORKDIR /workspace
-CMD ["/app/keycloakUpdater"]
+ENTRYPOINT ["/app/keycloakUpdater"]

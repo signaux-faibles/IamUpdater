@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 // nolint:errcheck
 package main
@@ -27,7 +26,8 @@ import (
 var kc KeycloakContext
 
 var signauxfaibleClientID = "signauxfaibles"
-var cwd, _ = os.Getwd()
+
+// var cwd, _ = os.Getwd()
 var mongoUrl string
 var mongodb *dockertest.Resource
 
@@ -50,9 +50,8 @@ func TestMain(m *testing.M) {
 	}
 
 	var keycloak *dockertest.Resource
-	if !(os.Getenv("DISABLE_KEYCLOAK") == "yes") {
-		keycloak = startKeycloak(pool)
-	}
+
+	keycloak = startKeycloak(pool)
 	mongodb = startWekanDB(pool)
 	if err != nil {
 		logger.Panicf("Could not read excel test cases")
@@ -60,9 +59,7 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	if !(os.Getenv("DISABLE_KEYCLOAK") == "yes") {
-		kill(keycloak)
-	}
+	kill(keycloak)
 	kill(mongodb)
 	// You can't defer this because os.Exit doesn't care for defer
 
@@ -79,6 +76,9 @@ func kill(resource *dockertest.Resource) {
 }
 
 func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
+	if os.Getenv("DISABLE_KEYCLOAK") == "yes" {
+		return nil
+	}
 	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
 	fields := logger.DataForMethod("startKeycloak")
 
@@ -91,12 +91,13 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		&dockertest.RunOptions{
 			Name:       keycloakContainerName,
 			Repository: "ghcr.io/signaux-faibles/conteneurs/keycloak",
-			Tag:        "v1.0.0",
+			Tag:        "latest",
 			Env: []string{
-				"KEYCLOAK_USER=" + keycloakAdmin,
-				"KEYCLOAK_PASSWORD=" + keycloakPassword,
+				"KEYCLOAK_ADMIN=" + keycloakAdmin,
+				"KEYCLOAK_ADMIN_PASSWORD=" + keycloakPassword,
 				"DB_VENDOR=h2",
 			},
+			Cmd: []string{"start-dev --http-relative-path=/auth --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"},
 		},
 		func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
@@ -111,7 +112,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		logger.ErrorE("Could not start keycloak", fields, err)
 	}
 	// container stops after 120 seconds
-	if err = keycloak.Expire(240); err != nil {
+	if err = keycloak.Expire(600); err != nil {
 		kill(keycloak)
 		logger.ErrorE("Could not set expiration on container keycloak", fields, err)
 	}
@@ -123,7 +124,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 	//exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	if err := pool.Retry(func() error {
 		var err error
-		kc, err = Init("http://localhost:"+keycloakPort, "master", keycloakAdmin, keycloakPassword)
+		kc, err = Init("http://localhost:"+keycloakPort+"/auth", "master", keycloakAdmin, keycloakPassword)
 		if err != nil {
 			logger.Info("keycloak n'est pas prêt", fields)
 			return err
@@ -137,6 +138,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 }
 
 func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
+	dir, _ := os.Getwd()
 	fields := logger.DataForMethod("startWekanDB")
 	mongodbContainerName := "mongodb-ti-" + strconv.Itoa(time.Now().Nanosecond())
 	mongodb, err := pool.RunWithOptions(
@@ -149,7 +151,7 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 				"MONGO_INITDB_ROOT_USERNAME=root",
 				"MONGO_INITDB_ROOT_PASSWORD=password",
 			},
-			Mounts: []string{cwd + "/test/resources/dump_wekan/:/dump/"},
+			Mounts: []string{dir + "/test/resources/dump_wekan/:/dump/"},
 		},
 		func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
