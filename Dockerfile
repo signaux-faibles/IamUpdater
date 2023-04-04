@@ -22,4 +22,4 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o keycloakUpdater .
 FROM scratch
 COPY --from=builder /build/keycloakUpdater /app/
 WORKDIR /workspace
-CMD ["/app/keycloakUpdater"]
+ENTRYPOINT ["/app/keycloakUpdater"]
