@@ -1,0 +1,2 @@
+[keycloak]
+address = "http://keycloak:8080/auth"
