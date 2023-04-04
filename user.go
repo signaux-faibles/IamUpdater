@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"sort"
 	"strings"
 
@@ -35,9 +36,12 @@ var habilitations = CompositeRoles{
 }
 
 func (user User) getRoles() Roles {
+	fields := logger.DataForMethod("getRoles")
+	fields.AddAny("user", user)
 	var roles Roles
+	// TODO should return MisconfiguredUserError
 	if user.niveau == "" {
-		// TODO should return MisconfiguredUserError
+		logger.Warn("aucun niveau", fields)
 	}
 	roles = habilitations[user.niveau]
 	if strings.EqualFold("a", user.niveau) {

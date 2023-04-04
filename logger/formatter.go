@@ -30,7 +30,7 @@ func (s *SimpleFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 func concat(b *bytes.Buffer, input string) {
-	if _, err := fmt.Fprintf(b, input); err != nil {
+	if _, err := fmt.Fprint(b, input); err != nil {
 		panic(err)
 	}
 }
