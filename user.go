@@ -46,14 +46,14 @@ func (user User) getRoles() Roles {
 	if strings.EqualFold("b", user.niveau) {
 		roles.add("dgefp")
 	}
-	if user.niveau != "0" {
+	if strings.EqualFold("a", user.niveau) || strings.EqualFold("b", user.niveau) {
 		roles.add("score", "detection", "pge")
 		if user.accesGeographique != "" {
 			roles.add(user.accesGeographique)
 		}
-		if !(len(user.scope) == 1 && user.scope[0] == "") {
-			roles.add(user.scope...)
-		}
+	}
+	if !(len(user.scope) == 1 && user.scope[0] == "") {
+		roles.add(user.scope...)
 	}
 	return roles
 }

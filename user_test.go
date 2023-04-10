@@ -27,17 +27,25 @@ func TestUser_roles_with_niveau_b(t *testing.T) {
 func TestUser_roles_with_scopes(t *testing.T) {
 	ass := assert.New(t)
 	scopes := []string{"first", "second"}
-	user := User{scope: scopes}
+	user := User{niveau: "0", scope: scopes}
 	actual := user.getRoles()
 
 	ass.Contains(actual, scopes[0])
 	ass.Contains(actual, scopes[1])
 }
 
-func TestUser_roles_with_acces_geographique(t *testing.T) {
+func TestUser_roles_with_acces_geographique_and_niveau_a(t *testing.T) {
 	ass := assert.New(t)
 	accessGeographique := "any where"
-	user := User{accesGeographique: accessGeographique}
+	user := User{niveau: "A", accesGeographique: accessGeographique}
 	actual := user.getRoles()
 	ass.Contains(actual, accessGeographique)
+}
+
+func TestUser_roles_with_acces_geographique_and_niveau_0(t *testing.T) {
+	ass := assert.New(t)
+	accessGeographique := "any where"
+	user := User{niveau: "0", accesGeographique: accessGeographique}
+	actual := user.getRoles()
+	ass.NotContains(actual, accessGeographique)
 }
