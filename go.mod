@@ -15,7 +15,7 @@ require (
 	github.com/sirupsen/logrus v1.9.1
 	github.com/snowzach/rotatefilehook v0.0.0-20220211133110-53752135082d
 	github.com/snowzach/writerhook v0.0.0-20180327172656-2eef47d6a0bf
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	github.com/tealeg/xlsx/v3 v3.2.4
 )
 
