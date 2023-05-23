@@ -11,7 +11,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
-	github.com/signaux-faibles/libwekan v0.1.3
+	github.com/signaux-faibles/libwekan v0.2.0
 	github.com/sirupsen/logrus v1.9.1
 	github.com/snowzach/rotatefilehook v0.0.0-20220211133110-53752135082d
 	github.com/snowzach/writerhook v0.0.0-20180327172656-2eef47d6a0bf
