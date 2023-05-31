@@ -5,7 +5,7 @@ go 1.20
 // replace github.com/signaux-faibles/libwekan => ../libwekan
 
 require (
-	github.com/BurntSushi/toml v1.2.1
+	github.com/BurntSushi/toml v1.3.0
 	github.com/Nerzal/gocloak/v13 v13.7.0
 	github.com/cnf/structhash v0.0.0-20201127153200-e1b16c1ebc08
 	github.com/mattn/go-colorable v0.1.13
