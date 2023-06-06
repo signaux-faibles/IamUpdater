@@ -60,7 +60,7 @@ Renseignez la base utilisateur dans le fichier excel fourni (userBase.xlsx), le 
 ### Tester localement
 ```bash
 # 1. Lancer le conteneur keycloak
-docker run -p 8080:8080 --name keycloak --env KEYCLOAK_ADMIN=kcadmin --env KEYCLOAK_ADMIN_PASSWORD=kcpwd ghcr.io/signaux-faibles/conteneurs/keycloak:latest "start-dev --http-relative-path=/auth"
+docker run -p 8080:8080 --name keycloak --env KEYCLOAK_ADMIN=kcadmin --env KEYCLOAK_ADMIN_PASSWORD=kcpwd ghcr.io/signaux-faibles/conteneurs/keycloak:latest "start-dev --http-relative-path=/auth"  
 # 2. Créer le conteneur (avec le tag `ku`)
 docker build  --tag ku .
 # 3. Lancer le conteneur avec la configuration qui va bien 
@@ -80,6 +80,9 @@ Il faut monter un volume avec les fichiers de configuration dans le répertoire 
   et que ses credentials sont bien configurés dans le fichier de config (voir `## Pour tester via Docker`)
 - `PANIC  [2022-05-11 11:06:18] Could not connect to keycloak: reached retry deadline`
   Il peut s'agir d'un problème de version avec un autre conteneur Keycloak. Il faut stopper l'autre conteneur ou aligner les versions.
+- `400 Bad Request: invalid_grant: Account is not fully set up`
+  il faut mettre à jour le mot de passe administrateur
+
 ## Format Excel
 Le niveau peut prendre 0, A ou B :
 - 0 : utilisateur administratif (compte de service ou administrateur)
