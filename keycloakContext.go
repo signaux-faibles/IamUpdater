@@ -427,18 +427,3 @@ func (kc KeycloakContext) saveClient(input gocloak.Client) error {
 func (kc KeycloakContext) getRealmName() string {
 	return *kc.Realm.Realm
 }
-
-func (kc KeycloakContext) getClient(clientID string) (*gocloak.Client, bool) {
-	client, ok := kc.getClients(clientID)[clientID]
-	return client, ok
-}
-
-func (kc KeycloakContext) getClients(clientIDs ...string) map[string]*gocloak.Client {
-	clientsMap := make(map[string]*gocloak.Client, len(kc.Clients))
-	for _, client := range kc.Clients {
-		if contains(clientIDs, *client.ClientID) {
-			clientsMap[*client.ClientID] = client
-		}
-	}
-	return clientsMap
-}

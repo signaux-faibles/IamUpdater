@@ -28,11 +28,10 @@ jobs:
         run: go test ./...
 
       - name: Integration Tests
-        run: go test -tags=integration
+        run: go test -tags=integration ./...
 
   container_keycloakUpdater:
     name: Push container
-    needs: build_keycloakUpdater
     runs-on: ubuntu-latest
     steps:
 
