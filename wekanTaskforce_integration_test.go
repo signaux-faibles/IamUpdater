@@ -6,12 +6,11 @@
 package main
 
 import (
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
+	"testing"
+
 	"github.com/signaux-faibles/libwekan"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func createBoard(t *testing.T, wekan libwekan.Wekan, suffix string) (libwekan.Board, libwekan.Swimlane, libwekan.List) {
@@ -216,9 +215,6 @@ func TestWekanTaskforce_AddMissingRules_whenBoardHasNotLabel(t *testing.T) {
 
 func TestWekanTaskforce_RemoveExtraRules_whenUserLosesTaskforce(t *testing.T) {
 	// GIVEN
-	logger.ConfigureWith(structs.LoggerConfig{
-		Level: "ERROR",
-	})
 	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
 
@@ -249,10 +245,6 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesTaskforce(t *testing.T) {
 		},
 	}
 
-	logger.ConfigureWith(structs.LoggerConfig{
-		Level: "DEBUG",
-	})
-
 	// WHEN
 	err = pipeline.StopAfter(wekan, users, stageRemoveExtraRulesAndCardMembership)
 	printErrChain(err, 0)
@@ -267,9 +259,6 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesTaskforce(t *testing.T) {
 
 func TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard(t *testing.T) {
 	// GIVEN
-	logger.ConfigureWith(structs.LoggerConfig{
-		Level: "ERROR",
-	})
 	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard_Slugboard")
 	ass := assert.New(t)
 
@@ -300,10 +289,6 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard(t *testing.T) {
 		},
 	}
 
-	logger.ConfigureWith(structs.LoggerConfig{
-		Level: "INFO",
-	})
-
 	// WHEN
 	err = pipeline.StopAfter(wekan, users, stageRemoveExtraRulesAndCardMembership)
 	printErrChain(err, 0)
@@ -318,9 +303,6 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesBoard(t *testing.T) {
 
 func TestWekanTaskforce_RemoveExtraRules_whenUserLosesWekanScope(t *testing.T) {
 	// GIVEN
-	logger.ConfigureWith(structs.LoggerConfig{
-		Level: "INFO",
-	})
 	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
 
@@ -350,10 +332,6 @@ func TestWekanTaskforce_RemoveExtraRules_whenUserLosesWekanScope(t *testing.T) {
 			taskforces: []string{string(label.Name)},
 		},
 	}
-
-	logger.ConfigureWith(structs.LoggerConfig{
-		Level: "INFO",
-	})
 
 	// WHEN
 	err = pipeline.StopAfter(wekan, users.selectScopeWekan(), stageRemoveExtraRulesAndCardMembership)

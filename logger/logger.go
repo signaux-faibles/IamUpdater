@@ -1,154 +1,141 @@
 package logger
 
 import (
-	"github.com/mattn/go-colorable"
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
-	"github.com/sirupsen/logrus"
-	"github.com/snowzach/rotatefilehook"
+	"context"
+	"log/slog"
 	"os"
+	"runtime/debug"
+	"slices"
+	"strings"
 
-	"github.com/snowzach/writerhook"
+	"github.com/pkg/errors"
+	slogmulti "github.com/samber/slog-multi"
+
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 )
 
-var logger *logrus.Logger
+var logger *slog.Logger
+var loglevel *slog.LevelVar
 
 func init() {
-	logger = logrus.New()
-	// formatter
-	consoleFormatter := &logrus.TextFormatter{
-		PadLevelText:  true,
-		ForceColors:   true,
-		FullTimestamp: true,
-		//TimestampFormat: ,
-	}
+	loglevel = new(slog.LevelVar)
+	loglevel.Set(slog.LevelInfo)
 
-	logger.SetLevel(logrus.InfoLevel)
-	logger.SetOutput(colorable.NewColorableStdout())
-	logger.SetFormatter(consoleFormatter)
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: loglevel,
+	})
+	parentLogger := slog.New(
+		handler)
+	buildInfo, _ := debug.ReadBuildInfo()
+	sha1 := findBuildSetting(buildInfo.Settings, "vcs.revision")
+	appLogger := parentLogger.With(
+		slog.Group("app", slog.String("sha1", sha1)),
+	)
+	slog.SetDefault(appLogger)
+	logger = appLogger
 }
 
 func ConfigureWith(config structs.LoggerConfig) {
-	//logger.ReportCaller = true
-	var err error
-
-	// level
-	var logLevel logrus.Level
-	if logLevel, err = logrus.ParseLevel(config.Level); err != nil {
-		logger.Infof("bad log level '%s' : %s", config.Level, err)
-		logLevel = logrus.InfoLevel
-	}
-	logger.SetLevel(logLevel)
-
-	// console
-	logger.SetOutput(colorable.NewColorableStdout())
-	consoleFormatter := &logrus.TextFormatter{
-		PadLevelText:    true,
-		ForceColors:     true,
-		FullTimestamp:   true,
-		TimestampFormat: config.TimestampFormat,
-	}
-	logger.SetFormatter(consoleFormatter)
-	//consoleFormatter := &SimpleFormatter{}
-	logger.SetFormatter(consoleFormatter)
-
-	// file
-	fileFormatter := &logrus.TextFormatter{
-		DisableColors:   true,
-		TimestampFormat: config.TimestampFormat,
-		PadLevelText:    true,
-	}
-	var hook logrus.Hook
-	if config.Filename != "" {
-		if config.Rotation {
-			hook = rotateFileHook(config.Filename, logLevel, fileFormatter)
-		} else {
-			hook = simpleFileHook(config.Filename, logLevel, fileFormatter)
-		}
-		logger.AddHook(hook)
-	}
+	configLogLevel(config.Level)
+	fileHandler := configFileHandler(config.Filename)
+	formatters := configFormatters(config.TimestampFormat)
+	formattedFileHandler := addFormattersToHandler(formatters, fileHandler)
+	defaultHandler := addFormattersToHandler(formatters, slog.Default().Handler())
+	combinedHandlers := slogmulti.Fanout(formattedFileHandler, defaultHandler)
+	slog.SetDefault(slog.New(combinedHandlers))
+	logger.Info("configuration des loggers effectuée", slog.Group(
+		"config",
+		slog.String("level", config.Level),
+		slog.String("filename", config.Filename),
+		slog.String("timeFormat", config.TimestampFormat),
+	))
 }
 
-func Debugf(msg string, args ...interface{}) {
-	logger.Debugf(msg, args...)
+func Debugf(msg string, args ...any) {
+	logger.Debug(msg, args...)
 }
 
 func Debug(msg string, data map[string]interface{}) {
-	logger.WithFields(data).Debug(msg)
+	logWithContext(slog.LevelDebug, msg, data, nil)
 }
 
-func Infof(msg string, args ...interface{}) {
-	logger.Infof(msg, args...)
+func Infof(msg string, args ...any) {
+	logger.Info(msg, args...)
 }
 
 func Info(msg string, data map[string]interface{}) {
-	logger.WithFields(data).Info(msg)
+	logWithContext(slog.LevelInfo, msg, data, nil)
 }
 
 func Warnf(msg string, args ...interface{}) {
-	logger.Warnf(msg, args...)
+	logger.Warn(msg, args...)
 }
 
 func Warn(msg string, data map[string]interface{}) {
-	logger.WithFields(data).Warning(msg)
+	logWithContext(slog.LevelWarn, msg, data, nil)
 }
 
 func WarnE(msg string, data map[string]interface{}, err error) {
-	context := Data(data)
-	context.AddError(err)
-	Warn(msg, data)
-	context.removeError()
+	logWithContext(slog.LevelWarn, msg, data, err)
 }
 
 func Error(msg string, data map[string]interface{}) {
-	logger.WithFields(data).Error(msg)
+	logWithContext(slog.LevelWarn, msg, data, nil)
 }
 
 func ErrorE(msg string, data map[string]interface{}, err error) {
-	context := Data(data)
-	context.AddError(err)
-	Error(msg, data)
-	context.removeError()
+	logWithContext(slog.LevelWarn, msg, data, err)
 }
 
 func Errorf(msg string, args ...interface{}) {
-	logger.Errorf(msg, args...)
+	logger.Error(msg, args...)
 }
 
 func Panicf(msg string, args ...interface{}) {
-	logger.Panicf(msg, args...)
+	Errorf(msg, args)
+	panic(msg)
 }
 
 func Panic(err error) {
-	logger.Panic(err)
+	Panicf(err.Error())
 }
 
-func rotateFileHook(filename string, logLevel logrus.Level, fileFormater logrus.Formatter) logrus.Hook {
-
-	hook, err := rotatefilehook.NewRotateFileHook(rotatefilehook.RotateFileConfig{
-		Filename:   filename,
-		MaxSize:    50, // megabytes
-		MaxBackups: 99, // amouts
-		MaxAge:     1,  //days
-		Level:      logLevel,
-		Formatter:  fileFormater,
-	})
+func logWithContext(level slog.Level, msg string, data map[string]interface{}, err error) {
+	var logCtx []any
+	for k, v := range data {
+		logCtx = append(logCtx, slog.Any(k, v))
+	}
 	if err != nil {
-		logger.Fatalf("Failed to initialize file rotate hook: %v", err)
+		logCtx = append(logCtx, slog.String("error", err.Error()))
 	}
-	return hook
+	logger.Log(context.Background(), level, msg, logCtx...)
 }
 
-func simpleFileHook(filename string, logLevel logrus.Level, fileFormater logrus.Formatter) logrus.Hook {
-	var hook logrus.Hook
-	var err error
-	var file *os.File
-
-	if file, err = os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644); err != nil {
-		logger.Fatalf("Failed to initialize file hook: %v", err)
+func findBuildSetting(settings []debug.BuildSetting, search string) string {
+	retour := "NOT FOUND"
+	slices.SortFunc(settings, func(s1 debug.BuildSetting, s2 debug.BuildSetting) int {
+		return strings.Compare(s1.Key, s2.Key)
+	})
+	index, found := slices.BinarySearchFunc(settings, search, func(input debug.BuildSetting, searched string) int {
+		return strings.Compare(input.Key, searched)
+	})
+	if found {
+		retour = settings[index].Value
 	}
+	return retour
+}
 
-	if hook, err = writerhook.NewWriterHook(file, logLevel, fileFormater); err != nil {
-		logger.Fatalf("Failed to initialize file hook: %v", err)
+func parseLogLevel(logLevel string) (slog.Level, error) {
+	switch strings.ToUpper(logLevel) {
+	case "DEBUG":
+		return slog.LevelDebug, nil
+	case "INFO":
+		return slog.LevelInfo, nil
+	case "WARN":
+		return slog.LevelWarn, nil
+	case "ERROR":
+		return slog.LevelError, nil
+	default:
+		return slog.LevelInfo, errors.New("log level inconnu : '" + logLevel + "'")
 	}
-	return hook
 }
