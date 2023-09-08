@@ -14,7 +14,6 @@ import (
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 )
 
-var logger *slog.Logger
 var loglevel *slog.LevelVar
 
 func init() {
@@ -32,7 +31,7 @@ func init() {
 		slog.Group("app", slog.String("sha1", sha1)),
 	)
 	slog.SetDefault(appLogger)
-	logger = appLogger
+	//logger = appLogger
 }
 
 func ConfigureWith(config structs.LoggerConfig) {
@@ -43,7 +42,7 @@ func ConfigureWith(config structs.LoggerConfig) {
 	defaultHandler := addFormattersToHandler(formatters, slog.Default().Handler())
 	combinedHandlers := slogmulti.Fanout(formattedFileHandler, defaultHandler)
 	slog.SetDefault(slog.New(combinedHandlers))
-	logger.Info("configuration des loggers effectuée", slog.Group(
+	slog.Info("configuration des loggers effectuée", slog.Group(
 		"config",
 		slog.String("level", config.Level),
 		slog.String("filename", config.Filename),
@@ -52,7 +51,7 @@ func ConfigureWith(config structs.LoggerConfig) {
 }
 
 func Debugf(msg string, args ...any) {
-	logger.Debug(msg, args...)
+	slog.Debug(msg, args...)
 }
 
 func Debug(msg string, data map[string]interface{}) {
@@ -60,7 +59,7 @@ func Debug(msg string, data map[string]interface{}) {
 }
 
 func Infof(msg string, args ...any) {
-	logger.Info(msg, args...)
+	slog.Info(msg, args...)
 }
 
 func Info(msg string, data map[string]interface{}) {
@@ -68,7 +67,7 @@ func Info(msg string, data map[string]interface{}) {
 }
 
 func Warnf(msg string, args ...interface{}) {
-	logger.Warn(msg, args...)
+	slog.Warn(msg, args...)
 }
 
 func Warn(msg string, data map[string]interface{}) {
@@ -88,7 +87,7 @@ func ErrorE(msg string, data map[string]interface{}, err error) {
 }
 
 func Errorf(msg string, args ...interface{}) {
-	logger.Error(msg, args...)
+	slog.Error(msg, args...)
 }
 
 func Panicf(msg string, args ...interface{}) {
@@ -108,7 +107,7 @@ func logWithContext(level slog.Level, msg string, data map[string]interface{}, e
 	if err != nil {
 		logCtx = append(logCtx, slog.String("error", err.Error()))
 	}
-	logger.Log(context.Background(), level, msg, logCtx...)
+	slog.Log(context.Background(), level, msg, logCtx...)
 }
 
 func findBuildSetting(settings []debug.BuildSetting, search string) string {

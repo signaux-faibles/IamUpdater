@@ -1,9 +1,10 @@
 package logger
 
 import (
+	"log/slog"
 	"testing"
 )
 
 func Test_merge(t *testing.T) {
-	logger.Info("coolos moolos")
+	slog.Info("coolos moolos")
 }
