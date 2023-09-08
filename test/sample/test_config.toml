@@ -8,7 +8,6 @@ realm = "master"
 filename = "test-initialisation.log"
 level = "ERROR"
 timestampFormat = "2006-01-02 15:04:05"
-#rotation = false
 
 [stock]
 clientsAndRealmFolder = "test/sample/test_config.d"

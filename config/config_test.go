@@ -2,10 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 )
 
 func Test_InitConfig(t *testing.T) {
@@ -36,7 +38,6 @@ func Test_InitConfig(t *testing.T) {
 		Filename:        "roles-test.log",
 		Level:           "TRACE",
 		TimestampFormat: "2006-01-02 15:04:05",
-		Rotation:        false,
 	}
 	ass.Equal(expectedLogger, *config.Logger)
 

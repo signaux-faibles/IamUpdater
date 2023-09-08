@@ -1,8 +1,9 @@
 package logger
 
 import (
-	"github.com/Nerzal/gocloak/v13"
 	"strings"
+
+	"github.com/Nerzal/gocloak/v13"
 )
 
 type Data map[string]interface{}
@@ -55,13 +56,3 @@ func (d Data) AddRoles(all []gocloak.Role) {
 	}
 	d["roles"] = val
 }
-
-func toStrings[T any](array []T, toString func(T) string) []string {
-	y := make([]string, len(array))
-	for i, v := range array {
-		y[i] = toString(v)
-	}
-	return y
-}
-
-func role2string(role gocloak.Role) string { return *role.Name }
