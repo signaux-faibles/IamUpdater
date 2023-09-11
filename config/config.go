@@ -88,7 +88,7 @@ func getAllConfigFilenames(filename string) []string {
 	for _, f := range files {
 		filename := folder + "/" + f.Name()
 		if !strings.HasSuffix(filename, ".toml") {
-			slog.Debug("ignore le fichier de configuration", slog.String("filename", filename))
+			logger.Debugf("ignore le fichier de configuration", slog.String("configFilename", filename))
 			continue
 		}
 		r = append(r, filename)
