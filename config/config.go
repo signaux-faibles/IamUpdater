@@ -24,10 +24,10 @@ func OverrideConfig(original structs.Config, overridingFilename string) structs.
 	slog.Info("surcharge de configuration", slog.String("filename", overridingFilename))
 	overridingConfig, err := initConfig(overridingFilename, true)
 	if err != nil {
-		logger.Errorf(
-			"erreur pendant la récupération de la surcharge de configuration '%s' : %s",
-			overridingFilename,
-			err)
+		slog.Error(
+			"erreur pendant la récupération de la surcharge de configuration",
+			slog.String("filename", overridingFilename),
+			slog.Any("error", err))
 		return original
 	}
 	return merge(original, overridingConfig)
