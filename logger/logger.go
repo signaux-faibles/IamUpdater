@@ -73,12 +73,8 @@ func ErrorE(msg string, data map[string]interface{}, err error) {
 	logWithContext(slog.LevelWarn, msg, data, err)
 }
 
-func Errorf(msg string, args ...interface{}) {
+func Panicf(msg string, args ...any) {
 	slog.Error(msg, args...)
-}
-
-func Panicf(msg string, args ...interface{}) {
-	Errorf(msg, args)
 	panic(msg)
 }
 

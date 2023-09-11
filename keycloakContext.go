@@ -381,10 +381,10 @@ func (kc *KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
 
 func (kc *KeycloakContext) refreshRealm(realmName string) {
 	slog.Debug("refresh Realm", slog.String("realm", realmName))
-	realm, err2 := kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, realmName)
-	if err2 != nil {
-		logger.Errorf("Error when fetching Realm : +%v", err2)
-		panic(err2)
+	realm, err := kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, realmName)
+	if err != nil {
+		slog.Error("Erreur pendant la récupération du Realm", slog.Any("error", err))
+		panic(err)
 	}
 	kc.Realm = realm
 }
