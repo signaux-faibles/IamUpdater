@@ -53,10 +53,6 @@ func Debug(msg string, data map[string]interface{}) {
 	logWithContext(slog.LevelDebug, msg, data, nil)
 }
 
-func Infof(msg string, args ...any) {
-	slog.Info(msg, args...)
-}
-
 func Info(msg string, data map[string]interface{}) {
 	logWithContext(slog.LevelInfo, msg, data, nil)
 }

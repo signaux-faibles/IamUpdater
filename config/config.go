@@ -18,10 +18,10 @@ func InitConfig(configFilename string) (structs.Config, error) {
 
 func OverrideConfig(original structs.Config, overridingFilename string) structs.Config {
 	if overridingFilename == "" {
-		logger.Infof("pas de surcharge de configuration")
+		slog.Debug("pas de surcharge de configuration")
 		return original
 	}
-	logger.Infof("surcharge de configuration : %s", overridingFilename)
+	slog.Info("surcharge de configuration", slog.String("filename", overridingFilename))
 	overridingConfig, err := initConfig(overridingFilename, true)
 	if err != nil {
 		logger.Errorf(
@@ -38,7 +38,7 @@ func initConfig(configFilename string, quietly bool) (structs.Config, error) {
 	//var err error
 	//var meta toml.MetaData
 	filenames := getAllConfigFilenames(configFilename)
-	logger.Infof("config files : %s", filenames)
+	slog.Info("config files", slog.Any("filenames", filenames))
 	allConfig := readAllConfigFiles(filenames)
 	for _, current := range allConfig {
 		conf = merge(conf, current)

@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"testing"
@@ -120,7 +121,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		logger.ErrorE("Could not set expiration on container keycloak", fields, err)
 	}
 
-	logger.Infof("keycloak a démarré avec l'admin", keycloakAdmin)
+	slog.Info("keycloak a démarré avec l'admin", slog.String("name", keycloakAdmin))
 	keycloakPort := keycloak.GetPort("8080/tcp")
 	fields.AddAny("port", keycloakPort)
 	logger.Info("keycloak started", fields)
