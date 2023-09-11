@@ -73,7 +73,7 @@ func getAllConfigFilenames(filename string) []string {
 	}
 	folder := config.Stock.ClientsAndRealmFolder
 	if folder == "" {
-		logger.Warnf("no configuration folder is defined")
+		slog.Warn("no configuration folder is defined")
 		return r
 	}
 	stockFilename := config.Stock.UsersAndRolesFilename
@@ -105,7 +105,11 @@ func extractConfig(filename string) structs.Config {
 	}
 	if meta.Undecoded() != nil {
 		for _, key := range meta.Undecoded() {
-			logger.Warnf("Caution : key '%s' from config file '%s' is not used", key, filename)
+			slog.Warn(
+				"Attention : la clé du fichier de configuration n'est pas utilisée",
+				slog.String("clé", key.String()),
+				slog.String("filename", filename),
+			)
 		}
 	}
 	return conf
