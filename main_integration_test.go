@@ -8,19 +8,22 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/ory/dockertest/v3"
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
-	"github.com/stretchr/testify/require"
 	"os"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/ory/dockertest/v3"
+	"github.com/stretchr/testify/require"
+
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
+
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/libwekan"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
 var kc KeycloakContext
@@ -117,7 +120,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		logger.ErrorE("Could not set expiration on container keycloak", fields, err)
 	}
 
-	logger.Infof("keycloak a démarré avec l'admin %v", keycloakAdmin)
+	logger.Infof("keycloak a démarré avec l'admin", keycloakAdmin)
 	keycloakPort := keycloak.GetPort("8080/tcp")
 	fields.AddAny("port", keycloakPort)
 	logger.Info("keycloak started", fields)

@@ -49,10 +49,6 @@ func ConfigureWith(config structs.LoggerConfig) {
 	))
 }
 
-func Debugf(msg string, args ...any) {
-	slog.Debug(msg, args...)
-}
-
 func Debug(msg string, data map[string]interface{}) {
 	logWithContext(slog.LevelDebug, msg, data, nil)
 }
