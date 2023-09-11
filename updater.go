@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strconv"
 
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/pkg/errors"
+
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
@@ -72,7 +74,7 @@ func UpdateKeycloak(
 	if err != nil {
 		logger.ErrorE("failed creating new roles", fields, err)
 	}
-	logger.Infof("%d roles created", i)
+	slog.Info("roles created", slog.Int("size", i))
 
 	// check and adjust composite roles
 	if err = kc.ComposeRoles(clientId, compositeRoles); err != nil {
