@@ -57,10 +57,6 @@ func Info(msg string, data map[string]interface{}) {
 	logWithContext(slog.LevelInfo, msg, data, nil)
 }
 
-func Warnf(msg string, args ...interface{}) {
-	slog.Warn(msg, args...)
-}
-
 func Warn(msg string, data map[string]interface{}) {
 	logWithContext(slog.LevelWarn, msg, data, nil)
 }
