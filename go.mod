@@ -4,8 +4,6 @@ go 1.21
 
 toolchain go1.21.1
 
-// replace github.com/signaux-faibles/libwekan => ../libwekan
-
 require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/Nerzal/gocloak/v13 v13.8.0

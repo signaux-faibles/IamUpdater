@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/pkg/errors"
+
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 )
@@ -377,7 +380,7 @@ func (kc *KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
 }
 
 func (kc *KeycloakContext) refreshRealm(realmName string) {
-	logger.Debugf("refresh Realm")
+	slog.Debug("refresh Realm", slog.String("realm", realmName))
 	realm, err2 := kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, realmName)
 	if err2 != nil {
 		logger.Errorf("Error when fetching Realm : +%v", err2)
