@@ -10,23 +10,22 @@ require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/Nerzal/gocloak/v13 v13.8.0
 	github.com/cnf/structhash v0.0.0-20201127153200-e1b16c1ebc08
-	github.com/mattn/go-colorable v0.1.13
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/slog-formatter v1.0.0
 	github.com/samber/slog-multi v1.0.1
 	github.com/signaux-faibles/libwekan v0.4.0
-	github.com/sirupsen/logrus v1.9.3
-	github.com/snowzach/rotatefilehook v0.0.0-20220211133110-53752135082d
-	github.com/snowzach/writerhook v0.0.0-20180327172656-2eef47d6a0bf
 	github.com/stretchr/testify v1.8.4
 	github.com/tealeg/xlsx/v3 v3.3.0
 )
 
 require (
+	bou.ke/monkey v1.0.2 // indirect
+	github.com/jaswdr/faker v1.19.0 // indirect
 	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/samber/lo v1.38.1 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
@@ -55,7 +54,6 @@ require (
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
 	github.com/montanaflynn/stats v0.6.6 // indirect
@@ -80,7 +78,6 @@ require (
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

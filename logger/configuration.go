@@ -10,8 +10,8 @@ import (
 
 func configFormatters(timeFormat string) slogmulti.Middleware {
 	formattingMiddleware := slogformatter.NewFormatterHandler(
-		timeFormatter(timeFormat),
 		errorFormatter(),
+		timeFormatter(timeFormat),
 		userFormatter(),
 		clientFormatter(),
 		singleRoleFormatter(),
@@ -34,7 +34,7 @@ func configFileHandler(logFilename string) *slog.TextHandler {
 
 func configLogLevel(configLogLevel string) {
 	var err error
-	level := loglevel.Level()
+	var level = loglevel.Level()
 	if level, err = parseLogLevel(configLogLevel); err != nil {
 		slog.Warn("erreur de configuration sur le log level", slog.String("valeur", configLogLevel))
 	}

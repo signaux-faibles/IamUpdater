@@ -10,18 +10,16 @@ import (
 	slogmulti "github.com/samber/slog-multi"
 )
 
-const defaultTimestampFormat = "2006-01-02 15:04:05"
-
 func addFormattersToHandler(formatters slogmulti.Middleware, handler slog.Handler) slog.Handler {
 	return slogmulti.Pipe(formatters).Handler(handler)
 }
 
 func timeFormatter(input string) slogformatter.Formatter {
-	format := defaultTimestampFormat
+	format := time.DateTime
 	if len(input) > 0 {
 		format = input
 	}
-	return slogformatter.TimeFormatter(format, time.UTC)
+	return slogformatter.TimeFormatter(format, time.Local)
 }
 
 func errorFormatter() slogformatter.Formatter {

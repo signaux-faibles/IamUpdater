@@ -2,8 +2,8 @@ package logger
 
 import (
 	"context"
+	"log"
 	"log/slog"
-	"os"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -20,11 +20,10 @@ func init() {
 	loglevel = new(slog.LevelVar)
 	loglevel.Set(slog.LevelInfo)
 
-	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	handler := slog.NewJSONHandler(log.Default().Writer(), &slog.HandlerOptions{
 		Level: loglevel,
 	})
-	parentLogger := slog.New(
-		handler)
+	parentLogger := slog.New(handler)
 	buildInfo, _ := debug.ReadBuildInfo()
 	sha1 := findBuildSetting(buildInfo.Settings, "vcs.revision")
 	appLogger := parentLogger.With(
