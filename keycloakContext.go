@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/pkg/errors"
@@ -380,11 +379,11 @@ func (kc *KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
 }
 
 func (kc *KeycloakContext) refreshRealm(realmName string) {
-	slog.Debug("refresh Realm", slog.String("realm", realmName))
+	logContext := logger.ContextForMethode(kc.refreshRealm)
+	logger.Debug("refresh Realm", logContext.AddAny("realm", realmName))
 	realm, err := kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, realmName)
 	if err != nil {
-		slog.Error("Erreur pendant la récupération du Realm", slog.Any("error", err))
-		panic(err)
+		logger.Panic("Erreur pendant la récupération du Realm", logContext, err)
 	}
 	kc.Realm = realm
 }

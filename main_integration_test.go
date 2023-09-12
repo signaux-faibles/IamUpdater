@@ -14,16 +14,14 @@ import (
 	"time"
 
 	"github.com/ory/dockertest/v3"
-	"github.com/stretchr/testify/require"
-
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
-
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/signaux-faibles/libwekan"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 )
 
 var kc KeycloakContext

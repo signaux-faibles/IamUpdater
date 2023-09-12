@@ -1,10 +1,11 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/signaux-faibles/libwekan"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestWekan_ListBoards(t *testing.T) {
