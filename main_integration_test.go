@@ -110,13 +110,13 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 	)
 	if err != nil {
 		kill(keycloak)
-		logger.ErrorE("Could not start keycloak", fields, err)
+		logger.Error("Could not start keycloak", fields, err)
 		panic(err)
 	}
 	// container stops after 120 seconds
 	if err = keycloak.Expire(600); err != nil {
 		kill(keycloak)
-		logger.ErrorE("Could not set expiration on container keycloak", fields, err)
+		logger.Error("Could not set expiration on container keycloak", fields, err)
 	}
 
 	slog.Info("keycloak a démarré avec l'admin", slog.String("name", keycloakAdmin))
@@ -209,7 +209,7 @@ func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *
 	logger.Info("Restaure le dump", fields)
 	if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", command}, dockerOptions); err != nil {
 		fields.AddAny("exitCode", exitCode)
-		logger.ErrorE("Erreur lors de la restauration du dump", fields, err)
+		logger.Error("Erreur lors de la restauration du dump", fields, err)
 		require.Nil(t, err)
 	}
 	err := outputWriter.Flush()

@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
-	"github.com/signaux-faibles/libwekan"
 	"strings"
+
+	"github.com/signaux-faibles/libwekan"
+
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
 var GENUINEUSERSELECTOR = []func(wekan libwekan.Wekan, user libwekan.User) bool{
@@ -86,7 +88,7 @@ func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 		logger.Info(">>> crée l'utilisateur", fields)
 		err := wekan.InsertUser(ctx, user)
 		if err != nil {
-			logger.Error(err.Error(), fields)
+			logger.Error("erreur Wekan pendant la création des utilisateurs", fields, err)
 			return err
 		}
 	}
@@ -108,7 +110,7 @@ func ensureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libw
 			continue
 		}
 		if err != nil {
-			logger.Error(err.Error(), fields)
+			logger.Error("erreur Wekan pendant la radiation des utilisateurs", fields, err)
 			return err
 		}
 		logger.Info(">>> active l'utilisateur", fields)
@@ -128,7 +130,7 @@ func ensureUsersAreDisabled(ctx context.Context, wekan libwekan.Wekan, users lib
 			continue
 		}
 		if err != nil {
-			logger.Error(err.Error(), fields)
+			logger.Error("erreur Wekan pendant l'examen du statut des utilisateurs", fields, err)
 			return err
 		}
 		logger.Info(">>> désactive l'utilisateur", fields)
