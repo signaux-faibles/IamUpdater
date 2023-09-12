@@ -292,7 +292,7 @@ func readStdin(message string) *os.File {
 }
 
 func logUser(client gocloak.Client, user gocloak.User) error {
-	fields := logger.ContextForMethod("logUser")
+	fields := logger.ContextForMethod(logUser)
 	fields.AddUser(user)
 	fields.AddClient(client)
 	// try connecting a user

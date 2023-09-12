@@ -28,7 +28,7 @@ func NewKeycloakContext(access *structs.Keycloak) (KeycloakContext, error) {
 
 // Init provides a connected keycloak context object
 func Init(hostname, realm, username, password string) (KeycloakContext, error) {
-	fields := logger.ContextForMethod("Init")
+	fields := logger.ContextForMethod(Init)
 	fields.AddAny("path", hostname)
 	fields.AddAny("realm", realm)
 	fields.AddAny("user", username)
@@ -91,7 +91,7 @@ func (kc KeycloakContext) GetRoles() Roles {
 
 // CreateClientRoles creates a bunch of roles in a client from a []string
 func (kc *KeycloakContext) CreateClientRoles(clientID string, roles Roles) (int, error) {
-	fields := logger.ContextForMethod("kc.CreateClientRoles")
+	fields := logger.ContextForMethod(kc.CreateClientRoles)
 
 	defer func() {
 		if err := kc.refreshClientRoles(); err != nil {
@@ -192,7 +192,7 @@ func (kc *KeycloakContext) CreateUsers(users []gocloak.User, userMap Users, clie
 		return err
 	}
 	for _, user := range users {
-		fields := logger.ContextForMethod("kc.CreateUsers")
+		fields := logger.ContextForMethod(kc.CreateUsers)
 		fields.AddUser(user)
 		logger.Info("crée l'utilisateur Keycloak", fields)
 		u, err := kc.API.CreateUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), user)
@@ -238,7 +238,7 @@ func (kc *KeycloakContext) DisableUsers(users []gocloak.User, clientName string)
 }
 
 func (kc *KeycloakContext) disableUser(u gocloak.User, internalClientID string) error {
-	fields := logger.ContextForMethod("kc.disableUser")
+	fields := logger.ContextForMethod(kc.disableUser)
 	disabled := false
 	u.Enabled = &disabled
 	fields.AddUser(u)
@@ -268,7 +268,7 @@ func (kc *KeycloakContext) disableUser(u gocloak.User, internalClientID string) 
 
 // EnableUsers enables users and adds roles
 func (kc *KeycloakContext) EnableUsers(users []gocloak.User) error {
-	fields := logger.ContextForMethod("kc.EnableUsers")
+	fields := logger.ContextForMethod(kc.EnableUsers)
 	t := true
 	for _, user := range users {
 		fields.AddUser(user)
@@ -285,7 +285,7 @@ func (kc *KeycloakContext) EnableUsers(users []gocloak.User) error {
 
 // UpdateCurrentUsers sets client roles on specified users according userMap
 func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users, clientName string) error {
-	fields := logger.ContextForMethod("kc.UpdateCurrentUsers")
+	fields := logger.ContextForMethod(kc.UpdateCurrentUsers)
 	accountInternalID, err := kc.GetInternalIDFromClientID("account")
 	if err != nil {
 		return err
@@ -365,7 +365,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 
 // SaveMasterRealm update master Realm
 func (kc *KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
-	fields := logger.ContextForMethod("kc.SaveMasterRealm")
+	fields := logger.ContextForMethod(kc.SaveMasterRealm)
 	id := "master"
 	input.ID = &id
 	input.Realm = &id
@@ -379,7 +379,7 @@ func (kc *KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
 }
 
 func (kc *KeycloakContext) refreshRealm(realmName string) {
-	logContext := logger.ContextForMethode(kc.refreshRealm)
+	logContext := logger.ContextForMethod(kc.refreshRealm)
 	logger.Debug("refresh Realm", logContext.AddAny("realm", realmName))
 	realm, err := kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, realmName)
 	if err != nil {
@@ -403,7 +403,7 @@ func (kc *KeycloakContext) SaveClients(input []*gocloak.Client) error {
 }
 
 func (kc KeycloakContext) saveClient(input gocloak.Client) error {
-	fields := logger.ContextForMethod("kc.saveClient")
+	fields := logger.ContextForMethod(kc.saveClient)
 	fields.AddClient(input)
 	//kc.refreshClients()
 	id, found := kc.GetQuietlyInternalIDFromClientID(*input.ClientID)

@@ -10,14 +10,7 @@ import (
 
 type LogContext map[string]interface{}
 
-func ContextForMethod(method string) LogContext {
-	fields := map[string]interface{}{
-		"method": method,
-	}
-	return fields
-}
-
-func ContextForMethode(method interface{}) LogContext {
+func ContextForMethod(method interface{}) LogContext {
 	methodName := runtime.FuncForPC(reflect.ValueOf(method).Pointer()).Name()
 	fields := map[string]interface{}{
 		"method": methodName,
