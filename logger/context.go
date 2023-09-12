@@ -1,70 +1,72 @@
 package logger
 
 import (
+	"log/slog"
 	"reflect"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/Nerzal/gocloak/v13"
 )
 
-type LogContext map[string]interface{}
+type LogContext []slog.Attr
 
-func ContextForMethod(method interface{}) LogContext {
+func ContextForMethod(method interface{}) *LogContext {
 	methodName := runtime.FuncForPC(reflect.ValueOf(method).Pointer()).Name()
-	fields := map[string]interface{}{
-		"method": methodName,
-	}
-	return fields
+	context := make([]slog.Attr, 0)
+	context = append(context, slog.String("method", methodName))
+	r := LogContext(context)
+	return &r
 }
 
-func (d LogContext) AddUser(user gocloak.User) LogContext {
-	d["user"] = *user.Username
+func (d *LogContext) AddAny(key string, any interface{}) *LogContext {
+	*d = append(*d, slog.Any(key, any))
 	return d
 }
 
-func (d LogContext) AddError(err error) LogContext {
-	d["error"] = err
+func (d *LogContext) AddString(key string, value string) *LogContext {
+	*d = append(*d, slog.String(key, value))
 	return d
 }
 
-func (d LogContext) removeError() LogContext {
-	delete(d, "error")
+func (d *LogContext) AddInt(key string, value int) *LogContext {
+	*d = append(*d, slog.Int(key, value))
 	return d
 }
 
-func (d LogContext) AddArray(key string, any []string) LogContext {
-	d[key] = strings.Join(any, ", ")
-	return d
+func (d *LogContext) AddArray(key string, any []string) *LogContext {
+	return d.AddString(key, strings.Join(any, ", "))
 }
 
-func (d LogContext) AddAny(key string, any interface{}) LogContext {
-	d[key] = any
-	return d
+func (d *LogContext) AddClient(input gocloak.Client) *LogContext {
+	return d.AddAny("clientId", input)
 }
 
-func (d LogContext) Remove(key string) LogContext {
-	delete(d, key)
-	return d
+func (d *LogContext) AddRole(input gocloak.Role) *LogContext {
+	return d.AddString("role", role2string(input))
 }
 
-func (d LogContext) AddClient(input gocloak.Client) LogContext {
-	d["clientId"] = *input.ClientID
-	return d
-}
-
-func (d LogContext) AddRole(input gocloak.Role) LogContext {
-	d["role"] = role2string(input)
-	return d
-}
-
-func (d LogContext) AddRoles(all []gocloak.Role) LogContext {
+func (d *LogContext) AddRoles(all []gocloak.Role) *LogContext {
 	var val string
 	if all == nil {
 		val = ""
 	} else {
 		val = strings.Join(toStrings(all, role2string), ", ")
 	}
-	d["roles"] = val
+	return d.AddString("roles", val)
+}
+
+func (d *LogContext) AddUser(user gocloak.User) *LogContext {
+	*d = append(*d, slog.Any("user", user))
 	return d
+}
+
+func (d *LogContext) Remove(key string) *LogContext {
+	*d = slices.DeleteFunc(*d, func(c slog.Attr) bool { return c.Key == key })
+	return d
+}
+
+func (d *LogContext) addError(err error) *LogContext {
+	return d.AddAny("error", err)
 }
