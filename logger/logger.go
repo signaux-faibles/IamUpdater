@@ -49,31 +49,31 @@ func ConfigureWith(config structs.LoggerConfig) {
 	))
 }
 
-func Debug(msg string, data map[string]interface{}) {
+func Debug(msg string, data *LogContext) {
 	logWithContext(slog.LevelDebug, msg, data, nil)
 }
 
-func Info(msg string, data map[string]interface{}) {
+func Info(msg string, data *LogContext) {
 	logWithContext(slog.LevelInfo, msg, data, nil)
 }
 
-func Warn(msg string, data map[string]interface{}) {
+func Warn(msg string, data *LogContext) {
 	logWithContext(slog.LevelWarn, msg, data, nil)
 }
 
-func Error(msg string, data map[string]interface{}, err error) {
+func Error(msg string, data *LogContext, err error) {
 	logWithContext(slog.LevelWarn, msg, data, err)
 }
 
-func Panic(msg string, data map[string]interface{}, err error) {
+func Panic(msg string, data *LogContext, err error) {
 	Error(msg, data, err)
 	panic(err)
 }
 
-func logWithContext(level slog.Level, msg string, data map[string]interface{}, err error) {
+func logWithContext(level slog.Level, msg string, data *LogContext, err error) {
 	var logCtx []slog.Attr
-	for k, v := range data {
-		logCtx = append(logCtx, slog.Any(k, v))
+	for _, v := range *data {
+		logCtx = append(logCtx, v)
 	}
 	if err != nil {
 		logCtx = append(logCtx, slog.Any("error", err))

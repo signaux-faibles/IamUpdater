@@ -21,7 +21,7 @@ func OverrideConfig(original structs.Config, overridingFilename string) structs.
 		return original
 	}
 	logContext := logger.ContextForMethod(OverrideConfig)
-	logger.Info("surcharge de configuration", logContext.AddAny("filename", overridingFilename))
+	logger.Info("surcharge de configuration", logContext.AddString("filename", overridingFilename))
 	overridingConfig, err := initConfig(overridingFilename, true)
 	if err != nil {
 		logger.Error(
