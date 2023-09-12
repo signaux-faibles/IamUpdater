@@ -62,7 +62,7 @@ func Warn(msg string, data *LogContext) {
 }
 
 func Error(msg string, data *LogContext, err error) {
-	logWithContext(slog.LevelWarn, msg, data, err)
+	logWithContext(slog.LevelError, msg, data, err)
 }
 
 func Panic(msg string, data *LogContext, err error) {
