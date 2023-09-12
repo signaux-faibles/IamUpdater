@@ -7,8 +7,8 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
+	"keycloakUpdater/v2/logger"
+	"keycloakUpdater/v2/structs"
 )
 
 func InitConfig(configFilename string) (structs.Config, error) {

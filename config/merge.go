@@ -4,8 +4,8 @@ import (
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/imdario/mergo"
 
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
+	"keycloakUpdater/v2/logger"
+	"keycloakUpdater/v2/structs"
 )
 
 func merge(first structs.Config, second structs.Config) structs.Config {

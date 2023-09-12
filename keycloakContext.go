@@ -6,8 +6,8 @@ import (
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/pkg/errors"
 
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
+	"keycloakUpdater/v2/logger"
+	"keycloakUpdater/v2/structs"
 )
 
 // KeycloakContext carry keycloak state

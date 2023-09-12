@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
+	"keycloakUpdater/v2/structs"
 )
 
 func Test_InitConfig(t *testing.T) {
