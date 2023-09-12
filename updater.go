@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"sort"
 	"strconv"
 
@@ -23,7 +22,7 @@ func UpdateKeycloak(
 	configuredUsername Username,
 	maxChangesToAccept int,
 ) error {
-	fields := logger.ContextForMethod("UpdateAll")
+	logContext := logger.ContextForMethode(UpdateKeycloak)
 
 	if _, exists := users[configuredUsername]; !exists {
 		return errors.Errorf(
@@ -42,11 +41,11 @@ func UpdateKeycloak(
 		)
 	}
 
-	logger.Info("START", fields)
-	logger.Info("accepte "+strconv.Itoa(maxChangesToAccept)+" changements pour les users", fields)
+	logger.Info("START", logContext)
+	logger.Info("accepte "+strconv.Itoa(maxChangesToAccept)+" changements pour les users", logContext)
 
 	// checking users
-	logger.Info("checking users", fields)
+	logger.Info("checking users", logContext)
 	missing, obsolete, update, current := users.Compare(*kc)
 	changes := len(missing) + len(obsolete) + len(update)
 	keeps := len(current)
@@ -55,11 +54,11 @@ func UpdateKeycloak(
 	}
 
 	// gather roles, newRoles are created before users, oldRoles are deleted after users
-	logger.Info("checking roles", fields)
+	logger.Info("checking roles", logContext)
 	neededRoles := neededRoles(compositeRoles, users)
 	newRoles, oldRoles := neededRoles.compare(kc.GetClientRoles()[clientId])
 
-	logger.Info("starting keycloak configuration", fields)
+	logger.Info("starting keycloak configuration", logContext)
 	// realmName conf
 	if realm != nil {
 		kc.SaveMasterRealm(*realm)
@@ -72,45 +71,39 @@ func UpdateKeycloak(
 
 	i, err := kc.CreateClientRoles(clientId, newRoles)
 	if err != nil {
-		slog.Error("erreur pendant l'écriture des nouveaux rôles", slog.Any("error", err))
-		panic(err)
+		logger.Panic("erreur pendant l'écriture des nouveaux rôles", logContext, err)
 	}
-	slog.Info("roles created", slog.Int("size", i))
+	logger.Info("roles created", logContext.AddAny("size", i))
 
 	// check and adjust composite roles
 	if err = kc.ComposeRoles(clientId, compositeRoles); err != nil {
-		slog.Error("erreur pendant l'écriture des rôles composés", slog.Any("error", err))
-		panic(err)
+		logger.Panic("erreur pendant l'écriture des rôles composés", logContext, err)
 	}
 
 	if err = kc.CreateUsers(missing, users, clientId); err != nil {
-		slog.Error("erreur pendant la création des utilisateurs", slog.Any("error", err))
-		panic(err)
+		logger.Panic("erreur pendant la création des utilisateurs", logContext, err)
 	}
 
 	// disable obsolete users
 	if err = kc.DisableUsers(obsolete, clientId); err != nil {
-		slog.Error("erreur pendant la désactivation des utilisateurs", slog.Any("error", err))
-		panic(err)
+		logger.Panic("erreur pendant la désactivation des utilisateurs", logContext, err)
 	}
 	// enable existing but disabled users
 	if err = kc.EnableUsers(update); err != nil {
-		slog.Error("erreur pendant l'activation des utilisateurs", slog.Any("error", err))
-		panic(err)
+		logger.Panic("erreur pendant l'activation des utilisateurs", logContext, err)
 	}
 
 	// make sure every on has correct roles
 	if err = kc.UpdateCurrentUsers(current, users, clientId); err != nil {
-		slog.Error("erreur pendant la mise à jour des utilisateurs", slog.Any("error", err))
-		panic(err)
+		logger.Error("erreur pendant la mise à jour des utilisateurs", logContext, err)
 	}
 
 	// delete old roles
 	if len(oldRoles) > 0 {
 		sort.Strings(oldRoles)
-		fields.AddArray("toDelete", oldRoles)
-		logger.Info("removing unused roles", fields)
-		fields.Remove("toDelete")
+		logContext.AddArray("toDelete", oldRoles)
+		logger.Info("removing unused roles", logContext)
+		logContext.Remove("toDelete")
 		internalID, err := kc.GetInternalIDFromClientID(clientId)
 		if err != nil {
 			panic(err)
@@ -126,7 +119,7 @@ func UpdateKeycloak(
 			panic(err)
 		}
 	}
-	logger.Info("DONE", fields)
+	logger.Info("DONE", logContext)
 	return nil
 }
 

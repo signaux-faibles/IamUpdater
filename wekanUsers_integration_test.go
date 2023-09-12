@@ -5,9 +5,10 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/signaux-faibles/libwekan"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {

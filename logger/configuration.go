@@ -34,7 +34,7 @@ func configFileHandler(logFilename string) *slog.TextHandler {
 
 func configLogLevel(configLogLevel string) {
 	var err error
-	var level = loglevel.Level()
+	level := loglevel.Level()
 	if level, err = parseLogLevel(configLogLevel); err != nil {
 		slog.Warn("erreur de configuration sur le log level", slog.String("valeur", configLogLevel))
 	}
