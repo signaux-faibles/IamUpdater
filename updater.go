@@ -72,31 +72,37 @@ func UpdateKeycloak(
 
 	i, err := kc.CreateClientRoles(clientId, newRoles)
 	if err != nil {
-		logger.ErrorE("failed creating new roles", fields, err)
+		slog.Error("erreur pendant l'écriture des nouveaux rôles", slog.Any("error", err))
+		panic(err)
 	}
 	slog.Info("roles created", slog.Int("size", i))
 
 	// check and adjust composite roles
 	if err = kc.ComposeRoles(clientId, compositeRoles); err != nil {
-		logger.Panic(err)
+		slog.Error("erreur pendant l'écriture des rôles composés", slog.Any("error", err))
+		panic(err)
 	}
 
 	if err = kc.CreateUsers(missing, users, clientId); err != nil {
-		logger.Panic(err)
+		slog.Error("erreur pendant la création des utilisateurs", slog.Any("error", err))
+		panic(err)
 	}
 
 	// disable obsolete users
 	if err = kc.DisableUsers(obsolete, clientId); err != nil {
-		logger.Panic(err)
+		slog.Error("erreur pendant la désactivation des utilisateurs", slog.Any("error", err))
+		panic(err)
 	}
 	// enable existing but disabled users
 	if err = kc.EnableUsers(update); err != nil {
-		logger.Panic(err)
+		slog.Error("erreur pendant l'activation des utilisateurs", slog.Any("error", err))
+		panic(err)
 	}
 
 	// make sure every on has correct roles
 	if err = kc.UpdateCurrentUsers(current, users, clientId); err != nil {
-		logger.Panic(err)
+		slog.Error("erreur pendant la mise à jour des utilisateurs", slog.Any("error", err))
+		panic(err)
 	}
 
 	// delete old roles
