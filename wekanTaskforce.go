@@ -5,7 +5,7 @@ import (
 
 	"github.com/signaux-faibles/libwekan"
 
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"keycloakUpdater/v2/logger"
 )
 
 // addMissingRulesAndCardMembership

@@ -7,7 +7,7 @@ import (
 
 	"github.com/signaux-faibles/libwekan"
 
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"keycloakUpdater/v2/logger"
 )
 
 var GENUINEUSERSELECTOR = []func(wekan libwekan.Wekan, user libwekan.User) bool{

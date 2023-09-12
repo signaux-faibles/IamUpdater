@@ -6,8 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/signaux-faibles/keycloakUpdater/v2/config"
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+	"keycloakUpdater/v2/config"
+	"keycloakUpdater/v2/logger"
 )
 
 var overridingConfigFilename string

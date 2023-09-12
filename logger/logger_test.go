@@ -14,7 +14,7 @@ import (
 	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
+	"keycloakUpdater/v2/structs"
 )
 
 var fake faker.Faker

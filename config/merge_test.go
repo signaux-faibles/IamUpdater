@@ -1,10 +1,12 @@
 package config
 
 import (
-	"github.com/Nerzal/gocloak/v13"
-	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/Nerzal/gocloak/v13"
+	"github.com/stretchr/testify/assert"
+
+	"keycloakUpdater/v2/structs"
 )
 
 func Test_merge(t *testing.T) {
