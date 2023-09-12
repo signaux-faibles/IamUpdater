@@ -32,7 +32,7 @@ func main() {
 	}
 
 	logger.ConfigureWith(*conf.Logger)
-	fields := logger.DataForMethod("main")
+	fields := logger.ContextForMethod("main")
 
 	// loading desired state for users, composites roles
 	logger.Info("lecture du fichier excel stock", fields)

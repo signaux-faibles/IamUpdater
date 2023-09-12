@@ -2,14 +2,16 @@ package main
 
 import (
 	"context"
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+
 	"github.com/signaux-faibles/libwekan"
+
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
 type BoardsMembers map[libwekan.BoardSlug]Users
 
 func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
-	fields := logger.DataForMethod("manageBoardsMembers")
+	fields := logger.ContextForMethod("manageBoardsMembers")
 	// périmètre du stage
 	wekanBoardsMembers := fromConfig.inferBoardsMember()
 	domainBoards, err := wekan.SelectDomainBoards(context.Background())
@@ -29,7 +31,7 @@ func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 }
 
 func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
-	fields := logger.DataForMethod("updateBoardMembers")
+	fields := logger.ContextForMethod("updateBoardMembers")
 	fields.AddAny("board", boardSlug)
 	board, err := wekan.GetBoardFromSlug(context.Background(), boardSlug)
 	if err != nil {
@@ -75,7 +77,7 @@ func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boar
 }
 
 func ensureUserIsActiveBoardMember(wekan libwekan.Wekan, user libwekan.User, board libwekan.Board) error {
-	fields := logger.DataForMethod("ensureUserIsActiveBoardMember")
+	fields := logger.ContextForMethod("ensureUserIsActiveBoardMember")
 	fields.AddAny("username", user.Username)
 	fields.AddAny("board", board.Slug)
 	logger.Debug(">>> examine l'utilisateur", fields)
@@ -90,7 +92,7 @@ func ensureUserIsActiveBoardMember(wekan libwekan.Wekan, user libwekan.User, boa
 }
 
 func ensureUserIsInactiveBoardMember(wekan libwekan.Wekan, user libwekan.User, board libwekan.Board) error {
-	fields := logger.DataForMethod("ensureUserIsInactiveBoardMember")
+	fields := logger.ContextForMethod("ensureUserIsInactiveBoardMember")
 	fields.AddAny("username", user.Username)
 	fields.AddAny("board", board.Slug)
 	logger.Debug(">>> vérifie la non-participation", fields)

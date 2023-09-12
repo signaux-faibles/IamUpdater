@@ -97,7 +97,7 @@ func (kc KeycloakContext) FindKeycloakRoles(clientName string, roles Roles) []go
 
 // ComposeRoles writes roles composition to keycloak server
 func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles CompositeRoles) error {
-	fields := logger.DataForMethod("kc.ComposeRoles")
+	fields := logger.ContextForMethod("kc.ComposeRoles")
 	fields.AddAny("clientId", clientID)
 	// Add known roles
 	for role, roles := range compositeRoles {

@@ -1,13 +1,13 @@
 package config
 
 import (
-	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 )
 
@@ -17,16 +17,17 @@ func InitConfig(configFilename string) (structs.Config, error) {
 
 func OverrideConfig(original structs.Config, overridingFilename string) structs.Config {
 	if overridingFilename == "" {
-		slog.Debug("pas de surcharge de configuration")
+		logger.Debug("pas de surcharge de configuration", nil)
 		return original
 	}
-	slog.Info("surcharge de configuration", slog.String("filename", overridingFilename))
+	logContext := logger.ContextForMethode(OverrideConfig)
+	logger.Info("surcharge de configuration", logContext.AddAny("filename", overridingFilename))
 	overridingConfig, err := initConfig(overridingFilename, true)
 	if err != nil {
-		slog.Error(
+		logger.Error(
 			"erreur pendant la récupération de la surcharge de configuration",
-			slog.String("filename", overridingFilename),
-			slog.Any("error", err))
+			logContext.AddAny("filename", overridingFilename),
+			err)
 		return original
 	}
 	return merge(original, overridingConfig)
@@ -37,7 +38,11 @@ func initConfig(configFilename string, quietly bool) (structs.Config, error) {
 	//var err error
 	//var meta toml.MetaData
 	filenames := getAllConfigFilenames(configFilename)
-	slog.Info("config files", slog.Any("filenames", filenames))
+
+	logger.Info(
+		"config files",
+		logger.ContextForMethode(initConfig).AddArray("filenames", filenames),
+	)
 	allConfig := readAllConfigFiles(filenames)
 	for _, current := range allConfig {
 		conf = merge(conf, current)
@@ -59,15 +64,15 @@ func readAllConfigFiles(filenames []string) []structs.Config {
 
 func getAllConfigFilenames(filename string) []string {
 	var r = make([]string, 0)
+	logContext := logger.ContextForMethode(getAllConfigFilenames)
 	// checking file exist
 	var err error
 	if _, err = os.Open(filename); err != nil {
-		slog.Error(
-			"error pendant la lecture des du fichier de configuration",
-			slog.String("filename", filename),
-			slog.Any("error", err),
+		logger.Panic(
+			"erreur pendant la lecture des du fichier de configuration",
+			logContext.AddAny("filename", filename),
+			err,
 		)
-		panic(err)
 	}
 	r = append(r, filename)
 	var files []os.DirEntry
@@ -77,32 +82,30 @@ func getAllConfigFilenames(filename string) []string {
 	}
 	folder := config.Stock.ClientsAndRealmFolder
 	if folder == "" {
-		slog.Warn("no configuration folder is defined")
+		logger.Warn("Attention : aucun répertoire de configuration n'est défini", logContext)
 		return r
 	}
 	stockFilename := config.Stock.UsersAndRolesFilename
 	if stockFilename != "" {
 		if _, err = os.ReadFile(stockFilename); err != nil {
-			slog.Error(
-				"error pendant la lecture des du fichier stock",
-				slog.String("filename", stockFilename),
-				slog.Any("error", err),
+			logger.Panic(
+				"erreur pendant la lecture des du fichier stock",
+				logContext.AddAny("filename", stockFilename),
+				err,
 			)
-			panic(err)
 		}
 	}
 	if files, err = os.ReadDir(folder); err != nil {
-		slog.Error(
-			"error pendant la lecture des clients Keycloak",
-			slog.Any("folder", folder),
-			slog.Any("error", err),
+		logger.Panic(
+			"erreur pendant la lecture des clients Keycloak",
+			logContext.AddAny("folder", folder),
+			err,
 		)
-		panic(err)
 	}
 	for _, f := range files {
 		filename := folder + "/" + f.Name()
 		if !strings.HasSuffix(filename, ".toml") {
-			slog.Debug("ignore le fichier de configuration", slog.String("filename", filename))
+			logger.Debug("ignore le fichier de configuration", logContext.AddAny("filename", filename))
 			continue
 		}
 		r = append(r, filename)
@@ -111,23 +114,22 @@ func getAllConfigFilenames(filename string) []string {
 }
 
 func extractConfig(filename string) structs.Config {
+	logContext := logger.ContextForMethode(extractConfig)
 	var conf structs.Config
 	var err error
 	var meta toml.MetaData
 	if meta, err = toml.DecodeFile(filename, &conf); err != nil {
-		slog.Error(
+		logger.Panic(
 			"error pendant le décodage du fichier de configuration Toml",
-			slog.Any("filename", filename),
-			slog.Any("error", err),
+			logContext.AddAny("filename", filename),
+			err,
 		)
-		panic(err)
 	}
 	if meta.Undecoded() != nil {
 		for _, key := range meta.Undecoded() {
-			slog.Warn(
+			logger.Warn(
 				"Attention : la clé du fichier de configuration n'est pas utilisée",
-				slog.String("clé", key.String()),
-				slog.String("filename", filename),
+				logContext.AddAny("clé", key.String()).AddAny("filename", filename),
 			)
 		}
 	}

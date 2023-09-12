@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
+
 	"github.com/signaux-faibles/libwekan"
+
+	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
 
 type Pipeline []PipelineStage
@@ -28,7 +30,7 @@ func (pipeline Pipeline) Run(wekan libwekan.Wekan, fromConfig Users) error {
 }
 
 func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastStage PipelineStage) error {
-	fields := logger.DataForMethod("StopAfter")
+	fields := logger.ContextForMethod("StopAfter")
 	for _, stage := range pipeline {
 		fields.AddAny("stage", stage.id)
 		logger.Debug("applique le pipeline", fields)

@@ -18,7 +18,7 @@ var GENUINEUSERSELECTOR = []func(wekan libwekan.Wekan, user libwekan.User) bool{
 // checkNativeUsers apporte des logs permettant de garder un œil sur les utilisateurs gérés manuellement
 func checkNativeUsers(wekan libwekan.Wekan, _ Users) error {
 	ctx := context.Background()
-	fields := logger.DataForMethod("checkNativeUsers")
+	fields := logger.ContextForMethod("checkNativeUsers")
 	logger.Info("inventaire des comptes standards", fields)
 	wekanUsers, err := wekan.GetUsers(ctx)
 	if err != nil {
@@ -75,7 +75,7 @@ func selectWekanUsers(wekan libwekan.Wekan) (libwekan.Users, error) {
 }
 
 func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
-	fields := logger.DataForMethod("insertUser")
+	fields := logger.ContextForMethod("insertUser")
 	logger.Info("> traite les inscriptions des utilisateurs", fields)
 	fields.AddAny("population", len(users))
 	logger.Info(">> inscrit les nouveaux utilisateurs", fields)
@@ -96,7 +96,7 @@ func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 }
 
 func ensureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
-	fields := logger.DataForMethod("ensureUsersAreEnabled")
+	fields := logger.ContextForMethod("ensureUsersAreEnabled")
 	fields.AddAny("population", len(users))
 	logger.Info(">> active des utilisateurs réinscrits", fields)
 	if err := wekan.AssertPrivileged(ctx); err != nil {
@@ -119,7 +119,7 @@ func ensureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libw
 }
 
 func ensureUsersAreDisabled(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
-	fields := logger.DataForMethod("ensureUsersAreDisabled")
+	fields := logger.ContextForMethod("ensureUsersAreDisabled")
 	fields.AddAny("population", len(users))
 	logger.Info(">> radie les utilisateurs absents", fields)
 	for _, user := range users {
