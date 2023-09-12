@@ -76,7 +76,7 @@ func main() {
 	}
 
 	if err != nil {
-		logger.ErrorE("le traitement s'est terminé de façon anormale", fields, err)
+		logger.Error("le traitement s'est terminé de façon anormale", fields, err)
 		fmt.Println("======= Détail de l'erreur")
 		printErrChain(err, 0)
 	} else {

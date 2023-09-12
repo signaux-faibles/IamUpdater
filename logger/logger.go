@@ -61,15 +61,7 @@ func Warn(msg string, data map[string]interface{}) {
 	logWithContext(slog.LevelWarn, msg, data, nil)
 }
 
-func WarnE(msg string, data map[string]interface{}, err error) {
-	logWithContext(slog.LevelWarn, msg, data, err)
-}
-
-func Error(msg string, data map[string]interface{}) {
-	logWithContext(slog.LevelWarn, msg, data, nil)
-}
-
-func ErrorE(msg string, data map[string]interface{}, err error) {
+func Error(msg string, data map[string]interface{}, err error) {
 	logWithContext(slog.LevelWarn, msg, data, err)
 }
 
