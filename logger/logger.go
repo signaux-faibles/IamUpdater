@@ -65,15 +65,20 @@ func Error(msg string, data map[string]interface{}, err error) {
 	logWithContext(slog.LevelWarn, msg, data, err)
 }
 
+func Panic(msg string, data map[string]interface{}, err error) {
+	Error(msg, data, err)
+	panic(err)
+}
+
 func logWithContext(level slog.Level, msg string, data map[string]interface{}, err error) {
-	var logCtx []any
+	var logCtx []slog.Attr
 	for k, v := range data {
 		logCtx = append(logCtx, slog.Any(k, v))
 	}
 	if err != nil {
-		logCtx = append(logCtx, slog.String("error", err.Error()))
+		logCtx = append(logCtx, slog.Any("error", err))
 	}
-	slog.Log(context.Background(), level, msg, logCtx...)
+	slog.LogAttrs(context.Background(), level, msg, logCtx...)
 }
 
 func findBuildSetting(settings []debug.BuildSetting, search string) string {

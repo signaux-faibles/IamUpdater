@@ -23,7 +23,7 @@ func UpdateKeycloak(
 	configuredUsername Username,
 	maxChangesToAccept int,
 ) error {
-	fields := logger.DataForMethod("UpdateAll")
+	fields := logger.ContextForMethod("UpdateAll")
 
 	if _, exists := users[configuredUsername]; !exists {
 		return errors.Errorf(
@@ -131,7 +131,7 @@ func UpdateKeycloak(
 }
 
 func areYouSureTooApplyChanges(changes, keeps, acceptedChanges int) bool {
-	fields := logger.DataForMethod("areYouSureTooApplyChanges")
+	fields := logger.ContextForMethod("areYouSureTooApplyChanges")
 	logger.Info("nombre d'utilisateurs à rajouter/supprimer/activer : "+strconv.Itoa(changes), fields)
 	logger.Info("nombre d'utilisateurs à conserver : "+strconv.Itoa(keeps), fields)
 	if keeps < 1 {

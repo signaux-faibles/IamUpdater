@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 	"strconv"
 	"testing"
@@ -41,6 +40,7 @@ const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
 
 func TestMain(m *testing.M) {
+	logContext := logger.ContextForMethode(TestMain)
 	var err error
 	pool, err := dockertest.NewPool("")
 	pool.MaxWait = time.Minute * 2
@@ -50,8 +50,7 @@ func TestMain(m *testing.M) {
 			Level:    "DEBUG",
 		})
 	if err != nil {
-		slog.Error("erreur pendant la connection à Docker", slog.Any("error", err))
-		panic(err)
+		logger.Panic("erreur pendant la connection à Docker", logContext, err)
 	}
 
 	keycloak := startKeycloak(pool)
@@ -67,12 +66,12 @@ func TestMain(m *testing.M) {
 }
 
 func kill(resource *dockertest.Resource) {
+	logContext := logger.ContextForMethode(kill)
 	if resource == nil {
 		return
 	}
 	if err := resource.Close(); err != nil {
-		slog.Error("erreur pendant la purge des ressources Docker", slog.Any("error", err))
-		panic(err)
+		logger.Panic("erreur pendant la purge des ressources Docker", logContext, err)
 	}
 }
 
@@ -81,12 +80,12 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		return nil
 	}
 	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
-	fields := logger.DataForMethod("startKeycloak")
+	logContext := logger.ContextForMethode(startKeycloak)
 
 	// pulls an image, creates a container based on it and runs it
 	keycloakContainerName := "keycloakUpdater-ti-" + strconv.Itoa(time.Now().Nanosecond())
-	fields.AddAny("container", keycloakContainerName)
-	logger.Info("Démarre keycloak", fields)
+	logContext.AddAny("container", keycloakContainerName)
+	logger.Info("Démarre keycloak", logContext)
 
 	keycloak, err := pool.RunWithOptions(
 		&dockertest.RunOptions{
@@ -110,39 +109,37 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 	)
 	if err != nil {
 		kill(keycloak)
-		logger.Error("Could not start keycloak", fields, err)
-		panic(err)
+		logger.Panic("Could not start keycloak", logContext, err)
 	}
 	// container stops after 120 seconds
 	if err = keycloak.Expire(600); err != nil {
 		kill(keycloak)
-		logger.Error("Could not set expiration on container keycloak", fields, err)
+		logger.Error("Could not set expiration on container keycloak", logContext, err)
 	}
 
-	slog.Info("keycloak a démarré avec l'admin", slog.String("name", keycloakAdmin))
+	logger.Info("keycloak a démarré avec l'admin", logContext.AddAny("name", keycloakAdmin))
 	keycloakPort := keycloak.GetPort("8080/tcp")
-	fields.AddAny("port", keycloakPort)
-	logger.Info("keycloak started", fields)
+	logContext.AddAny("port", keycloakPort)
+	logger.Info("keycloak started", logContext)
 	//exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	if err := pool.Retry(func() error {
 		var err error
 		kc, err = Init("http://localhost:"+keycloakPort+"/auth", "master", keycloakAdmin, keycloakPassword)
 		if err != nil {
-			logger.Info("keycloak n'est pas prêt", fields)
+			logger.Info("keycloak n'est pas prêt", logContext)
 			return err
 		}
 		return nil
 	}); err != nil {
-		slog.Error("erreur pendant la connexion à Keycloak", slog.Any("error", err))
-		panic(err)
+		logger.Panic("erreur pendant la connexion à Keycloak", logContext, err)
 	}
-	logger.Info("keycloak est prêt", fields)
+	logger.Info("keycloak est prêt", logContext)
 	return keycloak
 }
 
 func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 	dir, _ := os.Getwd()
-	fields := logger.DataForMethod("startWekanDB")
+	fields := logger.ContextForMethod("startWekanDB")
 	mongodbContainerName := "mongodb-ti-" + strconv.Itoa(time.Now().Nanosecond())
 	mongodb, err := pool.RunWithOptions(
 		&dockertest.RunOptions{
@@ -195,7 +192,7 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 
 func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *testing.T, slugDomainRegexp string) libwekan.Wekan {
 	databasename := t.Name() + suffix
-	fields := logger.DataForMethod("restoreMongoDump")
+	fields := logger.ContextForMethod("restoreMongoDump")
 	fields.AddAny("database", databasename)
 	var output bytes.Buffer
 	outputWriter := bufio.NewWriter(&output)
