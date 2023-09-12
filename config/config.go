@@ -8,7 +8,6 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 
-	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 	"github.com/signaux-faibles/keycloakUpdater/v2/structs"
 )
 
@@ -63,7 +62,12 @@ func getAllConfigFilenames(filename string) []string {
 	// checking file exist
 	var err error
 	if _, err = os.Open(filename); err != nil {
-		logger.Panicf("error reading clients config file : %s", err)
+		slog.Error(
+			"error pendant la lecture des du fichier de configuration",
+			slog.String("filename", filename),
+			slog.Any("error", err),
+		)
+		panic(err)
 	}
 	r = append(r, filename)
 	var files []os.DirEntry
@@ -79,11 +83,21 @@ func getAllConfigFilenames(filename string) []string {
 	stockFilename := config.Stock.UsersAndRolesFilename
 	if stockFilename != "" {
 		if _, err = os.ReadFile(stockFilename); err != nil {
-			logger.Panicf("error reading stock file '%s' : %s", stockFilename, err)
+			slog.Error(
+				"error pendant la lecture des du fichier stock",
+				slog.String("filename", stockFilename),
+				slog.Any("error", err),
+			)
+			panic(err)
 		}
 	}
 	if files, err = os.ReadDir(folder); err != nil {
-		logger.Panicf("error reading clients config folder : %s", err)
+		slog.Error(
+			"error pendant la lecture des clients Keycloak",
+			slog.Any("folder", folder),
+			slog.Any("error", err),
+		)
+		panic(err)
 	}
 	for _, f := range files {
 		filename := folder + "/" + f.Name()
@@ -101,7 +115,12 @@ func extractConfig(filename string) structs.Config {
 	var err error
 	var meta toml.MetaData
 	if meta, err = toml.DecodeFile(filename, &conf); err != nil {
-		logger.Panicf("error decoding toml config file '%s': %s", filename, err)
+		slog.Error(
+			"error pendant le décodage du fichier de configuration Toml",
+			slog.Any("filename", filename),
+			slog.Any("error", err),
+		)
+		panic(err)
 	}
 	if meta.Undecoded() != nil {
 		for _, key := range meta.Undecoded() {

@@ -50,16 +50,12 @@ func TestMain(m *testing.M) {
 			Level:    "DEBUG",
 		})
 	if err != nil {
-		logger.Panicf("Could not connect to docker: %s", err)
+		slog.Error("erreur pendant la connection à Docker", slog.Any("error", err))
+		panic(err)
 	}
 
-	var keycloak *dockertest.Resource
-
-	keycloak = startKeycloak(pool)
+	keycloak := startKeycloak(pool)
 	mongodb = startWekanDB(pool)
-	if err != nil {
-		logger.Panicf("Could not read excel test cases")
-	}
 
 	code := m.Run()
 
@@ -75,7 +71,8 @@ func kill(resource *dockertest.Resource) {
 		return
 	}
 	if err := resource.Close(); err != nil {
-		logger.Panicf("Could not purge resource: %s", err)
+		slog.Error("erreur pendant la purge des ressources Docker", slog.Any("error", err))
+		panic(err)
 	}
 }
 
@@ -114,6 +111,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 	if err != nil {
 		kill(keycloak)
 		logger.ErrorE("Could not start keycloak", fields, err)
+		panic(err)
 	}
 	// container stops after 120 seconds
 	if err = keycloak.Expire(600); err != nil {
@@ -135,7 +133,8 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		}
 		return nil
 	}); err != nil {
-		logger.Panicf("Could not connect to keycloak: %s", err)
+		slog.Error("erreur pendant la connexion à Keycloak", slog.Any("error", err))
+		panic(err)
 	}
 	logger.Info("keycloak est prêt", fields)
 	return keycloak

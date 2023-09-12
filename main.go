@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
+
 	"github.com/pkg/errors"
+
 	"github.com/signaux-faibles/keycloakUpdater/v2/config"
 	"github.com/signaux-faibles/keycloakUpdater/v2/logger"
 )
@@ -35,14 +38,16 @@ func main() {
 	logger.Info("lecture du fichier excel stock", fields)
 	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
 	if err != nil {
-		logger.Panic(err)
+		slog.Error("erreur pendant la lecture du fichier Excel", slog.Any("error", err))
+		panic(err)
 	}
 
 	if conf.Keycloak != nil {
 		clientId := conf.Stock.ClientForRoles
 		kc, err := NewKeycloakContext(conf.Keycloak)
 		if err != nil {
-			logger.Panic(err)
+			slog.Error("erreur pendant l'initialisation du contexte Keycloak'", slog.Any("error", err))
+			panic(err)
 		}
 
 		if err = UpdateKeycloak(
@@ -55,7 +60,8 @@ func main() {
 			Username(conf.Keycloak.Username),
 			conf.Stock.MaxChangesToAccept,
 		); err != nil {
-			logger.Panic(err)
+			slog.Error("erreur pendant la mise à jour de Keycloak", slog.Any("error", err))
+			panic(err)
 		}
 	}
 
