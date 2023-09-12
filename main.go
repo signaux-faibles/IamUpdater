@@ -31,7 +31,7 @@ func main() {
 	}
 
 	logger.ConfigureWith(*conf.Logger)
-	logContext := logger.ContextForMethode(main)
+	logContext := logger.ContextForMethod(main)
 
 	// loading desired state for users, composites roles
 	logger.Info("lecture du fichier excel stock", logContext)

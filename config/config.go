@@ -20,7 +20,7 @@ func OverrideConfig(original structs.Config, overridingFilename string) structs.
 		logger.Debug("pas de surcharge de configuration", nil)
 		return original
 	}
-	logContext := logger.ContextForMethode(OverrideConfig)
+	logContext := logger.ContextForMethod(OverrideConfig)
 	logger.Info("surcharge de configuration", logContext.AddAny("filename", overridingFilename))
 	overridingConfig, err := initConfig(overridingFilename, true)
 	if err != nil {
@@ -41,7 +41,7 @@ func initConfig(configFilename string, quietly bool) (structs.Config, error) {
 
 	logger.Info(
 		"config files",
-		logger.ContextForMethode(initConfig).AddArray("filenames", filenames),
+		logger.ContextForMethod(initConfig).AddArray("filenames", filenames),
 	)
 	allConfig := readAllConfigFiles(filenames)
 	for _, current := range allConfig {
@@ -64,7 +64,7 @@ func readAllConfigFiles(filenames []string) []structs.Config {
 
 func getAllConfigFilenames(filename string) []string {
 	var r = make([]string, 0)
-	logContext := logger.ContextForMethode(getAllConfigFilenames)
+	logContext := logger.ContextForMethod(getAllConfigFilenames)
 	// checking file exist
 	var err error
 	if _, err = os.Open(filename); err != nil {
@@ -114,7 +114,7 @@ func getAllConfigFilenames(filename string) []string {
 }
 
 func extractConfig(filename string) structs.Config {
-	logContext := logger.ContextForMethode(extractConfig)
+	logContext := logger.ContextForMethod(extractConfig)
 	var conf structs.Config
 	var err error
 	var meta toml.MetaData

@@ -12,7 +12,7 @@ import (
 // Calcule et insère les règles manquantes pour correspondre à la configuration Users
 // Ajuste la participation des utilisateurs aux cartes concernées par les labels en cas de changement
 func addMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
-	fields := logger.ContextForMethod("addMissingRulesAndCardMembership")
+	fields := logger.ContextForMethod(addMissingRulesAndCardMembership)
 	logger.Info("> ajoute les nouvelles règles", fields)
 	occurence := 0
 	for _, user := range users {
@@ -52,14 +52,14 @@ func addMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 		}
 	}
 	if occurence == 0 {
-		fields = logger.ContextForMethod("addMissingRulesAndCardMembership")
+		fields = logger.ContextForMethod(addMissingRulesAndCardMembership)
 		logger.Info("> aucune règle à ajouter", fields)
 	}
 	return nil
 }
 
 func EnsureRuleAddTaskforceMemberExists(wekan libwekan.Wekan, wekanUser libwekan.User, board libwekan.Board, label libwekan.BoardLabel) (int, error) {
-	fields := logger.ContextForMethod("EnsureRuleAddTaskforceMemberExists")
+	fields := logger.ContextForMethod(EnsureRuleAddTaskforceMemberExists)
 	fields.AddAny("username", wekanUser.Username)
 	fields.AddAny("board", board.Slug)
 	fields.AddAny("label", label.Name)
@@ -74,7 +74,7 @@ func EnsureRuleAddTaskforceMemberExists(wekan libwekan.Wekan, wekanUser libwekan
 }
 
 func EnsureRuleRemoveTaskforceMemberExists(wekan libwekan.Wekan, wekanUser libwekan.User, board libwekan.Board, label libwekan.BoardLabel) (int, error) {
-	fields := logger.ContextForMethod("EnsureRuleRemoveTaskforceMemberExists")
+	fields := logger.ContextForMethod(EnsureRuleRemoveTaskforceMemberExists)
 	fields.AddAny("username", wekanUser.Username)
 	fields.AddAny("board", board.Slug)
 	fields.AddAny("label", label.Name)
@@ -92,7 +92,7 @@ func EnsureRuleRemoveTaskforceMemberExists(wekan libwekan.Wekan, wekanUser libwe
 // Calcule et insert les règles manquantes pour correspondre à la configuration Users
 // Ajuste la participation des utilisateurs aux cartes concernées par les labels en cas de changement
 func removeExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error {
-	fields := logger.ContextForMethod("RemoveExtraRulesAndCardMembership")
+	fields := logger.ContextForMethod(removeExtraRulesAndCardsMembership)
 	logger.Info("> supprime les règles obsolètes", fields)
 	domainBoards, err := wekan.SelectDomainBoards(context.Background())
 	if err != nil {
@@ -142,7 +142,7 @@ func userHasTaskforceLabel(user User) func(label libwekan.BoardLabel) bool {
 }
 
 func removeCardMembership(wekan libwekan.Wekan, wekanUsername libwekan.Username, board libwekan.Board, label libwekan.BoardLabel) error {
-	fields := logger.ContextForMethod("removeCardMembership")
+	fields := logger.ContextForMethod(removeCardMembership)
 	fields.AddAny("username", wekanUsername)
 	fields.AddAny("label", label.Name)
 	fields.AddAny("board", board.Slug)
@@ -176,7 +176,7 @@ func removeCardMembership(wekan libwekan.Wekan, wekanUsername libwekan.Username,
 }
 
 func addCardMemberShip(wekan libwekan.Wekan, wekanUser libwekan.User, board libwekan.Board, label libwekan.BoardLabel) error {
-	fields := logger.ContextForMethod("AddCardMembership")
+	fields := logger.ContextForMethod(addCardMemberShip)
 	fields.AddAny("username", wekanUser.Username)
 	fields.AddAny("label", label.Name)
 	fields.AddAny("board", board.Slug)

@@ -38,7 +38,7 @@ const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
 
 func TestMain(m *testing.M) {
-	logContext := logger.ContextForMethode(TestMain)
+	logContext := logger.ContextForMethod(TestMain)
 	var err error
 	pool, err := dockertest.NewPool("")
 	pool.MaxWait = time.Minute * 2
@@ -64,7 +64,7 @@ func TestMain(m *testing.M) {
 }
 
 func kill(resource *dockertest.Resource) {
-	logContext := logger.ContextForMethode(kill)
+	logContext := logger.ContextForMethod(kill)
 	if resource == nil {
 		return
 	}
@@ -78,7 +78,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		return nil
 	}
 	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
-	logContext := logger.ContextForMethode(startKeycloak)
+	logContext := logger.ContextForMethod(startKeycloak)
 
 	// pulls an image, creates a container based on it and runs it
 	keycloakContainerName := "keycloakUpdater-ti-" + strconv.Itoa(time.Now().Nanosecond())
@@ -137,7 +137,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 
 func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 	dir, _ := os.Getwd()
-	fields := logger.ContextForMethod("startWekanDB")
+	fields := logger.ContextForMethod(startWekanDB)
 	mongodbContainerName := "mongodb-ti-" + strconv.Itoa(time.Now().Nanosecond())
 	mongodb, err := pool.RunWithOptions(
 		&dockertest.RunOptions{
@@ -190,7 +190,7 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 
 func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *testing.T, slugDomainRegexp string) libwekan.Wekan {
 	databasename := t.Name() + suffix
-	fields := logger.ContextForMethod("restoreMongoDump")
+	fields := logger.ContextForMethod(restoreMongoDumpInDatabase)
 	fields.AddAny("database", databasename)
 	var output bytes.Buffer
 	outputWriter := bufio.NewWriter(&output)
