@@ -12,7 +12,7 @@ func merge(first structs.Config, second structs.Config) structs.Config {
 	allClients := concatClients(first.Clients, second.Clients)
 	err := mergo.Merge(&first, second, mergo.WithOverride)
 	if err != nil {
-		logger.Error("erreur pendant le merging de la configuration", logger.ContextForMethod(merge), err)
+		logger.Panic("erreur pendant le merging de la configuration", logger.ContextForMethod(merge), err)
 	}
 	first.Clients = allClients
 	return first

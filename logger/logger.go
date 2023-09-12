@@ -72,8 +72,10 @@ func Panic(msg string, data *LogContext, err error) {
 
 func logWithContext(level slog.Level, msg string, data *LogContext, err error) {
 	var logCtx []slog.Attr
-	for _, v := range *data {
-		logCtx = append(logCtx, v)
+	if data != nil {
+		for _, v := range *data {
+			logCtx = append(logCtx, v)
+		}
 	}
 	if err != nil {
 		logCtx = append(logCtx, slog.Any("error", err))
