@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 
@@ -22,7 +23,7 @@ func UpdateKeycloak(
 	configuredUsername Username,
 	maxChangesToAccept int,
 ) error {
-	logContext := logger.ContextForMethod(UpdateKeycloak)
+	logContext := logger.ContextForMethod(UpdateKeycloak).AddString("client", clientId)
 
 	if _, exists := users[configuredUsername]; !exists {
 		return errors.Errorf(
@@ -50,7 +51,7 @@ func UpdateKeycloak(
 	changes := len(missing) + len(obsolete) + len(update)
 	keeps := len(current)
 	if sure := areYouSureTooApplyChanges(changes, keeps, maxChangesToAccept); !sure {
-		return errors.New("Trop de modifications utilisateurs.")
+		return errors.New("trop de modifications utilisateurs.")
 	}
 
 	// gather roles, newRoles are created before users, oldRoles are deleted after users
@@ -74,6 +75,7 @@ func UpdateKeycloak(
 		logger.Panic("erreur pendant l'écriture des nouveaux rôles", logContext, err)
 	}
 	if i > 0 {
+		slices.Sort(newRoles)
 		logger.Notice("rôles créés", logContext.Clone().AddAny("size", i).AddArray("roles", newRoles))
 	} else {
 		logger.Info("pas de rôle à créer", logContext)
@@ -128,19 +130,22 @@ func UpdateKeycloak(
 }
 
 func areYouSureTooApplyChanges(changes, keeps, acceptedChanges int) bool {
-	fields := logger.ContextForMethod(areYouSureTooApplyChanges)
-	logger.Info("nombre d'utilisateurs à rajouter/supprimer/activer : "+strconv.Itoa(changes), fields)
-	logger.Info("nombre d'utilisateurs à conserver : "+strconv.Itoa(keeps), fields)
+	logContext := logger.ContextForMethod(areYouSureTooApplyChanges)
+	logger.Notice("utilisateurs à rajouter/supprimer/activer", logContext.Clone().AddInt("nombre", changes))
+	logger.Info("utilisateurs à conserver", logContext.Clone().AddInt("nombre", keeps))
 	if keeps < 1 {
-		fmt.Println("Aucun utilisateur à conserver -> Refus de prendre en compte les changements.")
+		logger.Warn("aucun utilisateur à conserver -> Refus de prendre en compte les changements.", logContext)
 		return false
 	}
 	if acceptedChanges <= 0 {
-		fmt.Println("Tous les changements sont acceptés (acceptedChanges: " + strconv.Itoa(changes) + ")")
+		logger.Info("tous les changements sont acceptés", logContext.Clone().AddInt("changements", changes))
 		return true
 	}
 	if changes > acceptedChanges {
-		fmt.Println("Trop de changements à prendre en compte. (Max : " + strconv.Itoa(acceptedChanges) + ")")
+		logger.Warn(
+			"trop de changements à prendre en compte.",
+			logContext.Clone().AddInt("max", acceptedChanges).AddInt("current", changes),
+		)
 		return false
 	}
 	// pas trop de modif

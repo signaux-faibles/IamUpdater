@@ -191,26 +191,26 @@ func (kc *KeycloakContext) CreateUsers(users []gocloak.User, userMap Users, clie
 	if err != nil {
 		return err
 	}
+	logContext := logger.ContextForMethod(kc.CreateUsers).AddString("clientId", clientName)
 	for _, user := range users {
-		fields := logger.ContextForMethod(kc.CreateUsers)
-		fields.AddUser(user)
-		logger.Info("crée l'utilisateur Keycloak", fields)
+		userLogContext := logContext.Clone().AddUser(user)
+		logger.Notice("crée l'utilisateur Keycloak", userLogContext)
 		u, err := kc.API.CreateUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), user)
 		if err != nil {
-			logger.Error("Erreur keycloak pendant la création de l'utilisateur", fields, err)
+			logger.Error("erreur keycloak pendant la création de l'utilisateur", userLogContext, err)
 		}
 
 		configRoles := userMap[Username(*user.Username)].getRoles()
 		roles := kc.FindKeycloakRoles(clientName, configRoles)
-		fields.AddRoles(roles)
+		userLogContext.AddRoles(roles)
 		if roles != nil {
-			logger.Info("adding roles to user", fields)
+			logger.Notice("ajoute les rôles à l'utilisateur", userLogContext)
 			if err = kc.AddClientRolesToUser(internalID, u, roles); err != nil {
-				logger.Error("error adding client roles", fields, err)
+				logger.Error("erreur pendant l'ajout des rôles à l'utilisateur", userLogContext, err)
 				return err
 			}
 		} else {
-			logger.Warn("no role to add to user", fields)
+			logger.Warn("pas de rôle à ajouter au nouvel utilisateur", userLogContext)
 		}
 	}
 
@@ -285,7 +285,7 @@ func (kc *KeycloakContext) EnableUsers(users []gocloak.User) error {
 
 // UpdateCurrentUsers sets client roles on specified users according userMap
 func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users, clientName string) error {
-	fields := logger.ContextForMethod(kc.UpdateCurrentUsers)
+	logContext := logger.ContextForMethod(kc.UpdateCurrentUsers)
 	accountInternalID, err := kc.GetInternalIDFromClientID("account")
 	if err != nil {
 		return err
@@ -296,7 +296,7 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 	}
 
 	for _, user := range users {
-		fields.AddUser(user)
+		logContext.AddUser(user)
 		roles, err := kc.API.GetClientRolesByUserID(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalID, *user.ID)
 		if err != nil {
 			return err
@@ -319,44 +319,41 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 				LastName:   &u.nom,
 				Attributes: ug.Attributes,
 			}
-			logger.Info("updating user name and attributes", fields)
+			logger.Info("met à jour l'utilisateur et ses attributs", logContext.AddAny("update", update))
 			err := kc.API.UpdateUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), update)
 			if err != nil {
-				logger.Error("failed to update user names", fields, err)
+				logger.Error("erreur pendant la mise à jour de l'utilisateur", logContext, err)
 				return err
 			}
 		}
 
 		novel, old := userMap[Username(*user.Username)].getRoles().compare(rolesFromGocloakRoles(roles))
 		if len(old) > 0 {
-			fields.AddArray("oldRoles", old)
-			logger.Info("deleting unused roles", fields)
+			oldRolesLogContext := logContext.Clone().AddArray("oldRoles", old)
+			logger.Info("retire les rôles inutilisés", oldRolesLogContext)
 			err = kc.API.DeleteClientRolesFromUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), internalID, *user.ID, kc.FindKeycloakRoles(clientName, old))
 			if err != nil {
-				logger.Error("failed to delete roles", fields, err)
+				logger.Error("failed to delete roles", oldRolesLogContext, err)
 			}
-			fields.Remove("oldRoles")
 		}
 
 		if len(novel) > 0 {
-			fields.AddArray("novelRoles", novel)
-			logger.Info("adding missing roles", fields)
+			novelRolesLogContext := logContext.Clone().AddArray("novelRoles", novel)
+			logger.Info("adding missing roles", novelRolesLogContext)
 			keycloakRoles := kc.FindKeycloakRoles(clientName, novel)
 			err = kc.AddClientRolesToUser(internalID, *user.ID, keycloakRoles)
 			if err != nil {
-				logger.Error("failed to add roles", fields, err)
+				logger.Error("failed to add roles", novelRolesLogContext, err)
 			}
-			fields.Remove("novelRoles")
 		}
 
 		if len(accountRoles) > 0 {
-			fields.AddArray("accountRoles", accountRoles)
-			logger.Info("disabling account management", fields)
+			accountRolesLogContext := logContext.Clone().AddArray("accountRoles", accountRoles)
+			logger.Info("disabling account management", accountRolesLogContext)
 			err = kc.API.DeleteClientRolesFromUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), accountInternalID, *user.ID, kc.FindKeycloakRoles("account", accountRoles))
 			if err != nil {
-				logger.Error("failed to disable management", fields, err)
+				logger.Error("failed to disable management", accountRolesLogContext, err)
 			}
-			fields.Remove("accountRoles")
 		}
 	}
 
@@ -365,16 +362,14 @@ func (kc KeycloakContext) UpdateCurrentUsers(users []gocloak.User, userMap Users
 
 // SaveMasterRealm update master Realm
 func (kc *KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
-	fields := logger.ContextForMethod(kc.SaveMasterRealm)
+	logContext := logger.ContextForMethod(kc.SaveMasterRealm)
 	id := "master"
 	input.ID = &id
 	input.Realm = &id
-	logger.Info("met à jour le Realm", fields)
+	logger.Info("met à jour le Realm", logContext.AddString("realm", id))
 	if err := kc.API.UpdateRealm(context.Background(), kc.JWT.AccessToken, input); err != nil {
-		logger.Error("Error when updating Realm ", fields, err)
-		panic(err)
+		logger.Panic("Erreur pendant la mise à jour du Realm ", logContext, err)
 	}
-
 	kc.refreshRealm(*input.Realm)
 }
 
@@ -403,24 +398,22 @@ func (kc *KeycloakContext) SaveClients(input []*gocloak.Client) error {
 }
 
 func (kc KeycloakContext) saveClient(input gocloak.Client) error {
-	fields := logger.ContextForMethod(kc.saveClient)
-	fields.AddClient(input)
-	//kc.refreshClients()
+	logContext := logger.ContextForMethod(kc.saveClient).AddClient(input)
 	id, found := kc.GetQuietlyInternalIDFromClientID(*input.ClientID)
 	// need client creation
 	if !found {
-		logger.Info("create client", fields)
+		logger.Info("crée le client Keycloak", logContext)
 		createdId, err := kc.API.CreateClient(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), input)
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		fields.AddAny("id", createdId)
+		logContext.AddAny("id", createdId)
 		return nil
 	}
 	// update client
 	input.ID = &id
 	if err := kc.API.UpdateClient(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), input); err != nil {
-		logger.Info("update client", fields)
+		logger.Info("update client", logContext)
 		return errors.Wrap(err, "error updating client")
 	}
 	return nil

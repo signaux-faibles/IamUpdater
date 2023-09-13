@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/Nerzal/gocloak/v13"
 
@@ -46,6 +47,8 @@ func (roles Roles) compare(otherRoles Roles) (Roles, Roles) {
 			toDelete.add(r)
 		}
 	}
+	slices.Sort(toCreate)
+	slices.Sort(toDelete)
 	return toCreate, toDelete
 }
 
@@ -118,7 +121,7 @@ func (kc KeycloakContext) ComposeRoles(clientID string, compositeRoles Composite
 				continue
 			}
 		}
-		logger.Debug("ajoute les roles composites", logContext)
+		logger.Info("ajoute les roles composites", logContext)
 		err := kc.API.AddClientRoleComposite(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), *gocloakRole.ID, gocloakRoles)
 		if err != nil {
 			logger.Error("erreur Keycloak", logContext, err)
