@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"context"
 	"log/slog"
 	"os"
 	"testing"
@@ -21,14 +20,14 @@ func Test_level_Trace(t *testing.T) {
 		TimestampFormat: time.DateTime,
 	}
 	ConfigureWith(traceloggerConfig)
-	slog.Log(context.Background(), LevelTrace, "message de Trace")
-	slog.Log(context.Background(), slog.LevelDebug, "message de Debug")
+	Trace("message de Trace", nil)
+	Debug("message de Debug", nil)
 
 	var logsFromFile []byte
 	var err error
 	logsFromFile, err = os.ReadFile(traceloggerConfig.Filename)
 	ass.NoError(err)
-	ass.Contains(string(logsFromFile), "level="+LevelTraceName)
+	ass.Contains(string(logsFromFile), "level="+levelTraceName)
 	ass.Contains(string(logsFromFile), "level="+slog.LevelDebug.String())
 }
 
@@ -37,19 +36,19 @@ func Test_level_Notice(t *testing.T) {
 
 	noticeloggerConfig := structs.LoggerConfig{
 		Filename:        createTempFilename(t),
-		Level:           LevelNoticeName,
+		Level:           levelNoticeName,
 		TimestampFormat: time.DateTime,
 	}
 	ConfigureWith(noticeloggerConfig)
-	slog.Log(context.Background(), slog.LevelInfo, "message d'Info")
-	slog.Log(context.Background(), LevelNotice, "message de Notice")
-	slog.Log(context.Background(), slog.LevelWarn, "message de Warn")
+	Info("message d'Info", nil)
+	Notice("message de Notice", nil)
+	Warn("message de Warn", nil)
 
 	var logsFromFile []byte
 	var err error
 	logsFromFile, err = os.ReadFile(noticeloggerConfig.Filename)
 	ass.NoError(err)
 	ass.NotContains(string(logsFromFile), "level="+slog.LevelInfo.String())
-	ass.Contains(string(logsFromFile), "level="+LevelNoticeName)
+	ass.Contains(string(logsFromFile), "level="+levelNoticeName)
 	ass.Contains(string(logsFromFile), "level="+slog.LevelWarn.String())
 }

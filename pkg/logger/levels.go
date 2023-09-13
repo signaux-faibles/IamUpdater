@@ -8,15 +8,15 @@ import (
 )
 
 const (
-	LevelTrace      = slog.Level(-8)
-	LevelNotice     = slog.Level(2)
-	LevelTraceName  = "TRACE"
-	LevelNoticeName = "NOTICE"
+	levelTrace      = slog.Level(-8)
+	levelNotice     = slog.Level(2)
+	levelTraceName  = "TRACE"
+	levelNoticeName = "NOTICE"
 )
 
 var levelNames = map[slog.Leveler]string{
-	LevelTrace:  LevelTraceName,
-	LevelNotice: LevelNoticeName,
+	levelTrace:  levelTraceName,
+	levelNotice: levelNoticeName,
 }
 
 func customizeLogLevelNames() func(groups []string, a slog.Attr) slog.Attr {
@@ -44,10 +44,10 @@ func parseLogLevel(logLevel string) (slog.Level, error) {
 	case "ERROR":
 		return slog.LevelError, nil
 		// custom levels
-	case LevelTraceName:
-		return LevelTrace, nil
-	case LevelNoticeName:
-		return LevelNotice, nil
+	case levelTraceName:
+		return levelTrace, nil
+	case levelNoticeName:
+		return levelNotice, nil
 	default:
 		return slog.LevelWarn, errors.New("log level inconnu : '" + logLevel + "'")
 	}

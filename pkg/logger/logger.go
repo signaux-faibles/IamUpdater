@@ -49,12 +49,20 @@ func ConfigureWith(config structs.LoggerConfig) {
 	))
 }
 
+func Trace(msg string, data *LogContext) {
+	logWithContext(levelTrace, msg, data, nil)
+}
+
 func Debug(msg string, data *LogContext) {
 	logWithContext(slog.LevelDebug, msg, data, nil)
 }
 
 func Info(msg string, data *LogContext) {
 	logWithContext(slog.LevelInfo, msg, data, nil)
+}
+
+func Notice(msg string, data *LogContext) {
+	logWithContext(levelNotice, msg, data, nil)
 }
 
 func Warn(msg string, data *LogContext) {
