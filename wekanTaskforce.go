@@ -24,7 +24,7 @@ func addMissingRulesAndCardMembership(wekan libwekan.Wekan, users Users) error {
 		}
 
 		for _, boardSlug := range user.boards {
-			fields.AddAny("board", boardSlug)
+			fields.AddString("board", boardSlug)
 			logger.Debug(">>> examine le tableau", fields)
 			board, err := wekan.GetBoardFromSlug(context.Background(), libwekan.BoardSlug(boardSlug))
 			if err != nil {
