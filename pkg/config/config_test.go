@@ -26,9 +26,9 @@ func Test_InitConfig(t *testing.T) {
 	ass.Equal(expectedKeycloak, *config.Keycloak)
 
 	expectedStock := structs.Stock{
-		ClientsAndRealmFolder: "../test/sample/test_config.d",
+		ClientsAndRealmFolder: "../../test/sample/test_config.d",
 		ClientForRoles:        "signauxfaibles",
-		UsersAndRolesFilename: "../test/sample/userBase.xlsx",
+		UsersAndRolesFilename: "../../test/sample/userBase.xlsx",
 		BoardsConfigFilename:  "",
 		MaxChangesToAccept:    0,
 	}
@@ -76,7 +76,7 @@ func Test_OverrideConfig(t *testing.T) {
 	ass.Equal(expectedKeycloak, *overrided.Keycloak)
 
 	expectedStock := structs.Stock{
-		ClientsAndRealmFolder: "../test/sample/test_config.d",
+		ClientsAndRealmFolder: "../../test/sample/test_config.d",
 		ClientForRoles:        "signauxfaibles",
 		UsersAndRolesFilename: "empty_test_file.txt",
 		BoardsConfigFilename:  "",
@@ -91,9 +91,9 @@ func Test_getAllConfigFilenames(t *testing.T) {
 	currentConfigFile := "test_config.toml"
 	expected := []string{
 		currentConfigFile,
-		"../test/sample/test_config.d/another.toml",
-		"../test/sample/test_config.d/realm_master.toml",
-		"../test/sample/test_config.d/client_signauxfaibles.toml",
+		"../../test/sample/test_config.d/another.toml",
+		"../../test/sample/test_config.d/realm_master.toml",
+		"../../test/sample/test_config.d/client_signauxfaibles.toml",
 	}
 
 	// using the function
