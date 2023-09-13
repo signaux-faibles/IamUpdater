@@ -79,7 +79,7 @@ func main() {
 		fmt.Println("======= Détail de l'erreur")
 		printErrChain(err, 0)
 	} else {
-		logger.Info("le traitement s'est terminé correctement", logContext)
+		logger.Notice("le traitement s'est terminé correctement", logContext)
 	}
 }
 
