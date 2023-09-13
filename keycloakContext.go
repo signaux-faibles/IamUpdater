@@ -28,10 +28,10 @@ func NewKeycloakContext(access *structs.Keycloak) (KeycloakContext, error) {
 
 // Init provides a connected keycloak context object
 func Init(hostname, realm, username, password string) (KeycloakContext, error) {
-	fields := logger.ContextForMethod(Init)
-	fields.AddAny("path", hostname)
-	fields.AddAny("realm", realm)
-	fields.AddAny("user", username)
+	fields := logger.ContextForMethod(Init).
+		AddString("path", hostname).
+		AddString("realm", realm).
+		AddString("user", username)
 
 	logger.Info("initialize KeycloakContext [START]", fields)
 	kc := KeycloakContext{}
@@ -380,7 +380,7 @@ func (kc *KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
 
 func (kc *KeycloakContext) refreshRealm(realmName string) {
 	logContext := logger.ContextForMethod(kc.refreshRealm)
-	logger.Debug("refresh Realm", logContext.AddAny("realm", realmName))
+	logger.Debug("refresh Realm", logContext.AddString("realm", realmName))
 	realm, err := kc.API.GetRealm(context.Background(), kc.JWT.AccessToken, realmName)
 	if err != nil {
 		logger.Panic("Erreur pendant la récupération du Realm", logContext, err)

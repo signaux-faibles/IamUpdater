@@ -82,7 +82,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 
 	// pulls an image, creates a container based on it and runs it
 	keycloakContainerName := "keycloakUpdater-ti-" + strconv.Itoa(time.Now().Nanosecond())
-	logContext.AddAny("container", keycloakContainerName)
+	logContext.AddString("container", keycloakContainerName)
 	logger.Info("Démarre keycloak", logContext)
 
 	keycloak, err := pool.RunWithOptions(
