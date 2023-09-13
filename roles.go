@@ -6,7 +6,7 @@ import (
 
 	"github.com/Nerzal/gocloak/v13"
 
-	"keycloakUpdater/v2/logger"
+	"keycloakUpdater/v2/pkg/logger"
 )
 
 // Roles is role collection in []string with some handy functions attached

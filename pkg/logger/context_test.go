@@ -19,7 +19,7 @@ func Test_Context_addSomeFields(t *testing.T) {
 	ass.Equal((*logContext)[2].Value.String(), "c'est encore mieux")
 }
 
-func Test_Context_reomveSomeField(t *testing.T) {
+func Test_Context_removeField(t *testing.T) {
 	ass := assert.New(t)
 	logContext := ContextForMethod(Test_Context_addSomeFields).
 		AddAny("to remove", fake.Lorem().Word()).

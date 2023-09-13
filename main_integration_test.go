@@ -20,8 +20,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"keycloakUpdater/v2/logger"
-	"keycloakUpdater/v2/structs"
+	"keycloakUpdater/v2/pkg/logger"
+	"keycloakUpdater/v2/pkg/structs"
 )
 
 var kc KeycloakContext

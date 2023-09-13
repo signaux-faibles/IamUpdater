@@ -6,7 +6,7 @@ import (
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/stretchr/testify/assert"
 
-	"keycloakUpdater/v2/structs"
+	"keycloakUpdater/v2/pkg/structs"
 )
 
 func Test_merge(t *testing.T) {

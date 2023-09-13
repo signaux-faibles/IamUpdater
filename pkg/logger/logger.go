@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	slogmulti "github.com/samber/slog-multi"
 
-	"keycloakUpdater/v2/structs"
+	"keycloakUpdater/v2/pkg/structs"
 )
 
 var loglevel *slog.LevelVar
