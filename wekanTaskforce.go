@@ -67,7 +67,7 @@ func EnsureRuleAddTaskforceMemberExists(wekan libwekan.Wekan, wekanUser libwekan
 	if modified, err := wekan.EnsureRuleAddTaskforceMemberExists(context.Background(), wekanUser, board, label); err != nil {
 		return 0, err
 	} else if modified {
-		logger.Notice(">>> crée de la règle d'ajout à la taskforce", logContext)
+		logger.Notice(">>> crée la règle d'ajout à la taskforce", logContext)
 		return 1, nil
 	}
 	return 0, nil
@@ -140,7 +140,7 @@ func removeExtraRulesAndCardsMembership(wekan libwekan.Wekan, users Users) error
 	if deleted == 0 {
 		logContext.Remove("board")
 		logContext.Remove("rule")
-		logger.Notice("> aucune règle à supprimer", logContext)
+		logger.Info("> aucune règle à supprimer", logContext)
 	}
 	return nil
 }
@@ -165,7 +165,6 @@ func removeCardMembership(wekan libwekan.Wekan, wekanUsername libwekan.Username,
 		return err
 	}
 	var occurences int
-	cardsToBeRemoved := make([]string, 0)
 	for _, card := range boardCards {
 		if contains(card.LabelIDs, label.ID) {
 			modified, err := wekan.EnsureMemberOutOfCard(context.Background(), card.ID, wekanUser.ID)
@@ -173,7 +172,6 @@ func removeCardMembership(wekan libwekan.Wekan, wekanUsername libwekan.Username,
 				return err
 			}
 			if modified {
-				cardsToBeRemoved = append(cardsToBeRemoved, card.Title)
 				occurences += 1
 			}
 		}
@@ -181,8 +179,8 @@ func removeCardMembership(wekan libwekan.Wekan, wekanUsername libwekan.Username,
 	if occurences > 0 {
 		logContext.AddAny("occurences", occurences)
 		logger.Info(
-			">>> radie l'utilisateur des cartes",
-			logContext.AddInt("occurences", occurences).AddArray("cards", cardsToBeRemoved),
+			">>> radie l'utilisateur des cartes du board",
+			logContext.AddInt("occurences", occurences),
 		)
 	}
 	return nil
@@ -202,7 +200,6 @@ func addCardMemberShip(wekan libwekan.Wekan, wekanUser libwekan.User, board libw
 		return err
 	}
 	var occurences int
-	cardsToBeAdded := make([]string, 0)
 	for _, card := range boardCards {
 		if contains(card.LabelIDs, label.ID) {
 			modified, err := wekan.EnsureMemberInCard(context.Background(), card.ID, wekanUser.ID)
@@ -210,15 +207,14 @@ func addCardMemberShip(wekan libwekan.Wekan, wekanUser libwekan.User, board libw
 				return err
 			}
 			if modified {
-				cardsToBeAdded = append(cardsToBeAdded, card.Title)
 				occurences++
 			}
 		}
 	}
 	if occurences > 0 {
 		logger.Notice(
-			">>> inscrit l'utilisateur sur les cartes",
-			logContext.AddInt("occurences", occurences).AddArray("cards", cardsToBeAdded),
+			">>> inscrit l'utilisateur sur les cartes du board",
+			logContext.AddInt("occurences", occurences),
 		)
 	}
 	return nil
