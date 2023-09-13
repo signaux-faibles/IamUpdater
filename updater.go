@@ -74,9 +74,9 @@ func UpdateKeycloak(
 		logger.Panic("erreur pendant l'écriture des nouveaux rôles", logContext, err)
 	}
 	if i > 0 {
-		logger.Info("rôles créés", logContext.Clone().AddAny("size", i).AddArray("roles", newRoles))
+		logger.Notice("rôles créés", logContext.Clone().AddAny("size", i).AddArray("roles", newRoles))
 	} else {
-		logger.Debug("pas de rôle à créer", logContext)
+		logger.Info("pas de rôle à créer", logContext)
 	}
 
 	// check and adjust composite roles
