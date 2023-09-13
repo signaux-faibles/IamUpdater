@@ -16,6 +16,7 @@ func configFormatters(timeFormat string) slogmulti.Middleware {
 		clientFormatter(),
 		singleRoleFormatter(),
 		manyRolesFormatter(),
+		wekanBoardLabelFormatter(),
 	)
 	return formattingMiddleware
 }

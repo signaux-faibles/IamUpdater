@@ -30,10 +30,10 @@ func (pipeline Pipeline) Run(wekan libwekan.Wekan, fromConfig Users) error {
 }
 
 func (pipeline Pipeline) StopAfter(wekan libwekan.Wekan, fromConfig Users, lastStage PipelineStage) error {
-	fields := logger.ContextForMethod(pipeline.StopAfter)
+	logContext := logger.ContextForMethod(pipeline.StopAfter)
 	for _, stage := range pipeline {
-		fields.AddAny("stage", stage.id)
-		logger.Debug("applique le pipeline", fields)
+		logContext.AddString("stage", stage.id)
+		logger.Debug("applique le pipeline", logContext)
 		err := stage.run(wekan, fromConfig)
 		if err != nil || stage.id == lastStage.id {
 			return err
