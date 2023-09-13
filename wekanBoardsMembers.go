@@ -31,8 +31,7 @@ func manageBoardsMembers(wekan libwekan.Wekan, fromConfig Users) error {
 }
 
 func updateBoardMembers(wekan libwekan.Wekan, boardSlug libwekan.BoardSlug, boardMembers Users) error {
-	fields := logger.ContextForMethod(updateBoardMembers)
-	fields.AddAny("board", boardSlug)
+	fields := logger.ContextForMethod(updateBoardMembers).AddAny("board", boardSlug)
 	board, err := wekan.GetBoardFromSlug(context.Background(), boardSlug)
 	if err != nil {
 		return err
