@@ -73,7 +73,10 @@ func UpdateKeycloak(
 	if err != nil {
 		logger.Panic("erreur pendant l'écriture des nouveaux rôles", logContext, err)
 	}
-	logger.Info("roles created", logContext.AddAny("size", i))
+	if i > 0 {
+
+		logger.Info("créations des rôles", logContext.AddAny("size", i))
+	}
 
 	// check and adjust composite roles
 	if err = kc.ComposeRoles(clientId, compositeRoles); err != nil {

@@ -2,6 +2,7 @@ package logger
 
 import (
 	"log/slog"
+	"maps"
 	"reflect"
 	"runtime"
 	"strings"
@@ -63,6 +64,7 @@ func (d *LogContext) Remove(key string) *LogContext {
 	return d
 }
 
-func (d *LogContext) addError(err error) *LogContext {
-	return d.AddAny("error", err)
+func (d *LogContext) Clone() *LogContext {
+	clone := maps.Clone(*d)
+	return &clone
 }
