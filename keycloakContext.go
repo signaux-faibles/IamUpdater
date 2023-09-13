@@ -33,7 +33,7 @@ func Init(hostname, realm, username, password string) (KeycloakContext, error) {
 		AddString("realm", realm).
 		AddString("user", username)
 
-	logger.Info("initialize KeycloakContext [START]", fields)
+	logger.Info("initialize KeycloakContext", fields.AddString("status", "START"))
 	kc := KeycloakContext{}
 	kc.API = gocloak.NewClient(hostname)
 	var err error
@@ -74,7 +74,7 @@ func Init(hostname, realm, username, password string) (KeycloakContext, error) {
 	if err != nil {
 		return KeycloakContext{}, err
 	}
-	logger.Info("initialize KeycloakContext [DONE]", fields)
+	logger.Info("initialize KeycloakContext", fields.AddString("status", "END"))
 	return kc, nil
 }
 
@@ -369,7 +369,7 @@ func (kc *KeycloakContext) SaveMasterRealm(input gocloak.RealmRepresentation) {
 	id := "master"
 	input.ID = &id
 	input.Realm = &id
-	logger.Info("update realm", fields)
+	logger.Info("met à jour le Realm", fields)
 	if err := kc.API.UpdateRealm(context.Background(), kc.JWT.AccessToken, input); err != nil {
 		logger.Error("Error when updating Realm ", fields, err)
 		panic(err)

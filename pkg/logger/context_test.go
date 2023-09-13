@@ -56,5 +56,4 @@ func Test_Context_clone(t *testing.T) {
 	ass.Equal((*clonedContext)["original"].Value.String(), "c'est bien")
 	ass.Equal((*clonedContext)["clone"].Key, "clone")
 	ass.Equal((*clonedContext)["clone"].Value.String(), "c'est pas bien de copier")
-
 }

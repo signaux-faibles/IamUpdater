@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/pkg/errors"
 	slogmulti "github.com/samber/slog-multi"
 
 	"keycloakUpdater/v2/pkg/structs"
@@ -21,7 +20,8 @@ func init() {
 	loglevel.Set(slog.LevelInfo)
 
 	handler := slog.NewJSONHandler(log.Default().Writer(), &slog.HandlerOptions{
-		Level: loglevel,
+		Level:       loglevel,
+		ReplaceAttr: customizeLogLevelNames(),
 	})
 	parentLogger := slog.New(handler)
 	buildInfo, _ := debug.ReadBuildInfo()
@@ -95,19 +95,4 @@ func findBuildSetting(settings []debug.BuildSetting, search string) string {
 		retour = settings[index].Value
 	}
 	return retour
-}
-
-func parseLogLevel(logLevel string) (slog.Level, error) {
-	switch strings.ToUpper(logLevel) {
-	case "DEBUG":
-		return slog.LevelDebug, nil
-	case "INFO":
-		return slog.LevelInfo, nil
-	case "WARN":
-		return slog.LevelWarn, nil
-	case "ERROR":
-		return slog.LevelError, nil
-	default:
-		return slog.LevelInfo, errors.New("log level inconnu : '" + logLevel + "'")
-	}
 }
