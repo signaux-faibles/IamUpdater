@@ -63,7 +63,6 @@ func main() {
 			logger.Error("erreur pendant la mise à jour de Keycloak", logContext, err)
 		}
 	}
-
 	if conf.Mongo != nil && conf.Wekan != nil {
 		err = WekanUpdate(
 			conf.Mongo.Url,

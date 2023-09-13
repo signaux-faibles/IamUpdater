@@ -217,7 +217,7 @@ func TestKeycloak_should_not_update_when_too_many_changes(t *testing.T) {
 		Username(conf.Keycloak.Username),
 		4,
 	)
-	ass.EqualError(actual, "Trop de modifications utilisateurs.")
+	ass.EqualError(actual, "trop de modifications utilisateurs.")
 }
 
 func TestKeycloakUpdate(t *testing.T) {
