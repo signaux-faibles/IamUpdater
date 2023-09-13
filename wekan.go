@@ -6,7 +6,7 @@ import (
 
 	"github.com/signaux-faibles/libwekan"
 
-	"keycloakUpdater/v2/logger"
+	"keycloakUpdater/v2/pkg/logger"
 )
 
 type Pipeline []PipelineStage

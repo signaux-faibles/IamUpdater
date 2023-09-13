@@ -13,9 +13,9 @@ import (
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/stretchr/testify/assert"
 
-	"keycloakUpdater/v2/config"
-	"keycloakUpdater/v2/logger"
-	"keycloakUpdater/v2/structs"
+	"keycloakUpdater/v2/pkg/config"
+	"keycloakUpdater/v2/pkg/logger"
+	"keycloakUpdater/v2/pkg/structs"
 )
 
 func TestKeycloakConfiguration_access_username_should_be_present_in_stock_file(t *testing.T) {

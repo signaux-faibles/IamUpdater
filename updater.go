@@ -9,7 +9,7 @@ import (
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/pkg/errors"
 
-	"keycloakUpdater/v2/logger"
+	"keycloakUpdater/v2/pkg/logger"
 )
 
 func UpdateKeycloak(
