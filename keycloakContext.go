@@ -28,53 +28,53 @@ func NewKeycloakContext(access *structs.Keycloak) (KeycloakContext, error) {
 
 // Init provides a connected keycloak context object
 func Init(hostname, realm, username, password string) (KeycloakContext, error) {
-	fields := logger.ContextForMethod(Init).
+	logContext := logger.ContextForMethod(Init).
 		AddString("path", hostname).
 		AddString("realm", realm).
 		AddString("user", username)
 
-	logger.Info("initialize KeycloakContext", fields.AddString("status", "START"))
+	logger.Info("initialize KeycloakContext", logContext.AddString("status", "START"))
 	kc := KeycloakContext{}
 	kc.API = gocloak.NewClient(hostname)
 	var err error
 	ctx := context.Background()
-	logger.Debug("récupère le token d'admin", fields)
+	logger.Debug("récupère le token d'admin", logContext)
 	kc.JWT, err = kc.API.LoginAdmin(ctx, username, password, realm)
 	if err != nil {
 		return KeycloakContext{}, err
 	}
 
 	// fetch Realm
-	logger.Debug("récupère le realm", fields)
+	logger.Debug("récupère le realm", logContext)
 	kc.Realm, err = kc.API.GetRealm(ctx, kc.JWT.AccessToken, realm)
 	if err != nil {
 		return KeycloakContext{}, err
 	}
 
-	logger.Debug("synchronise les clients", fields)
+	logger.Debug("synchronise les clients", logContext)
 	err = kc.refreshClients()
 	if err != nil {
 		return KeycloakContext{}, err
 	}
 
-	logger.Debug("synchronise les utilisateurs", fields)
+	logger.Debug("synchronise les utilisateurs", logContext)
 	err = kc.refreshUsers()
 	if err != nil {
 		return KeycloakContext{}, err
 	}
 
-	logger.Debug("synchronise les rôles du Realm", fields)
+	logger.Debug("synchronise les rôles du Realm", logContext)
 	kc.Roles, err = kc.API.GetRealmRoles(ctx, kc.JWT.AccessToken, realm, gocloak.GetRoleParams{})
 	if err != nil {
 		return KeycloakContext{}, err
 	}
 
-	logger.Debug("synchronise les rôles clients", fields)
+	logger.Debug("synchronise les rôles clients", logContext)
 	err = kc.refreshClientRoles()
 	if err != nil {
 		return KeycloakContext{}, err
 	}
-	logger.Info("initialize KeycloakContext", fields.AddString("status", "END"))
+	logger.Info("initialize KeycloakContext", logContext.AddString("status", "END"))
 	return kc, nil
 }
 

@@ -18,8 +18,8 @@ var GENUINEUSERSELECTOR = []func(wekan libwekan.Wekan, user libwekan.User) bool{
 // checkNativeUsers apporte des logs permettant de garder un œil sur les utilisateurs gérés manuellement
 func checkNativeUsers(wekan libwekan.Wekan, _ Users) error {
 	ctx := context.Background()
-	fields := logger.ContextForMethod(checkNativeUsers)
-	logger.Info("inventaire des comptes standards", fields)
+	logContext := logger.ContextForMethod(checkNativeUsers)
+	logger.Info("inventaire des comptes standards", logContext)
 	wekanUsers, err := wekan.GetUsers(ctx)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func checkNativeUsers(wekan libwekan.Wekan, _ Users) error {
 
 	for _, user := range wekanUsers {
 		if !user.LoginDisabled && user.AuthenticationMethod != "oauth2" && user.Username != wekan.AdminUsername() {
-			fields.AddAny("username", user.Username)
+			logContext.AddAny("username", user.Username)
 			boards, err := wekan.SelectBoardsFromMemberID(ctx, user.ID)
 			if err != nil {
 				return err
@@ -35,8 +35,8 @@ func checkNativeUsers(wekan libwekan.Wekan, _ Users) error {
 
 			activeUserBoards := selectSlice(boards, func(board libwekan.Board) bool { return board.UserIsActiveMember(user) && board.Slug != "templates" })
 			activeUserBoardSlugs := mapSlice(activeUserBoards, func(board libwekan.Board) libwekan.BoardSlug { return board.Slug })
-			fields.AddAny("boards", activeUserBoardSlugs)
-			logger.Warn("utilisateur standard actif", fields)
+			logContext.AddAny("boards", activeUserBoardSlugs)
+			logger.Warn("utilisateur standard actif", logContext)
 		}
 	}
 	return nil
@@ -75,20 +75,18 @@ func selectWekanUsers(wekan libwekan.Wekan) (libwekan.Users, error) {
 }
 
 func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
-	fields := logger.ContextForMethod(insertUsers)
-	logger.Info("> traite les inscriptions des utilisateurs", fields)
-	fields.AddAny("population", len(users))
-	logger.Info(">> inscrit les nouveaux utilisateurs", fields)
+	logContext := logger.ContextForMethod(insertUsers)
+	logger.Info("> traite les inscriptions des utilisateurs", logContext)
+	logContext.AddInt("population", len(users))
+	logger.Info(">> inscrit les nouveaux utilisateurs", logContext)
 	if err := wekan.AssertPrivileged(ctx); err != nil {
 		return err
 	}
-
 	for _, user := range users {
-		fields.AddAny("username", user.Username)
-		logger.Info(">>> crée l'utilisateur", fields)
+		logger.Notice(">>> crée l'utilisateur", logContext.AddAny("username", user.Username))
 		err := wekan.InsertUser(ctx, user)
 		if err != nil {
-			logger.Error("erreur Wekan pendant la création des utilisateurs", fields, err)
+			logger.Error("erreur Wekan pendant la création des utilisateurs", logContext, err)
 			return err
 		}
 	}
@@ -96,44 +94,41 @@ func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 }
 
 func ensureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
-	fields := logger.ContextForMethod(ensureUsersAreEnabled)
-	fields.AddAny("population", len(users))
-	logger.Info(">> active des utilisateurs réinscrits", fields)
+	logContext := logger.ContextForMethod(ensureUsersAreEnabled)
+	logger.Info(">> active des utilisateurs réinscrits", logContext.Clone().AddInt("population", len(users)))
 	if err := wekan.AssertPrivileged(ctx); err != nil {
 		return err
 	}
 	for _, user := range users {
-		fields.AddAny("username", user.Username)
-		logger.Debug(">>> examine le statut de l'utilisateur", fields)
+		logger.Debug(">>> examine le statut de l'utilisateur", logContext.AddAny("username", user.Username))
 		err := wekan.EnableUser(ctx, user)
 		if err == (libwekan.NothingDoneError{}) {
 			continue
 		}
 		if err != nil {
-			logger.Error("erreur Wekan pendant la radiation des utilisateurs", fields, err)
+			logger.Error("erreur Wekan pendant la radiation d'un utilisateur", logContext, err)
 			return err
 		}
-		logger.Info(">>> active l'utilisateur", fields)
+		logger.Notice(">>> active l'utilisateur", logContext)
 	}
 	return nil
 }
 
 func ensureUsersAreDisabled(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
-	fields := logger.ContextForMethod(ensureUsersAreDisabled)
-	fields.AddAny("population", len(users))
-	logger.Info(">> radie les utilisateurs absents", fields)
+	logContext := logger.ContextForMethod(ensureUsersAreDisabled)
+	logger.Info(">> radie les utilisateurs absents", logContext.Clone().AddInt("population", len(users)))
 	for _, user := range users {
-		fields.AddAny("username", user.Username)
-		logger.Debug(">>> examine le statut de l'utilisateur", fields)
+		logContext.AddAny("username", user.Username)
+		logger.Debug(">>> examine le statut de l'utilisateur", logContext)
 		err := wekan.DisableUser(ctx, user)
 		if err == (libwekan.NothingDoneError{}) {
 			continue
 		}
 		if err != nil {
-			logger.Error("erreur Wekan pendant l'examen du statut des utilisateurs", fields, err)
+			logger.Error("erreur Wekan pendant l'examen du statut des utilisateurs", logContext, err)
 			return err
 		}
-		logger.Info(">>> désactive l'utilisateur", fields)
+		logger.Notice(">>> désactive l'utilisateur", logContext)
 	}
 	return nil
 }

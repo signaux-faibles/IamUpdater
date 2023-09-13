@@ -8,6 +8,7 @@ import (
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/samber/slog-formatter"
 	slogmulti "github.com/samber/slog-multi"
+	"github.com/signaux-faibles/libwekan"
 )
 
 func addFormattersToHandler(formatters slogmulti.Middleware, handler slog.Handler) slog.Handler {
@@ -35,6 +36,12 @@ func clientFormatter() slogformatter.Formatter {
 func userFormatter() slogformatter.Formatter {
 	return slogformatter.FormatByType(func(user gocloak.User) slog.Value {
 		return slog.StringValue(*user.Username)
+	})
+}
+
+func wekanBoardLabelFormatter() slogformatter.Formatter {
+	return slogformatter.FormatByType(func(boardLabel libwekan.BoardLabel) slog.Value {
+		return slog.StringValue(string(boardLabel.Name))
 	})
 }
 
