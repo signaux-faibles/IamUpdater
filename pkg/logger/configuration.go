@@ -28,7 +28,8 @@ func configFileHandler(logFilename string) *slog.TextHandler {
 		panic(err)
 	}
 	return slog.NewTextHandler(file, &slog.HandlerOptions{
-		Level: loglevel,
+		Level:       loglevel,
+		ReplaceAttr: customizeLogLevelNames(),
 	})
 }
 

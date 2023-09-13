@@ -34,7 +34,10 @@ func main() {
 	logContext := logger.ContextForMethod(main)
 
 	// loading desired state for users, composites roles
-	logger.Info("lecture du fichier excel stock", logContext)
+	logger.Debug(
+		"lecture du fichier excel stock",
+		logContext.AddString("filename", conf.Stock.UsersAndRolesFilename),
+	)
 	users, compositeRoles, err := loadExcel(conf.Stock.UsersAndRolesFilename)
 	if err != nil {
 		logger.Panic("erreur pendant la lecture du fichier Excel", logContext, err)
