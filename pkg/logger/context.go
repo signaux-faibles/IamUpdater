@@ -4,34 +4,31 @@ import (
 	"log/slog"
 	"reflect"
 	"runtime"
-	"slices"
 	"strings"
 
 	"github.com/Nerzal/gocloak/v13"
 )
 
-type LogContext []slog.Attr
+type LogContext map[string]slog.Attr
 
 func ContextForMethod(method interface{}) *LogContext {
 	methodName := runtime.FuncForPC(reflect.ValueOf(method).Pointer()).Name()
-	context := make([]slog.Attr, 0)
-	context = append(context, slog.String("method", methodName))
-	r := LogContext(context)
-	return &r
+	context := make(LogContext)
+	return (&context).AddString("method", methodName)
 }
 
-func (d *LogContext) AddAny(key string, any interface{}) *LogContext {
-	*d = append(*d, slog.Any(key, any))
+func (d *LogContext) AddAny(key string, value any) *LogContext {
+	(*d)[key] = slog.Any(key, value)
 	return d
 }
 
 func (d *LogContext) AddString(key string, value string) *LogContext {
-	*d = append(*d, slog.String(key, value))
+	(*d)[key] = slog.String(key, value)
 	return d
 }
 
 func (d *LogContext) AddInt(key string, value int) *LogContext {
-	*d = append(*d, slog.Int(key, value))
+	(*d)[key] = slog.Int(key, value)
 	return d
 }
 
@@ -58,12 +55,11 @@ func (d *LogContext) AddRoles(all []gocloak.Role) *LogContext {
 }
 
 func (d *LogContext) AddUser(user gocloak.User) *LogContext {
-	*d = append(*d, slog.Any("user", user))
-	return d
+	return d.AddAny("user", user)
 }
 
 func (d *LogContext) Remove(key string) *LogContext {
-	*d = slices.DeleteFunc(*d, func(c slog.Attr) bool { return c.Key == key })
+	delete(*d, key)
 	return d
 }
 
