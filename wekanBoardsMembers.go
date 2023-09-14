@@ -85,7 +85,7 @@ func ensureUserIsActiveBoardMember(wekan libwekan.Wekan, user libwekan.User, boa
 		return err
 	}
 	if modified {
-		logger.Notice(">>> inscrit l'utilisateur", logContext)
+		logger.Notice(">>> inscrit l'utilisateur sur le board", logContext)
 	}
 	return nil
 }
@@ -100,7 +100,7 @@ func ensureUserIsInactiveBoardMember(wekan libwekan.Wekan, user libwekan.User, b
 		return err
 	}
 	if modified {
-		logger.Notice(">>> désinscrit l'utilisateur", logContext)
+		logger.Notice(">>> désinscrit l'utilisateur du board", logContext)
 	}
 	return nil
 }
