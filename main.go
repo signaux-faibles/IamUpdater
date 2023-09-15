@@ -42,8 +42,9 @@ func main() {
 	if err != nil {
 		logger.Panic("erreur pendant la lecture du fichier Excel", logContext, err)
 	}
-
 	if conf.Keycloak != nil {
+		keycloakLogContext := logContext.Clone()
+		logger.Notice("mise à jour des habilitations Keycloak", keycloakLogContext.AddString("status", "START"))
 		clientId := conf.Stock.ClientForRoles
 		kc, err := NewKeycloakContext(conf.Keycloak)
 		if err != nil {
@@ -62,8 +63,11 @@ func main() {
 		); err != nil {
 			logger.Error("erreur pendant la mise à jour de Keycloak", logContext, err)
 		}
+		logger.Notice("mise à jour des habilitations Keycloak", keycloakLogContext.AddString("status", "END"))
 	}
 	if conf.Mongo != nil && conf.Wekan != nil {
+		wekanLogContext := logContext.Clone()
+		logger.Notice("mise à jour des habilitations Wekan", wekanLogContext.AddString("status", "START"))
 		err = WekanUpdate(
 			conf.Mongo.Url,
 			conf.Mongo.Database,
@@ -71,6 +75,10 @@ func main() {
 			users,
 			conf.Wekan.SlugDomainRegexp,
 		)
+		if err != nil {
+			logger.Error("erreur pendant la mise à jour de Keycloak", logContext, err)
+		}
+		logger.Notice("mise à jour des habilitations Wekan", wekanLogContext.AddString("status", "END"))
 	}
 
 	if err != nil {
