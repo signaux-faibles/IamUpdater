@@ -77,9 +77,9 @@ func main() {
 		logger.Error("le traitement s'est terminé de façon anormale", logContext, err)
 		fmt.Println("======= Détail de l'erreur")
 		printErrChain(err, 0)
-	} else {
-		logger.Notice("le traitement s'est terminé correctement", logContext)
+		return
 	}
+	logger.Notice("le traitement s'est terminé correctement", logContext)
 }
 
 func printErrChain(err error, i int) {
