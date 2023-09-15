@@ -66,7 +66,7 @@ func loadExcel(excelFileName string) (Users, map[string]Roles, error) {
 
 	for _, userRow := range table[1:] {
 		niveau := userRow[fields["NIVEAU HABILITATION"]]
-		email := Username(strings.Trim(strings.ToLower(userRow[fields["ADRESSE MAIL"]]), " "))
+		email := Username(strings.TrimSpace(strings.ToLower(userRow[fields["ADRESSE MAIL"]])))
 
 		if email != "" && len(userRow[fields["PRENOM"]]) > 1 {
 			user := User{
