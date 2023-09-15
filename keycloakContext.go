@@ -198,6 +198,7 @@ func (kc *KeycloakContext) CreateUsers(users []gocloak.User, userMap Users, clie
 		u, err := kc.API.CreateUser(context.Background(), kc.JWT.AccessToken, kc.getRealmName(), user)
 		if err != nil {
 			logger.Error("erreur keycloak pendant la création de l'utilisateur", userLogContext, err)
+			return err
 		}
 
 		configRoles := userMap[Username(*user.Username)].getRoles()
