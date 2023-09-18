@@ -1,8 +1,10 @@
 name: CI - Publication
 
 on:
+  push:
+    branches:
   release:
-    types: [ published, edited ]
+    types: [published]
 
 env:
   GOFLAGS: -mod=readonly
@@ -55,7 +57,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=ref,event=pr
+            type=sha,format=short
           flavor: |
             latest=true
 
