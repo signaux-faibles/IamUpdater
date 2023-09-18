@@ -36,7 +36,7 @@ func checkNativeUsers(wekan libwekan.Wekan, _ Users) error {
 			activeUserBoards := selectSlice(boards, func(board libwekan.Board) bool { return board.UserIsActiveMember(user) && board.Slug != "templates" })
 			activeUserBoardSlugs := mapSlice(activeUserBoards, func(board libwekan.Board) libwekan.BoardSlug { return board.Slug })
 			logContext.AddAny("boards", activeUserBoardSlugs)
-			logger.Warn("utilisateur standard actif", logContext)
+			logger.Info("utilisateur standard actif", logContext)
 		}
 	}
 	return nil
