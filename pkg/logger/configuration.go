@@ -3,15 +3,15 @@ package logger
 import (
 	"log/slog"
 	"os"
+	"slices"
 
 	"github.com/samber/slog-formatter"
 	"github.com/samber/slog-multi"
 )
 
-func configFormatters(timeFormat string) slogmulti.Middleware {
+func configFormatters() slogmulti.Middleware {
 	formattingMiddleware := slogformatter.NewFormatterHandler(
 		errorFormatter(),
-		timeFormatter(timeFormat),
 		userFormatter(),
 		clientFormatter(),
 		singleRoleFormatter(),
@@ -21,7 +21,26 @@ func configFormatters(timeFormat string) slogmulti.Middleware {
 	return formattingMiddleware
 }
 
-func configFileHandler(logFilename string) *slog.TextHandler {
+func composeReplaceAttrs(
+	funcs ...func(args []string, a slog.Attr) slog.Attr) func(args []string, a slog.Attr) slog.Attr {
+	if len(funcs) == 0 {
+		return nil
+	}
+	if len(funcs) == 1 {
+		return funcs[0]
+	}
+	composition := func(args []string, a slog.Attr) slog.Attr {
+		attr := funcs[0](args, a)
+		return funcs[1](args, attr)
+	}
+	if len(funcs) == 2 {
+		return composition
+	}
+	composedArray := slices.Insert(funcs[2:], 0, composition)
+	return composeReplaceAttrs(composedArray...)
+}
+
+func configFileHandler(logFilename string, timeFormat string) *slog.TextHandler {
 	var err error
 	var file *os.File
 	if file, err = os.OpenFile(logFilename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644); err != nil {
@@ -30,7 +49,7 @@ func configFileHandler(logFilename string) *slog.TextHandler {
 	}
 	return slog.NewTextHandler(file, &slog.HandlerOptions{
 		Level:       loglevel,
-		ReplaceAttr: customizeLogLevelNames(),
+		ReplaceAttr: composeReplaceAttrs(customizeTimeFormat(timeFormat), customizeLogLevelNames),
 	})
 }
 
