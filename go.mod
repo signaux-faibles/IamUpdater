@@ -7,6 +7,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/Nerzal/gocloak/v13 v13.8.0
 	github.com/cnf/structhash v0.0.0-20201127153200-e1b16c1ebc08
+	github.com/gosimple/slug v1.13.1
 	github.com/jaswdr/faker v1.19.0
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
@@ -18,6 +19,7 @@ require (
 )
 
 require (
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/samber/lo v1.38.1 // indirect

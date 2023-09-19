@@ -19,18 +19,16 @@ var levelNames = map[slog.Leveler]string{
 	levelNotice: levelNoticeName,
 }
 
-func customizeLogLevelNames() func(groups []string, a slog.Attr) slog.Attr {
-	return func(groups []string, a slog.Attr) slog.Attr {
-		if a.Key == slog.LevelKey {
-			level := a.Value.Any().(slog.Level)
-			levelLabel, exists := levelNames[level]
-			if !exists {
-				levelLabel = level.String()
-			}
-			a.Value = slog.StringValue(levelLabel)
+func customizeLogLevelNames(_ []string, a slog.Attr) slog.Attr {
+	if a.Key == slog.LevelKey {
+		level := a.Value.Any().(slog.Level)
+		levelLabel, exists := levelNames[level]
+		if !exists {
+			levelLabel = level.String()
 		}
-		return a
+		a.Value = slog.StringValue(levelLabel)
 	}
+	return a
 }
 
 func parseLogLevel(logLevel string) (slog.Level, error) {

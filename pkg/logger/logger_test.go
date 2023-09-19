@@ -11,6 +11,7 @@ import (
 
 	"bou.ke/monkey"
 	"github.com/Nerzal/gocloak/v13"
+	"github.com/gosimple/slug"
 	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/assert"
 
@@ -122,30 +123,37 @@ func Test_formatter_Role(t *testing.T) {
 	ass.Contains(string(logsFromFile), key+"="+name)
 }
 
-// func Test_formatter_Time(t *testing.T) {
-//
-// 	ass := assert.New(t)
-// 	tuTime := time.Date(2023, 9, 11, 15, 47, 32, 99, time.Local)
-// 	FakeTime(t, tuTime)
-// 	t.Cleanup(func() { unfakeTime() })
-//
-// 	timeFormatter := timeFormatter(time.DateTime)
-//
-// 	formattingMiddleware := slogformatter.NewFormatterHandler(timeFormatter)
-// 	logFilename := createTempFilename(t)
-// 	logfile, err := os.Create(logFilename)
-// 	ass.NoError(err)
-// 	fileHandler := slog.NewTextHandler(logfile, &slog.HandlerOptions{})
-//
-// 	logger := slog.New(slogmulti.Pipe(formattingMiddleware).Handler(fileHandler))
-//
-// 	logger.Info("message d'info")
-//
-// 	var logsFromFile []byte
-// 	logsFromFile, err = os.ReadFile(logFilename)
-// 	ass.NoError(err)
-// 	ass.Contains(string(logsFromFile), "time=2023-09-11 15:47:32")
-// }
+func Test_formatter_Time(t *testing.T) {
+
+	ass := assert.New(t)
+	// on fausse le temps
+	tuTime := time.Date(2023, 9, 11, 15, 47, 32, 99, time.Local)
+	fakeTime(t, tuTime)
+	t.Cleanup(func() { unfakeTime() })
+
+	// création du fichier de log
+	logFilename := createTempFilename(t)
+	logfile, err := os.Create(logFilename)
+	ass.NoError(err)
+
+	fileHandler := slog.NewTextHandler(logfile, &slog.HandlerOptions{
+		ReplaceAttr: customizeTimeFormat(time.DateTime),
+		AddSource:   true,
+	})
+
+	logger := slog.New(fileHandler)
+
+	logger.Info("message d'info")
+
+	// lecture du fichier de log
+	var logsFromFile []byte
+	logsFromFile, err = os.ReadFile(logFilename)
+	fmt.Println(string(logsFromFile))
+
+	// assertions
+	ass.NoError(err)
+	ass.Contains(string(logsFromFile), "time=\"2023-09-11 15:47:32\"")
+}
 
 func defaultDebugLogger(t *testing.T) structs.LoggerConfig {
 	loggerConfig := structs.LoggerConfig{
@@ -157,12 +165,12 @@ func defaultDebugLogger(t *testing.T) structs.LoggerConfig {
 }
 
 func createTempFilename(t *testing.T) string {
-	return fmt.Sprint(t.TempDir(), os.PathSeparator, t.Name())
+	return fmt.Sprint(t.TempDir(), os.PathSeparator, slug.Make(t.Name()))
 }
 
-// FakeTime méthode qui permet de fausser la méthode `time.Now` en la forçant à toujours retourner
+// fakeTime méthode qui permet de fausser la méthode `time.Now` en la forçant à toujours retourner
 // le paramètre `t`
-func FakeTime(test *testing.T, t time.Time) {
+func fakeTime(test *testing.T, t time.Time) {
 	monkey.Patch(time.Now, func() time.Time {
 		return t
 	})

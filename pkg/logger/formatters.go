@@ -15,12 +15,19 @@ func addFormattersToHandler(formatters slogmulti.Middleware, handler slog.Handle
 	return slogmulti.Pipe(formatters).Handler(handler)
 }
 
-func timeFormatter(input string) slogformatter.Formatter {
-	format := time.DateTime
-	if len(input) > 0 {
-		format = input
+func customizeTimeFormat(input string) func(_ []string, a slog.Attr) slog.Attr {
+	return func(_ []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.TimeKey {
+			format := time.DateTime
+			if len(input) > 0 {
+				format = input
+			}
+			t := a.Value.Time()
+			s := t.Format(format)
+			a.Value = slog.StringValue(s)
+		}
+		return a
 	}
-	return slogformatter.TimeFormatter(format, time.Local)
 }
 
 func errorFormatter() slogformatter.Formatter {

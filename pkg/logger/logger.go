@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"slices"
 	"strings"
+	"time"
 
 	slogmulti "github.com/samber/slog-multi"
 
@@ -21,7 +22,7 @@ func init() {
 
 	handler := slog.NewJSONHandler(log.Default().Writer(), &slog.HandlerOptions{
 		Level:       loglevel,
-		ReplaceAttr: customizeLogLevelNames(),
+		ReplaceAttr: composeReplaceAttrs(customizeLogLevelNames, customizeTimeFormat(time.DateTime)),
 	})
 	parentLogger := slog.New(handler)
 	buildInfo, _ := debug.ReadBuildInfo()
@@ -30,14 +31,14 @@ func init() {
 		slog.Group("app", slog.String("sha1", sha1)),
 	)
 	slog.SetDefault(appLogger)
-	//logger = appLogger
 }
 
 func ConfigureWith(config structs.LoggerConfig) {
 	configLogLevel(config.Level)
-	fileHandler := configFileHandler(config.Filename)
-	formatters := configFormatters(config.TimestampFormat)
+	fileHandler := configFileHandler(config.Filename, config.TimestampFormat)
+	formatters := configFormatters()
 	formattedFileHandler := addFormattersToHandler(formatters, fileHandler)
+
 	defaultHandler := addFormattersToHandler(formatters, slog.Default().Handler())
 	combinedHandlers := slogmulti.Fanout(formattedFileHandler, defaultHandler)
 	slog.SetDefault(slog.New(combinedHandlers))
