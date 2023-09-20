@@ -45,7 +45,7 @@ func TestMain(m *testing.M) {
 	logger.ConfigureWith(
 		structs.LoggerConfig{
 			Filename: "/dev/null",
-			Level:    "DEBUG",
+			Level:    "INFO",
 		})
 	if err != nil {
 		logger.Panic("erreur pendant la connection à Docker", logContext, err)
@@ -57,7 +57,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	kill(keycloak)
-	kill(mongodb)
+	// kill(mongodb)
 	// You can't defer this because os.Exit doesn't care for defer
 
 	os.Exit(code)
@@ -124,7 +124,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		var err error
 		kc, err = Init("http://localhost:"+keycloakPort+"/auth", "master", keycloakAdmin, keycloakPassword)
 		if err != nil {
-			logger.Info("keycloak n'est pas prêt", logContext)
+			logger.Debug("keycloak n'est pas prêt", logContext)
 			return err
 		}
 		return nil
@@ -137,7 +137,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 
 func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 	dir, _ := os.Getwd()
-	fields := logger.ContextForMethod(startWekanDB)
+	logContext := logger.ContextForMethod(startWekanDB)
 	mongodbContainerName := "mongodb-ti-" + strconv.Itoa(time.Now().Nanosecond())
 	mongodb, err := pool.RunWithOptions(
 		&dockertest.RunOptions{
@@ -160,13 +160,17 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 		},
 	)
 	if err != nil {
-		fmt.Println(err.Error())
+		logger.Error("erreur pendant le démarrage de Mongo", logContext, err)
 		kill(mongodb)
 	}
-
+	// container stops after 120 seconds
+	if err = mongodb.Expire(6000); err != nil {
+		kill(mongodb)
+		logger.Error("Could not set expiration on container mongoDb", logContext, err)
+	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	if err := pool.Retry(func() error {
-		logger.Info("Mongo n'est pas encore prêt", fields)
+		logger.Info("Mongo n'est pas encore prêt", logContext)
 		var err error
 		mongoUrl = fmt.Sprintf("mongodb://root:password@localhost:%s", mongodb.GetPort("27017/tcp"))
 
@@ -184,14 +188,13 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 		panic("N'arrive pas à démarrer Mongo")
 	}
 
-	logger.Info("Mongo est prêt", fields)
+	logger.Info("Mongo est prêt", logContext)
 	return mongodb
 }
 
 func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *testing.T, slugDomainRegexp string) libwekan.Wekan {
 	databasename := t.Name() + suffix
-	fields := logger.ContextForMethod(restoreMongoDumpInDatabase)
-	fields.AddAny("database", databasename)
+	logContext := logger.ContextForMethod(restoreMongoDumpInDatabase).AddAny("database", databasename)
 	var output bytes.Buffer
 	outputWriter := bufio.NewWriter(&output)
 
@@ -200,16 +203,16 @@ func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *
 		StdErr: outputWriter,
 	}
 	command := fmt.Sprintf("mongorestore  --uri mongodb://root:password@localhost/ /dump --nsFrom \"wekan.*\" --nsTo \"%s.*\"", databasename)
-	fields.AddAny("command", command)
-	logger.Info("Restaure le dump", fields)
+	logContext.AddAny("command", command)
+	logger.Info("Restaure le dump", logContext)
 	if exitCode, err := mongodb.Exec([]string{"/bin/bash", "-c", command}, dockerOptions); err != nil {
-		fields.AddAny("exitCode", exitCode)
-		logger.Error("Erreur lors de la restauration du dump", fields, err)
-		require.Nil(t, err)
+		logContext.AddAny("exitCode", exitCode)
+		logger.Error("Erreur lors de la restauration du dump", logContext, err)
+		require.NoError(t, err)
 	}
 	err := outputWriter.Flush()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	wekan, err := initWekan(mongoUrl, databasename, "signaux.faibles", slugDomainRegexp)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	return wekan
 }

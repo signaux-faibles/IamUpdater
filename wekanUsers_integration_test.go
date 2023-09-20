@@ -1,15 +1,22 @@
 //go:build integration
-// +build integration
 
-// nolint:errcheck
 package main
 
 import (
+	"context"
 	"testing"
 
+	"github.com/jaswdr/faker"
 	"github.com/signaux-faibles/libwekan"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+var fake faker.Faker
+
+func init() {
+	fake = faker.New()
+}
 
 func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {
 	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
@@ -64,7 +71,8 @@ func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 			email: usernameDeTest,
 		},
 	}
-	pipeline.StopAfter(wekan, usersWithScopeWekan, stageManageUsers)
+	err := pipeline.StopAfter(wekan, usersWithScopeWekan, stageManageUsers)
+	ass.NoError(err)
 
 	usersWithoutScopeWekan := Users{
 		usernameDeTest: User{
@@ -74,7 +82,7 @@ func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 		},
 	}
 	// WHEN
-	err := pipeline.StopAfter(wekan, usersWithoutScopeWekan.selectScopeWekan(), stageManageUsers)
+	err = pipeline.StopAfter(wekan, usersWithoutScopeWekan.selectScopeWekan(), stageManageUsers)
 	ass.NoError(err)
 
 	// THEN
@@ -82,4 +90,44 @@ func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 	ass.Nil(actualErr)
 	ass.NotEmpty(actualUser)
 	ass.True(actualUser.LoginDisabled)
+}
+
+func TestWekan_ManageUsers_withScopeWekanAlreadyExists(t *testing.T) {
+	ass := assert.New(t)
+	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
+	// GIVEN
+
+	// construction d'un user legacy
+	user := libwekan.BuildUser("legacy@tests.unitaires", "LU", "User LEGACY")
+	user.AuthenticationMethod = "password"
+	user.Services = libwekan.UserServices{
+		Password: libwekan.UserServicesPassword{
+			Bcrypt: fake.BinaryString().BinaryString(512),
+		},
+	}
+	user.Username = libwekan.Username(user.Profile.Fullname)
+	// insertion en base
+	ctx := context.Background()
+	err := wekan.InsertUser(ctx, user)
+	require.NoError(t, err)
+
+	legacy := Username("legacy@tests.unitaires")
+	legacyUser := Users{
+		legacy: User{
+			scope:  []string{"wekan"},
+			email:  legacy,
+			prenom: "user",
+			nom:    "legacy",
+		},
+	}
+
+	err = pipeline.StopAfter(wekan, legacyUser, stageManageUsers)
+	//require.NoError(t, err)
+	// WHEN
+
+	// THEN
+	ass.NoError(err)
+	actualUser, actualErr := wekan.GetUserFromUsername(ctx, "legacy@tests.unitaires")
+	ass.Nil(actualErr)
+	ass.NotEmpty(actualUser)
 }
