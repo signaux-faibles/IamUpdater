@@ -35,8 +35,9 @@ func init() {
 
 func ConfigureWith(config structs.LoggerConfig) {
 	configLogLevel(config.Level)
-	fileHandler := configFileHandler(config.Filename, config.TimestampFormat)
 	formatters := configFormatters()
+
+	fileHandler := configFileHandler(config.Filename, config.TimestampFormat)
 	formattedFileHandler := addFormattersToHandler(formatters, fileHandler)
 
 	defaultHandler := addFormattersToHandler(formatters, slog.Default().Handler())

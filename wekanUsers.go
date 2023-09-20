@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/signaux-faibles/libwekan"
 
 	"keycloakUpdater/v2/pkg/logger"
@@ -69,7 +70,7 @@ func manageUsers(wekan libwekan.Wekan, fromConfig Users) error {
 }
 
 func selectWekanUsers(wekan libwekan.Wekan) (libwekan.Users, error) {
-	users, err := wekan.GetUsers(context.TODO())
+	users, err := wekan.GetUsers(context.Background())
 	genuineUsers := selectSlice(users, selectGenuineUserFunc(wekan))
 	return genuineUsers, err
 }
@@ -77,20 +78,58 @@ func selectWekanUsers(wekan libwekan.Wekan) (libwekan.Users, error) {
 func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
 	logContext := logger.ContextForMethod(insertUsers)
 	logger.Info("> traite les inscriptions des utilisateurs", logContext)
-	logContext.AddInt("population", len(users))
-	logger.Info(">> inscrit les nouveaux utilisateurs", logContext)
+	logger.Info(">> inscrit les nouveaux utilisateurs", logContext.Clone().AddInt("population", len(users)))
 	if err := wekan.AssertPrivileged(ctx); err != nil {
 		return err
 	}
 	for _, user := range users {
-		logger.Notice(">>> crée l'utilisateur Wekan", logContext.AddAny("username", user.Username))
+		userLogContext := logContext.Clone()
+		logger.Notice(">>> crée l'utilisateur Wekan", userLogContext.AddAny("username", user.Username))
 		err := wekan.InsertUser(ctx, user)
 		if err != nil {
-			logger.Error("erreur Wekan pendant la création des utilisateurs", logContext, err)
+			// on regarde si on est dans le cas d'un user legacy
+			found, usersFoundByEmail, err := findUsersByEmails(ctx, wekan, user.Emails)
+			if err != nil {
+				logger.Error("erreur Wekan pendant la recherche d'utilisateurs par email", userLogContext, err)
+				return err
+			}
+			if found {
+				logger.Error(
+					"Un utilisateur existe déjà avec cette adresse email. Création annulée. Des modifications sont à effectuer sur la base",
+					userLogContext.Clone().
+						AddAny("legacyUserID", usersFoundByEmail.ID).
+						AddAny("update", user),
+					nil,
+				)
+				continue
+			}
+			logger.Error("erreur Wekan pendant la création des utilisateurs", userLogContext, err)
 			return err
 		}
 	}
 	return nil
+}
+
+func findUsersByEmails(ctx context.Context, wekan libwekan.Wekan, emails []libwekan.UserEmail) (bool, libwekan.User, error) {
+	logContext := logger.ContextForMethod(findUsersByEmails)
+	addressExtractor := func(email libwekan.UserEmail) string { return email.Address }
+	searchedEmails := mapSlice(emails, addressExtractor)
+	logContext.AddArray("filter", searchedEmails)
+	users, err := wekan.GetUsers(ctx)
+	if err != nil {
+		return false, libwekan.User{}, errors.Wrap(err, "erreur lors de la recherche par email")
+	}
+	for _, user := range users {
+		userLogContext := logContext.Clone().AddAny("user.name", user.Username)
+		userEmails := mapSlice(user.Emails, addressExtractor)
+		userLogContext.AddArray("user.emails", userEmails)
+		both, _, _ := intersect(userEmails, searchedEmails)
+		logger.Debug("recherche d'utilisateur par email", userLogContext.AddInt("commun", len(both)))
+		if len(both) > 0 {
+			return true, user, nil
+		}
+	}
+	return false, libwekan.User{}, nil
 }
 
 func ensureUsersAreEnabled(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users) error {
@@ -194,8 +233,8 @@ func isOauth2User(_ libwekan.Wekan, user libwekan.User) bool {
 
 func selectGenuineUserFunc(wekan libwekan.Wekan) func(user libwekan.User) bool {
 	return func(user libwekan.User) bool {
-		for _, fn := range GENUINEUSERSELECTOR {
-			if fn(wekan, user) {
+		for _, accept := range GENUINEUSERSELECTOR {
+			if accept(wekan, user) {
 				return true
 			}
 		}
