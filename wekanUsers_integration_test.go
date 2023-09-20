@@ -10,6 +10,9 @@ import (
 	"github.com/signaux-faibles/libwekan"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"keycloakUpdater/v2/pkg/logger"
+	"keycloakUpdater/v2/pkg/structs"
 )
 
 var fake faker.Faker
@@ -92,13 +95,16 @@ func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 	ass.True(actualUser.LoginDisabled)
 }
 
-func TestWekan_ManageUsers_withScopeWekanAlreadyExists(t *testing.T) {
+func TestWekan_ManageUsers_whenAlreadyExists(t *testing.T) {
 	ass := assert.New(t)
+	logger.ConfigureWith(structs.LoggerConfig{Filename: "/dev/null", Level: "ERROR"})
 	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	// GIVEN
+	email := "legacy@tests.unitaires"
 
 	// construction d'un user legacy
-	user := libwekan.BuildUser("legacy@tests.unitaires", "LU", "User LEGACY")
+	user := libwekan.BuildUser(email, "LU", "User LEGACY")
+	user.Emails[0].Verified = false
 	user.AuthenticationMethod = "password"
 	user.Services = libwekan.UserServices{
 		Password: libwekan.UserServicesPassword{
@@ -106,28 +112,48 @@ func TestWekan_ManageUsers_withScopeWekanAlreadyExists(t *testing.T) {
 		},
 	}
 	user.Username = libwekan.Username(user.Profile.Fullname)
-	// insertion en base
+	// insertion en base de user legacy
 	ctx := context.Background()
 	err := wekan.InsertUser(ctx, user)
 	require.NoError(t, err)
 
-	legacy := Username("legacy@tests.unitaires")
-	legacyUser := Users{
-		legacy: User{
+	// on simule 3 users dont 1 qui a un email existant en base
+	username1 := Username(fake.Internet().Email())
+	legacyUsername := Username(email)
+	username3 := Username(fake.Internet().Email())
+	excelUser := Users{
+		username1: User{
+			scope: []string{"wekan"},
+			email: username1,
+		},
+		legacyUsername: User{
 			scope:  []string{"wekan"},
-			email:  legacy,
+			email:  legacyUsername,
 			prenom: "user",
 			nom:    "legacy",
 		},
+		username3: User{
+			scope: []string{"wekan"},
+			email: username3,
+		},
 	}
 
-	err = pipeline.StopAfter(wekan, legacyUser, stageManageUsers)
-	//require.NoError(t, err)
+	err = pipeline.StopAfter(wekan, excelUser, stageManageUsers)
+	require.NoError(t, err)
 	// WHEN
 
 	// THEN
-	ass.NoError(err)
-	actualUser, actualErr := wekan.GetUserFromUsername(ctx, "legacy@tests.unitaires")
-	ass.Nil(actualErr)
+	// le 1er et le 3e user sont en bases
+	// le second qui a un email déjà présent non
+	actualUser, actualErr := wekan.GetUserFromUsername(ctx, libwekan.Username(username1))
+	ass.NoError(actualErr)
+	ass.NotEmpty(actualUser)
+
+	actualUser, actualErr = wekan.GetUserFromUsername(ctx, libwekan.Username(legacyUsername))
+	ass.Empty(actualUser)
+	ass.Error(actualErr)
+
+	actualUser, actualErr = wekan.GetUserFromUsername(ctx, libwekan.Username(username3))
+	ass.NoError(actualErr)
 	ass.NotEmpty(actualUser)
 }

@@ -40,9 +40,20 @@ func clientFormatter() slogformatter.Formatter {
 	})
 }
 
-func userFormatter() slogformatter.Formatter {
+func keycloakUserFormatter() slogformatter.Formatter {
 	return slogformatter.FormatByType(func(user gocloak.User) slog.Value {
 		return slog.StringValue(*user.Username)
+	})
+}
+
+func wekanUserUpdateFormatter() slogformatter.Formatter {
+	return slogformatter.FormatByFieldType("update", func(user libwekan.User) slog.Value {
+		return slog.GroupValue(
+			slog.Any("username", user.Username),
+			slog.Any("emails", user.Emails),
+			slog.Any("authenticationMethod", user.AuthenticationMethod),
+			slog.Any("profile", user.Profile),
+			slog.Any("services", user.Services))
 	})
 }
 

@@ -12,11 +12,12 @@ import (
 func configFormatters() slogmulti.Middleware {
 	formattingMiddleware := slogformatter.NewFormatterHandler(
 		errorFormatter(),
-		userFormatter(),
+		keycloakUserFormatter(),
 		clientFormatter(),
 		singleRoleFormatter(),
 		manyRolesFormatter(),
 		wekanBoardLabelFormatter(),
+		wekanUserUpdateFormatter(),
 	)
 	return formattingMiddleware
 }
