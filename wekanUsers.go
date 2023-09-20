@@ -83,7 +83,7 @@ func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 		return err
 	}
 	for _, user := range users {
-		logger.Notice(">>> crée l'utilisateur", logContext.AddAny("username", user.Username))
+		logger.Notice(">>> crée l'utilisateur Wekan", logContext.AddAny("username", user.Username))
 		err := wekan.InsertUser(ctx, user)
 		if err != nil {
 			logger.Error("erreur Wekan pendant la création des utilisateurs", logContext, err)

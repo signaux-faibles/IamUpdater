@@ -23,7 +23,13 @@ func createBoard(t *testing.T, wekan libwekan.Wekan, suffix string) (libwekan.Bo
 	return board, swimlane, list
 }
 
-func createUser(t *testing.T, wekan libwekan.Wekan, suffix string, boardID *libwekan.BoardID, cardID *libwekan.CardID) libwekan.User {
+func createUser(
+	t *testing.T,
+	wekan libwekan.Wekan,
+	suffix string,
+	boardID *libwekan.BoardID,
+	cardID *libwekan.CardID,
+) libwekan.User {
 	name := t.Name() + suffix
 	user := libwekan.BuildUser(name, name, name)
 	if boardID != nil {
@@ -31,16 +37,26 @@ func createUser(t *testing.T, wekan libwekan.Wekan, suffix string, boardID *libw
 			UserID:   user.ID,
 			IsActive: true,
 		}
-		wekan.AddMemberToBoard(ctx, *boardID, boardMember)
+		err := wekan.AddMemberToBoard(ctx, *boardID, boardMember)
+		require.NoError(t, err)
 	}
 	if cardID != nil {
-		wekan.AddMemberToCard(ctx, *cardID, user.ID)
+		err := wekan.AddMemberToCard(ctx, *cardID, user.ID)
+		require.NoError(t, err)
 	}
-	wekan.InsertUser(ctx, user)
+	err := wekan.InsertUser(ctx, user)
+	require.NoError(t, err)
 	return user
 }
 
-func createCard(t *testing.T, wekan libwekan.Wekan, suffix string, boardID libwekan.BoardID, swimlaneID libwekan.SwimlaneID, listID libwekan.ListID) libwekan.Card {
+func createCard(
+	t *testing.T,
+	wekan libwekan.Wekan,
+	suffix string,
+	boardID libwekan.BoardID,
+	swimlaneID libwekan.SwimlaneID,
+	listID libwekan.ListID,
+) libwekan.Card {
 	name := t.Name() + suffix
 	card := libwekan.BuildCard(boardID, listID, swimlaneID, name, "desc : "+name, wekan.AdminID())
 	wekan.InsertCard(ctx, card)
