@@ -165,7 +165,7 @@ func startWekanDB(pool *dockertest.Pool) *dockertest.Resource {
 		kill(mongodb)
 	}
 	// container stops after 120 seconds
-	if err = mongodb.Expire(6000); err != nil {
+	if err = mongodb.Expire(600); err != nil {
 		kill(mongodb)
 		logger.Error("Could not set expiration on container mongoDb", logContext, err)
 	}
