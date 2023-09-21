@@ -95,10 +95,12 @@ func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 			}
 			if found {
 				logger.Error(
-					"Un utilisateur existe déjà avec cette adresse email. Création annulée. Des modifications sont à effectuer sur la base avant de recommencer.",
+					"Un utilisateur existe déjà avec cette adresse email. Création annulée. L'id de l'utilisateur est précisé dans cette ligne ainsi que les valeurs à modifier (aidez-vous de la méthode `atob()`pour décoder le base64).",
 					userLogContext.Clone().
 						AddAny("legacyUserID", usersFoundByEmail.ID).
-						AddAny("update", user),
+						AddAny("update", user).
+						AddString("protip.1", "Les valeurs à modifier sont en base 64, on peut utiliser la méthode `atob()` pour se faciliter la vie").
+						AddString("protip.2", "l'ID de l'utilisateur à modifier est aussi proposé"),
 					nil,
 				)
 				continue
