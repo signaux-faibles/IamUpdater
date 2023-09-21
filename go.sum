@@ -144,6 +144,8 @@ github.com/signaux-faibles/libwekan v0.2.2-0.20230606085858-432e87a12a9e h1:/fkE
 github.com/signaux-faibles/libwekan v0.2.2-0.20230606085858-432e87a12a9e/go.mod h1:ioobIVSPxSE3H/PqXbI+F3yuyblpsD1y+qJZis2X9dg=
 github.com/signaux-faibles/libwekan v0.4.0 h1:QD20QofXlJUlPbPq0TSQhfAykH573qm1mbiu/+w5meM=
 github.com/signaux-faibles/libwekan v0.4.0/go.mod h1:CQw3TAfWRiy12eduon5uVEIEwB95ZNTmPM1jaTtZ+rk=
+github.com/signaux-faibles/libwekan v0.4.1-0.20230905095406-f46ef6c38ebe h1:ADYR5r7Ii9Sr9XZfAtS//kfkGbteMGiFWzJ38TCsdv0=
+github.com/signaux-faibles/libwekan v0.4.1-0.20230905095406-f46ef6c38ebe/go.mod h1:i5tEXQL5QsiFW53ascvwAxm/WPglRjr25kcPwsP34rQ=
 github.com/signaux-faibles/libwekan v0.4.1-0.20230920135843-e9e13c20057e h1:xZwldT3kb+M4rS2WDaMNFG9lvQ2tEScOoqbX2ZoAkFY=
 github.com/signaux-faibles/libwekan v0.4.1-0.20230920135843-e9e13c20057e/go.mod h1:i5tEXQL5QsiFW53ascvwAxm/WPglRjr25kcPwsP34rQ=
 github.com/signaux-faibles/libwekan v0.4.1-0.20230920143937-732300584b09 h1:/P4f1smFQ1vSMLYvL0ZYTzQvfskCn9M71obQ+xQh+XI=
