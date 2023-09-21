@@ -4,6 +4,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/jaswdr/faker"
@@ -24,7 +26,7 @@ func init() {
 func TestWekan_ManageUsers_withoutScopeWekan(t *testing.T) {
 	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	ass := assert.New(t)
-	usersWithoutScopeWekan := make(Users)
+	var usersWithoutScopeWekan = make(Users)
 	usernameDeTest := Username("no_wekan")
 	usersWithoutScopeWekan = Users{
 		usernameDeTest: User{
@@ -97,7 +99,8 @@ func TestWekan_ManageUsers_removeScopeWekan(t *testing.T) {
 
 func TestWekan_ManageUsers_whenAlreadyExists(t *testing.T) {
 	ass := assert.New(t)
-	logger.ConfigureWith(structs.LoggerConfig{Filename: "/dev/null", Level: "ERROR"})
+	logFilename := createTempFilename(t)
+	logger.ConfigureWith(structs.LoggerConfig{Filename: logFilename, Level: "ERROR"})
 	wekan := restoreMongoDumpInDatabase(mongodb, "", t, "")
 	// GIVEN
 	email := "legacy@tests.unitaires"
@@ -156,4 +159,9 @@ func TestWekan_ManageUsers_whenAlreadyExists(t *testing.T) {
 	actualUser, actualErr = wekan.GetUserFromUsername(ctx, libwekan.Username(username3))
 	ass.NoError(actualErr)
 	ass.NotEmpty(actualUser)
+
+	// lecture du fichier de log
+	var logsFromFile []byte
+	logsFromFile, _ = os.ReadFile(logFilename)
+	fmt.Println(string(logsFromFile))
 }

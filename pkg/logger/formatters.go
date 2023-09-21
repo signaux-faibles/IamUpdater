@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"log/slog"
 	"strings"
 	"time"
@@ -49,11 +51,11 @@ func keycloakUserFormatter() slogformatter.Formatter {
 func wekanUserUpdateFormatter() slogformatter.Formatter {
 	return slogformatter.FormatByFieldType("update", func(user libwekan.User) slog.Value {
 		return slog.GroupValue(
-			slog.Any("username", user.Username),
-			slog.Any("emails", user.Emails),
-			slog.Any("authenticationMethod", user.AuthenticationMethod),
-			slog.Any("profile", user.Profile),
-			slog.Any("services", user.Services))
+			slog.String("username", encode(user.Username)),
+			slog.String("emails", encode(user.Emails)),
+			slog.String("authenticationMethod", encode(user.AuthenticationMethod)),
+			slog.String("profile", encode(user.Profile)),
+			slog.String("services", encode(user.Services)))
 	})
 }
 
@@ -90,3 +92,11 @@ func toStrings[T any](array []T, toString func(T) string) []string {
 }
 
 func role2string(role gocloak.Role) string { return *role.Name }
+
+func encode(object any) string {
+	json, err := json.Marshal(object)
+	if err != nil {
+		Error("erreur pendant la conversion JSON", ContextForMethod(encode), err)
+	}
+	return base64.StdEncoding.EncodeToString(json)
+}
