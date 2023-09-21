@@ -95,7 +95,7 @@ func insertUsers(ctx context.Context, wekan libwekan.Wekan, users libwekan.Users
 			}
 			if found {
 				logger.Error(
-					"Un utilisateur existe déjà avec cette adresse email. Création annulée. Des modifications sont à effectuer sur la base",
+					"Un utilisateur existe déjà avec cette adresse email. Création annulée. Des modifications sont à effectuer sur la base avant de recommencer.",
 					userLogContext.Clone().
 						AddAny("legacyUserID", usersFoundByEmail.ID).
 						AddAny("update", user),
@@ -201,7 +201,7 @@ func (users Users) buildWekanUsers() libwekan.Users {
 }
 
 func (user User) buildWekanUser() libwekan.User {
-	initials := firstChar(user.prenom) + firstChar(user.nom)
+	initials := strings.ToUpper(firstChar(user.prenom) + firstChar(user.nom))
 	fullname := fmt.Sprintf("%s %s", strings.ToUpper(user.nom), user.prenom)
 	return libwekan.BuildUser(string(user.email), initials, fullname)
 }

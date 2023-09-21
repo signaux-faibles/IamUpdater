@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gosimple/slug"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/signaux-faibles/libwekan"
@@ -215,4 +216,8 @@ func restoreMongoDumpInDatabase(mongodb *dockertest.Resource, suffix string, t *
 	wekan, err := initWekan(mongoUrl, databasename, "signaux.faibles", slugDomainRegexp)
 	require.NoError(t, err)
 	return wekan
+}
+
+func createTempFilename(t *testing.T) string {
+	return fmt.Sprint(t.TempDir(), os.PathSeparator, slug.Make(t.Name()))
 }
