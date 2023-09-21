@@ -32,20 +32,20 @@ func createUser(
 ) libwekan.User {
 	name := t.Name() + suffix
 	user := libwekan.BuildUser(name, name, name)
+	err := wekan.InsertUser(ctx, user)
+	require.NoError(t, err)
 	if boardID != nil {
 		boardMember := libwekan.BoardMember{
 			UserID:   user.ID,
 			IsActive: true,
 		}
-		err := wekan.AddMemberToBoard(ctx, *boardID, boardMember)
+		err = wekan.AddMemberToBoard(ctx, *boardID, boardMember)
 		require.NoError(t, err)
 	}
 	if cardID != nil {
 		err := wekan.AddMemberToCard(ctx, *cardID, user.ID)
 		require.NoError(t, err)
 	}
-	err := wekan.InsertUser(ctx, user)
-	require.NoError(t, err)
 	return user
 }
 
