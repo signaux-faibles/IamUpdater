@@ -152,6 +152,8 @@ github.com/signaux-faibles/libwekan v0.4.1-0.20230920143937-732300584b09 h1:/P4f
 github.com/signaux-faibles/libwekan v0.4.1-0.20230920143937-732300584b09/go.mod h1:i5tEXQL5QsiFW53ascvwAxm/WPglRjr25kcPwsP34rQ=
 github.com/signaux-faibles/libwekan v0.4.1-0.20230921072930-ab083c073e5a h1:zVOs8JrYr2WoiG9qyiRvztZ7P7i6esu+V7574B0CAyI=
 github.com/signaux-faibles/libwekan v0.4.1-0.20230921072930-ab083c073e5a/go.mod h1:i5tEXQL5QsiFW53ascvwAxm/WPglRjr25kcPwsP34rQ=
+github.com/signaux-faibles/libwekan v0.4.1 h1:hRutroAQkU2UzSxVhWau6RuESs/OA9y9UXIgVvblzQ0=
+github.com/signaux-faibles/libwekan v0.4.1/go.mod h1:i5tEXQL5QsiFW53ascvwAxm/WPglRjr25kcPwsP34rQ=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=

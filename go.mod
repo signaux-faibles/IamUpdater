@@ -13,7 +13,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/samber/slog-formatter v1.0.0
 	github.com/samber/slog-multi v1.0.1
-	github.com/signaux-faibles/libwekan v0.4.1-0.20230905095406-f46ef6c38ebe
+	github.com/signaux-faibles/libwekan v0.4.1
 	github.com/stretchr/testify v1.8.4
 	github.com/tealeg/xlsx/v3 v3.3.0
 )
