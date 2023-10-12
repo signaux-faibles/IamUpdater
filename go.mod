@@ -15,7 +15,7 @@ require (
 	github.com/samber/slog-multi v1.0.1
 	github.com/signaux-faibles/libwekan v0.4.1
 	github.com/stretchr/testify v1.8.4
-	github.com/tealeg/xlsx/v3 v3.3.0
+	github.com/tealeg/xlsx/v3 v3.3.2
 )
 
 require (
@@ -40,7 +40,7 @@ require (
 	github.com/docker/docker v20.10.24+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/frankban/quicktest v1.14.5 // indirect
+	github.com/frankban/quicktest v1.14.6 // indirect
 	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
