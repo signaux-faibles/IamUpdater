@@ -8,7 +8,7 @@ require (
 	github.com/Nerzal/gocloak/v13 v13.8.0
 	github.com/cnf/structhash v0.0.0-20201127153200-e1b16c1ebc08
 	github.com/gosimple/slug v1.13.1
-	github.com/jaswdr/faker v1.19.0
+	github.com/jaswdr/faker v1.19.1
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/slog-formatter v1.0.0
