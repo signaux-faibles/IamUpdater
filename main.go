@@ -87,7 +87,7 @@ func main() {
 		printErrChain(err, 0)
 		return
 	}
-	logger.Notice("le traitement s'est terminé correctement", logContext)
+	logger.Notice("le traitement s'est terminé correctement ✌️", logContext)
 }
 
 func printErrChain(err error, i int) {
