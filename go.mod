@@ -13,7 +13,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/samber/slog-formatter v1.0.0
 	github.com/samber/slog-multi v1.0.2
-	github.com/signaux-faibles/libwekan v0.4.1
+	github.com/signaux-faibles/libwekan v0.5.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tealeg/xlsx/v3 v3.3.4
 )
@@ -70,7 +70,7 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
-	go.mongodb.org/mongo-driver v1.13.0
+	go.mongodb.org/mongo-driver v1.13.1
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
