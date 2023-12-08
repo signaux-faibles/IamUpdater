@@ -93,7 +93,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		&dockertest.RunOptions{
 			Name:       keycloakContainerName,
 			Repository: "ghcr.io/signaux-faibles/conteneurs/keycloak",
-			Tag:        "v21.0",
+			Tag:        "v2.0.1",
 			Env: []string{
 				"KEYCLOAK_ADMIN=" + keycloakAdmin,
 				"KEYCLOAK_ADMIN_PASSWORD=" + keycloakPassword,
