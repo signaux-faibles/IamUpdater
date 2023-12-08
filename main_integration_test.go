@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 	"strconv"
 	"testing"
@@ -30,7 +29,6 @@ var kc KeycloakContext
 
 var signauxfaibleClientID = "signauxfaibles"
 
-// var cwd, _ = os.Getwd()
 var mongoUrl string
 var mongodb *dockertest.Resource
 
@@ -40,8 +38,6 @@ const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
 
 func TestMain(m *testing.M) {
-	level := logger.SetLogLevel(slog.LevelDebug)
-	defer logger.SetLogLevel(level)
 	logContext := logger.ContextForMethod(TestMain)
 	var err error
 	pool, err := dockertest.NewPool("")
@@ -49,7 +45,6 @@ func TestMain(m *testing.M) {
 	logger.ConfigureWith(
 		structs.LoggerConfig{
 			Filename: "/dev/null",
-			Level:    "INFO",
 		})
 	if err != nil {
 		logger.Panic("erreur pendant la connection à Docker", logContext, err)
@@ -93,13 +88,16 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		&dockertest.RunOptions{
 			Name:       keycloakContainerName,
 			Repository: "ghcr.io/signaux-faibles/conteneurs/keycloak",
-			Tag:        "v2.0.1",
+			Tag:        "v23.0",
 			Env: []string{
 				"KEYCLOAK_ADMIN=" + keycloakAdmin,
 				"KEYCLOAK_ADMIN_PASSWORD=" + keycloakPassword,
 				"DB_VENDOR=h2",
 			},
-			Cmd: []string{"start-dev --http-relative-path=/auth --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"},
+			Cmd: []string{
+				"start-dev",
+				"--http-relative-path=/auth",
+				"--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"},
 		},
 		func(config *docker.HostConfig) {
 			// set AutoRemove to true so that stopped container goes away by itself
@@ -127,7 +125,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		var err error
 		kc, err = Init("http://localhost:"+keycloakPort+"/auth", "master", keycloakAdmin, keycloakPassword)
 		if err != nil {
-			logger.Debug("keycloak n'est pas prêt", logContext.AddAny("error", err))
+			logger.Trace("keycloak n'est pas prêt", logContext.AddAny("error", err))
 			return err
 		}
 		return nil
