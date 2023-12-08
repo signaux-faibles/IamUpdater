@@ -46,6 +46,8 @@ func TestMain(m *testing.M) {
 		structs.LoggerConfig{
 			Filename: "/dev/null",
 		})
+	level := logger.SetLogLevel("TRACE")
+	defer logger.SetLogLevel(level)
 	if err != nil {
 		logger.Panic("erreur pendant la connection à Docker", logContext, err)
 	}

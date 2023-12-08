@@ -57,21 +57,20 @@ func configFileHandler(logFilename string, timeFormat string) *slog.TextHandler 
 func configLogLevel(configLogLevel string) {
 	var err error
 	var level slog.Leveler
-	backup := loglevel.Level()
 	if level, err = parseLogLevel(configLogLevel); err != nil {
 		slog.Warn("erreur de configuration sur le log level", slog.String("valeur", configLogLevel))
-		level = backup
+		return
 	}
 	loglevel.Set(level.Level())
 }
 
-func SetLogLevel(newLogLevel slog.Leveler) slog.Leveler {
-	oldLoglevel := loglevel.Level()
-	loglevel.Set(newLogLevel.Level())
+func SetLogLevel(level string) string {
+	old := loglevel.Level().String()
 	slog.Info(
 		"change le niveau de log",
-		slog.String("ancien", oldLoglevel.String()),
-		slog.String("nouveau", newLogLevel.Level().String()),
+		slog.String("ancien", old),
+		slog.String("nouveau", level),
 	)
-	return oldLoglevel
+	configLogLevel(level)
+	return old
 }
