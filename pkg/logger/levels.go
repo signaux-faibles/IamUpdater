@@ -31,7 +31,7 @@ func customizeLogLevelNames(_ []string, a slog.Attr) slog.Attr {
 	return a
 }
 
-func parseLogLevel(logLevel string) (slog.Level, error) {
+func parseLogLevel(logLevel string) (slog.Leveler, error) {
 	switch strings.ToUpper(logLevel) {
 	case "DEBUG":
 		return slog.LevelDebug, nil
