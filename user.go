@@ -65,11 +65,7 @@ func (kc KeycloakContext) GetUser(username Username) (gocloak.User, error) {
 			return *u, nil
 		}
 	}
-	return gocloak.User{},
-		fmt.Errorf(
-			"l'utilisateur '%s' n'existe pas dans le contexte Keycloak",
-			username,
-		)
+	return gocloak.User{}, fmt.Errorf("l'utilisateur '%s' n'existe pas dans le contexte Keycloak", username)
 }
 
 // Compare returns missing, obsoletes, disabled users from kc.Users from []user
