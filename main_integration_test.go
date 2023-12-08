@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"testing"
@@ -39,6 +40,8 @@ const keycloakAdmin = "ti_admin"
 const keycloakPassword = "pwd"
 
 func TestMain(m *testing.M) {
+	level := logger.SetLogLevel(slog.LevelDebug)
+	defer logger.SetLogLevel(level)
 	logContext := logger.ContextForMethod(TestMain)
 	var err error
 	pool, err := dockertest.NewPool("")
@@ -90,7 +93,7 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 		&dockertest.RunOptions{
 			Name:       keycloakContainerName,
 			Repository: "ghcr.io/signaux-faibles/conteneurs/keycloak",
-			Tag:        "latest",
+			Tag:        "v21.0",
 			Env: []string{
 				"KEYCLOAK_ADMIN=" + keycloakAdmin,
 				"KEYCLOAK_ADMIN_PASSWORD=" + keycloakPassword,
@@ -119,13 +122,12 @@ func startKeycloak(pool *dockertest.Pool) *dockertest.Resource {
 	logger.Info("keycloak a démarré avec l'admin", logContext.AddAny("name", keycloakAdmin))
 	keycloakPort := keycloak.GetPort("8080/tcp")
 	logContext.AddAny("port", keycloakPort)
-	logger.Info("keycloak started", logContext)
 	//exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	if err := pool.Retry(func() error {
 		var err error
 		kc, err = Init("http://localhost:"+keycloakPort+"/auth", "master", keycloakAdmin, keycloakPassword)
 		if err != nil {
-			logger.Debug("keycloak n'est pas prêt", logContext)
+			logger.Debug("keycloak n'est pas prêt", logContext.AddAny("error", err))
 			return err
 		}
 		return nil
