@@ -138,8 +138,8 @@ github.com/segmentio/ksuid v1.0.4/go.mod h1:/XUiZBD3kVx5SmUOl55voK5yeAbBNNIed+2O
 github.com/shabbyrobe/xmlwriter v0.0.0-20220218224045-defe0ad214f6 h1:ri617veNyNwEMXywzcLmU//YIVSFdJvdk39lNsFB/Ro=
 github.com/shabbyrobe/xmlwriter v0.0.0-20220218224045-defe0ad214f6/go.mod h1:tKYSeHyJGYz7eoZMlzrRDQSfdYPYt0UduMr8b97Mmaw=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
-github.com/signaux-faibles/libwekan v0.5.0 h1:nyctCp5Ud4GimtM0zFhRIMSaIODNH55I2ACXcW6XG1E=
-github.com/signaux-faibles/libwekan v0.5.0/go.mod h1:vc3421qZK06Y8eF4OPwOHR7QO7KHadMr8np60KWBRHM=
+github.com/signaux-faibles/libwekan v0.6.0 h1:5eZl4whVIg6tmgG28ixa/OnMYNNCy8PH25xDyFE2Hu0=
+github.com/signaux-faibles/libwekan v0.6.0/go.mod h1:vc3421qZK06Y8eF4OPwOHR7QO7KHadMr8np60KWBRHM=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
