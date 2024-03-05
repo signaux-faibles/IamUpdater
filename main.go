@@ -61,7 +61,7 @@ func main() {
 			Username(conf.Keycloak.Username),
 			conf.Stock.MaxChangesToAccept,
 		); err != nil {
-			logger.Error("erreur pendant la mise à jour de Keycloak", logContext, err)
+			logger.Error("erreur pendant la mise à jour des habilitations Keycloak", logContext, err)
 		}
 		logger.Notice("mise à jour des habilitations Keycloak", keycloakLogContext.AddString("status", "END"))
 	}
@@ -76,7 +76,7 @@ func main() {
 			conf.Wekan.SlugDomainRegexp,
 		)
 		if err != nil {
-			logger.Error("erreur pendant la mise à jour de Keycloak", logContext, err)
+			logger.Error("erreur pendant la mise à jour des habilitations Wekan", logContext, err)
 		}
 		logger.Notice("mise à jour des habilitations Wekan", wekanLogContext.AddString("status", "END"))
 	}
