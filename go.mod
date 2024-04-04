@@ -15,7 +15,7 @@ require (
 	github.com/samber/slog-multi v1.0.2
 	github.com/signaux-faibles/libwekan v0.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tealeg/xlsx/v3 v3.3.5
+	github.com/tealeg/xlsx/v3 v3.3.6
 )
 
 require (
